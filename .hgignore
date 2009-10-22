@@ -1,0 +1,11 @@
+
+syntax: regexp
+^build$
+syntax: regexp
+^dist$
+syntax: glob
+*.egg-info
+syntax: glob
+.settings
+syntax: regexp
+^docs/_build$

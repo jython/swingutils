@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp codebase="http://pypi.python.org/jython-swingutils/" href="jython-swingutils.jnlp">
+	<information>
+		<title>Jython Swing Utilities</title>
+		<vendor>Alex Grönholm</vendor>
+	</information>
+
+	<security>
+		<all-permissions />
+	</security>
+	
+	<resources>
+		<j2se version="1.5+"/>
+		<jar href="jython-swingutils.jar" />
+	</resources>
+	<component-desc/>
+</jnlp>
