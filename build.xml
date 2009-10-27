@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="jar">
 
-	<property environment="env" />
-	<property name="workspace" location=".." />
 	<property name="jarfile" location="dist/jython-swingutils.jar" />
-	<property name="signer" value="alex" />
 	<property name="jnlpfile" value="jython-swingutils.jnlp" />
+	<property file="build.properties"/>
 
 	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
 
@@ -17,12 +15,11 @@
 		<delete file="${jarfile}" />
 		<jar destfile="${jarfile}">
 			<fileset dir="build" />
-			<fileset dir="." includes="**/*.jfd" />
 		</jar>
 	</target>
 
 	<target name="signjar" depends="jar">
-		<signjar jar="${jarfile}" alias="${signer}" />
+		<signjar jar="${jarfile}" alias="${signer}" storepass="${storepass}" />
 	</target>
 
 </project>
