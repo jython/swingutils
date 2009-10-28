@@ -40,12 +40,14 @@ class ListModel(AbstractListModel, list):
     
     def __setitem__(self, index, value):
         list.__setitem__(self, index, value)
-        self.fireContentsChanged(index, index)
+        self.fireContentsChanged(self, index, index)
 
     def __setslice__(self, start, end, value):
-        """TODO: should probably fire an interval changed event too"""
+        oldEnd = len(self) - 1
         list.__setslice__(self, start, end, value)
-        self.fireContentsChanged(start, end - 1)
+        self.fireContentsChanged(self, start, min(oldEnd, end - 1))
+        if end > oldEnd:
+            self.fireIntervalAdded(self, oldEnd + 1, end)
 
     def append(self, obj):
         list.append(self, obj)

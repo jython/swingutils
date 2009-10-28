@@ -57,9 +57,11 @@ class ListTableModel(AbstractTableModel, list):
         self.fireTableRowsUpdated(row, row)
 
     def __setslice__(self, start, end, value):
-        """TODO: should probably fire an interval changed event too"""
+        oldEnd = len(self) - 1
         list.__setslice__(self, start, end, value)
-        self.fireTableRowsUpdated(start, end - 1)
+        self.fireTableRowsUpdated(start, min(oldEnd, end - 1))
+        if end > oldEnd:
+            self.fireTableRowsInserted(oldEnd + 1, end)
 
     def append(self, obj):
         list.append(self, obj)
