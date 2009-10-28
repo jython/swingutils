@@ -7,12 +7,10 @@ class ListTableModel(AbstractTableModel, list):
     Table model that wraps a Python `list` object, and fires events when its
     contents are manipulated (through the table model).
 
-    The :attr:`__columns__` class attribute should be an iterable of
+    The :attr:`__columns__` attribute should be a sequence of
     (name, class) tuples. The `name` is used for displaying column headers, and
     `class` is used for identifying the type of objects in this column
-    (usually for the purpose of choosing an appropriate cell renderer). You can
-    leave the class as None to automatically detect the type, but this may not
-    be reliable.
+    (usually for the purpose of choosing an appropriate cell renderer).
     You can either override :attr:`__columns__` in a subclass, or supply it via
     the constructor.
 
@@ -21,12 +19,23 @@ class ListTableModel(AbstractTableModel, list):
 
     def __init__(self, *columns):
         """
-        :param columns: a list of of column names or tuples of
-                        (column name, column class)
+        Initializes the column names and types.
+        Constructor arguments override any column definitions from the class.
+        
+        :param columns: tuples of (column name, column class)
 
         """
-        if columns:
-            self.__columns__ = tuple(columns)
+        columns = columns or self.__columns__
+        self.__columns__ = (self._validateColumn(col) for col in columns)
+
+    @staticmethod
+    def _validateColumn(column):
+        if isinstance(column, basestring):
+            return (column, Object)
+        if not isinstance(column[1], type):
+            raise ValueError('Column "%s": expected a type for second item, '
+                             'got %s instead' % (column[0], type(column[1])))
+        return column
 
     def replace(self, replacement):
         """Replaces the data with the given replacement.
@@ -160,11 +169,18 @@ class ObjectTableModel(ListTableModel):
     """
     A variant of :class:`ListTableModel` where each row is a single object.
     Columns are mapped to object attributes.
-    The :attr:`__column__` class attribute should be a list of (name, class,
-    attrname) tuples where attrname is the name of the attribute the column is
-    mapped to.
+    The :attr:`__column__` attribute should be a sequence of
+    (name, class, attrname) tuples where attrname is the name of the attribute
+    the column is mapped to.
 
     """
+    @staticmethod
+    def _validateColumn(column):
+        column = ListTableModel._validateColumn(self, column)
+        if not isinstance(column[3], basestring):
+            raise ValueError('Column "%s": the attribute name must be a '
+                             'string' % column[0])
+        return column
 
     # Methods from AbstractTableModel
 
