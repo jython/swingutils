@@ -87,8 +87,8 @@ class PanelWrapper(_DelegateWrapper):
 class WindowWrapper(_DelegateWrapper):
     """
     Wraps a form that has a Window (or any of its descendants) as its root
-    element. Attributes of that panel can be accessed as the attributes of this
-    class.
+    element. Attributes of that window can be accessed as the attributes of
+    this class.
 
     See the documentation for the :class:`~FormWrapper` class for more
     information.
