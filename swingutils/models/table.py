@@ -1,13 +1,23 @@
 from java.lang import Object
 from javax.swing.table import AbstractTableModel
-from types import NoneType
 
 
 class ListTableModel(AbstractTableModel, list):
-    """Table model that wraps a Python `list` object, and fires events when its
+    """
+    Table model that wraps a Python `list` object, and fires events when its
     contents are manipulated (through the table model).
 
+    The :attr:`__columns__` class attribute should be an iterable of
+    (name, class) tuples. The `name` is used for displaying column headers, and
+    `class` is used for identifying the type of objects in this column
+    (usually for the purpose of choosing an appropriate cell renderer). You can
+    leave the class as None to automatically detect the type, but this may not
+    be reliable.
+    You can either override :attr:`__columns__` in a subclass, or supply it via
+    the constructor.
+
     """
+    __columns__ = ()
 
     def __init__(self, *columns):
         """
@@ -15,7 +25,8 @@ class ListTableModel(AbstractTableModel, list):
                         (column name, column class)
 
         """
-        self.columns = []
+        if columns:
+            self.__columns__ = tuple(columns)
 
     def replace(self, replacement):
         """Replaces the data with the given replacement.
@@ -31,9 +42,7 @@ class ListTableModel(AbstractTableModel, list):
         list.extend(self, replacement)
         self.fireTableDataChanged()
 
-    #
-    # Overridden methods from list
-    #
+    # Methods from list
 
     def __delitem__(self, index):
         list.__delitem_(self, index)
@@ -68,26 +77,16 @@ class ListTableModel(AbstractTableModel, list):
         if end > start:
             self.fireTableRowsInserted(start, end - 1)
 
-    # Inherited methods from AbstractTableModel
+    # Methods from AbstractTableModel
 
     def getColumnClass(self, columnIndex):
-        col = self.columns[columnIndex]
-        if isinstance(col, tuple):
-            return col[1]
-        if len(self):
-            type_ = type(self[0][columnIndex])
-            if type_ is not NoneType:
-                return type_
-        return Object
+        return self.__columns__[columnIndex][1] or Object
 
     def getColumnCount(self):
-        return len(self.columns)
+        return len(self.__columns__)
 
     def getColumnName(self, columnIndex):
-        col = self.columns[columnIndex]
-        if isinstance(col, tuple):
-            return col[0]
-        return col
+        return self.__columns__[columnIndex][0]
 
     def getRowCount(self):
         return len(self)
@@ -98,3 +97,95 @@ class ListTableModel(AbstractTableModel, list):
     def setValueAt(self, aValue, rowIndex, columnIndex):
         self[rowIndex][columnIndex] = aValue
         self.fireTableCellUpdated(rowIndex, columnIndex)
+
+    # Convenience methods
+
+    def getSelectedRow(self, table):
+        """
+        Returns the selected row, or first selected row if the table has
+        multi-row selection enabled.
+
+        """
+        assert table.model is self
+        if table.selectedRow >= 0:
+            modelRow = table.convertRowIndexToModel(table.selectedRow)
+            return self[modelRow]
+
+    def getSelectedRows(self, table):
+        """
+        Returns rows that have been selected in the given table.
+        This table model must be the given table's model.
+
+        :return: rows that were selected in the given table
+        :rtype: list
+
+        """
+        assert table.model is self
+        selected = []
+        for viewRow in table.selectedRows:
+            modelRow = table.convertRowIndexToModel(viewRow)
+            selected.append(self[modelRow])
+        return selected
+
+    def getVisibleRows(self, table):
+        """
+        Returns rows not hidden by any table filters.
+        This table model must be the given table's model.
+
+        :return: rows that were visible in the given table
+        :rtype: list
+
+        """
+        assert table.model is self
+        visible = []
+        for viewRow in xrange(0, table.rowCount):
+            modelRow = table.convertRowIndexToModel(viewRow)
+            visible.append(self[modelRow])
+        return visible
+
+    def refresh(self):
+        """
+        Forces a visual refresh for all rows on related tables.
+        Use this method to visually update tables after you have done changes
+        that did not fire the appropriate table events.
+
+        """
+        if len(self.data) > 0:
+            self.fireTableRowsUpdated(0, len(self.data) - 1)
+
+
+class ObjectTableModel(ListTableModel):
+    """
+    A variant of :class:`ListTableModel` where each row is a single object.
+    Columns are mapped to object attributes.
+    The :attr:`__column__` class attribute should be a list of (name, class,
+    attrname) tuples where attrname is the name of the attribute the column is
+    mapped to.
+
+    """
+
+    # Methods from AbstractTableModel
+
+    def getValueAt(self, rowIndex, columnIndex):
+        attrname = self.__columns__[columnIndex][2]
+        return getattr(self[rowIndex], attrname)
+
+    def setValueAt(self, aValue, rowIndex, columnIndex):
+        attrname = self.__columns__[columnIndex][2]
+        setattr(self[rowIndex], attrname, aValue)
+        self.fireTableCellUpdated(rowIndex, columnIndex)
+
+    # Convenience methods
+
+    def getRowIndex(self, obj):
+        """
+        Returns the row number that contains the object that is equal
+        to the given object.
+
+        :return: the row number, or -1 if no match was found
+
+        """
+        for i, row in enumerate(self):
+            if row == obj:
+                return i
+        return -1
