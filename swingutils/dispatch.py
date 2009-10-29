@@ -7,6 +7,7 @@ run. These are necessary when you need to manipulate Swing objects from other
 """
 
 from threading import Event
+import traceback
 
 from java.lang import Throwable
 from java.util.concurrent import RunnableFuture, ExecutionException,\
@@ -37,6 +38,7 @@ class ResultHolder(RunnableFuture):
             self._retval = func(*self._args, **self._kwargs)
         except BaseException, e:
             self._exception = e
+            traceback.print_exc()
         
         self._func = None        # Free any memory taken by possible closures
         self._event.set()
