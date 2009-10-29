@@ -176,8 +176,8 @@ class ObjectTableModel(ListTableModel):
     """
     @staticmethod
     def _validateColumn(column):
-        column = ListTableModel._validateColumn(self, column)
-        if not isinstance(column[3], basestring):
+        column = ListTableModel._validateColumn(column)
+        if not isinstance(column[2], basestring):
             raise ValueError('Column "%s": the attribute name must be a '
                              'string' % column[0])
         return column
