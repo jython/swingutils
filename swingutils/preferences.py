@@ -22,18 +22,7 @@ class PreferencesNode(object):
         return self._delegate.get(key, None)
 
     def __setitem__(self, key, value):
-        if isinstance(value, bool):
-            self._delegate.putBoolean(key, value)
-        elif isinstance(value, array) and value.typecode == 'b':
-            self._delegate.putByteArray(key, value)
-        elif isinstance(value, float):
-            self._delegate.putDouble(key, value)
-        elif isinstance(value, int):
-            self._delegate.putInteger(key, value)
-        elif isinstance(value, long):
-            self._delegate.putLong(key, value)
-        else:
-            self._delegate.put(key, unicode(value))
+        self.put(key, value)
 
     def __delitem__(self, key):
         self._delegate.remove(key)
@@ -52,6 +41,20 @@ class PreferencesNode(object):
 
     def getLong(self, key, default):
         return self._delegate.getLong(key, default)
+    
+    def put(self, key, value):
+        if isinstance(value, bool):
+            self._delegate.putBoolean(key, value)
+        elif isinstance(value, array) and value.typecode == 'b':
+            self._delegate.putByteArray(key, value)
+        elif isinstance(value, float):
+            self._delegate.putDouble(key, value)
+        elif isinstance(value, int):
+            self._delegate.putInteger(key, value)
+        elif isinstance(value, long):
+            self._delegate.putLong(key, value)
+        else:
+            self._delegate.put(key, unicode(value))
 
     def keys(self):
         return tuple(self._delegate.keys())
