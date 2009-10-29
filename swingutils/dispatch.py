@@ -39,7 +39,7 @@ class ResultHolder(RunnableFuture):
         except BaseException, e:
             self._exception = e
         
-        self.func = None        # Free any memory taken by possible closures
+        self._func = None        # Free any memory taken by possible closures
         self._event.set()
 
     def cancel(self, mayInterruptIfRunning):
