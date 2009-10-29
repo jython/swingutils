@@ -8,6 +8,7 @@ run. These are necessary when you need to manipulate Swing objects from other
 
 from threading import Event
 
+from java.lang import Throwable
 from java.util.concurrent import RunnableFuture, ExecutionException,\
     CancellationException
 from javax.swing import SwingUtilities
@@ -51,7 +52,9 @@ class ResultHolder(RunnableFuture):
             timeout = unit.toMillis(timeout) / 1000.0
         self._event.wait(timeout)
         if hasattr(self, '_exception'):
-            raise ExecutionException(self._exception)
+            if isinstance(self._exception, Throwable):
+                raise ExecutionException(self._exception)
+            raise ExecutionException(unicode(self._exception), None)
         if not hasattr(self, '_retval'):
             raise CancellationException
         return self.retval
