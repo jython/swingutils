@@ -83,6 +83,10 @@ class PanelWrapper(_DelegateWrapper):
         self.loadform(formName)
         self._delegate = self._creator.createPanel()
 
+    @property
+    def panel(self):
+        return self._delegate
+
 
 class WindowWrapper(_DelegateWrapper):
     """
@@ -102,3 +106,7 @@ class WindowWrapper(_DelegateWrapper):
         """
         self.loadform(formName)
         self._delegate = self._creator.createWindow(owner)
+
+    @property
+    def window(self):
+        return self._delegate
