@@ -59,7 +59,7 @@ class ResultHolder(RunnableFuture):
             raise ExecutionException(unicode(self._exception), None)
         if not hasattr(self, '_retval'):
             raise CancellationException
-        return self.retval
+        return self._retval
 
     def isCancelled(self):
         return not hasattr(self, '_func')
