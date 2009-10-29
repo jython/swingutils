@@ -4,7 +4,7 @@ This module provides dict-like access to user and system preferences.
 """
 from java.util.prefs import Preferences as JavaPreferences
 
-from jarray import array
+from array import array
 
 
 class PreferencesNode(object):
