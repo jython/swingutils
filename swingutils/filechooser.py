@@ -23,8 +23,11 @@ class SimpleFileFilter(FileFilter):
         :param description: textual description of the file filter
         
         """
-        if not hasattr(self.suffixes, '__iter__'):
-            self.suffixes = (suffixes,)
+        if isinstance(suffixes, basestring):
+            self.suffixes = [suffixes]
+        else:
+            self.suffixes = list(suffixes)
+
         if preferred and not preferred in self.suffixes:
             self.suffixes.append(preferred)
         self.preferred = preferred or self.suffixes[0]
