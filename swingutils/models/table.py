@@ -26,7 +26,7 @@ class ListTableModel(AbstractTableModel, list):
 
         """
         columns = columns or self.__columns__
-        self.__columns__ = (self._validateColumn(col) for col in columns)
+        self.__columns__ = tuple(self._validateColumn(col) for col in columns)
 
     @staticmethod
     def _validateColumn(column):
