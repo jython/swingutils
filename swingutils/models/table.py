@@ -54,7 +54,7 @@ class ListTableModel(AbstractTableModel, list):
     # Methods from list
 
     def __delitem__(self, index):
-        list.__delitem_(self, index)
+        list.__delitem__(self, index)
         self.fireTableRowsDeleted(index, index)
 
     def __delslice__(self, start, end):
