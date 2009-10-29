@@ -10,7 +10,6 @@
 	</security>
 	
 	<resources>
-		<j2se version="1.5+"/>
 		<jar href="jython-swingutils.jar" />
 	</resources>
 	<component-desc/>
