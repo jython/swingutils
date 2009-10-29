@@ -21,8 +21,6 @@ class ResultHolder(RunnableFuture):
     instantiate or run these directly.
 
     """
-    __slots__ = ('_retval', '_exception')
-
     def __init__(self, func, args, kwargs):
         self._func = func
         self._args = args
