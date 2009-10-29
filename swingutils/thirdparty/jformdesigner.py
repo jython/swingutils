@@ -67,7 +67,7 @@ class _DelegateWrapper(FormWrapper):
         if self._delegate and hasattr(self._delegate, key):
             setattr(self._delegate, key, value)
         else:
-            object.__setattr__(key, value)
+            object.__setattr__(self, key, value)
 
 
 class PanelWrapper(_DelegateWrapper):
