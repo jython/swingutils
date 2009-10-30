@@ -66,8 +66,10 @@ def createFileChooserDialog(filters, filename, prefs, prefkey, multiselect):
     # Add filters
     if not hasattr(filters, '__iter__'):
         filters = (filters,)
-    for filter in filters:
-        fileChooser.addChoosableFileFilter(filter)
+    if filters:
+        for filter in filters:
+            fileChooser.addChoosableFileFilter(filter)
+        fileChooser.fileFilter = filters[0]
 
     # Enable/disable multiple file select
     fileChooser.setMultiSelectionEnabled(multiselect)
@@ -159,8 +161,8 @@ def showSaveDialog(filters, filename=None, parent=None, prefs=None,
     # Insert the suffix from the file filter if it's missing from the file name
     selectedFile = fileChooser.selectedFile
     filter = fileChooser.fileFilter
-    if selectedFile and hasattr(filter, 'suffix') and not \
-        selectedFile.name.lower().endswith(filter.suffix):
-            selectedFile = File(selectedFile.path + filter.suffix)
+    if selectedFile and hasattr(filter, 'preferred') and not \
+        selectedFile.name.lower().endswith(filter.preferred):
+            selectedFile = File(selectedFile.path + filter.preferred)
 
     return selectedFile
