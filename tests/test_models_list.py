@@ -149,15 +149,43 @@ class TestListModel(object):
         self.model[2:4] = ['abc', 'xyz', 'foo']
         event = result[0]
         assert event
+        eq_(event.type, ListDataEvent.CONTENTS_CHANGED)
         eq_(event.index0, 2)
         eq_(event.index1, 2)
-        eq_(event.type, ListDataEvent.CONTENTS_CHANGED)
 
         event = result[1]
         assert event
+        eq_(event.type, ListDataEvent.INTERVAL_ADDED)
         eq_(event.index0, 3)
         eq_(event.index1, 4)
-        eq_(event.type, ListDataEvent.INTERVAL_ADDED)
 
         for i, val in enumerate([u'Test', 'Test2', 'abc', 'xyz', 'foo']):
+            eq_(self.model[i], val)
+
+    def testSetSliceReplace(self):
+        def contentsChanged(event, result):
+            result[0] = event
+        
+        def intervalRemoved(event, result):
+            result[1] = event
+
+        result = [None, None]
+        self.model.extend([u'Test', 'Test2', 678])
+
+        self.model.contentsChanged = makeEventListener(contentsChanged, result)
+        self.model.intervalRemoved = makeEventListener(intervalRemoved, result)
+        self.model[:] = ['abc', 'xyz']
+        event = result[0]
+        assert event
+        eq_(event.type, ListDataEvent.CONTENTS_CHANGED)
+        eq_(event.index0, 0)
+        eq_(event.index1, 1)
+
+        event = result[1]
+        assert event
+        eq_(event.type, ListDataEvent.INTERVAL_REMOVED)
+        eq_(event.index0, 2)
+        eq_(event.index1, 2)
+
+        for i, val in enumerate(['abc', 'xyz']):
             eq_(self.model[i], val)
