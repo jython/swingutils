@@ -6,6 +6,9 @@ class ListModel(AbstractListModel, list):
     its contents are manipulated.
 
     """
+    
+    def __init__(self, data):
+        list.__init__(data)
 
     #
     # list methods
