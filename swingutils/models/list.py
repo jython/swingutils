@@ -5,10 +5,9 @@ class ListModel(AbstractListModel, list):
     """List model that is also a Python `list` object, and fires events when
     its contents are manipulated.
 
-    """
-    
-    def __init__(self, data):
-        list.__init__(data)
+    """    
+    def __init__(self, *args):
+        list.__init__(self, *args)
 
     #
     # list methods
@@ -33,11 +32,12 @@ class ListModel(AbstractListModel, list):
         newLength = len(self)
 
         if newLength > 0 and oldLength > 0:
-            self.fireTableRowsUpdated(start, min(oldLength, newLength) - 1)
+            self.fireContentsChanged(self, start, min(oldLength,
+                                                      newLength) - 1)
         if newLength > oldLength:
-            self.fireTableRowsInserted(min(oldLength - 1, 0), newLength - 1)
+            self.fireIntervalAdded(self, oldLength, newLength - 1)
         elif newLength < oldLength:
-            self.fireTableRowsDeleted(min(newLength - 1, 0), oldLength - 1)
+            self.fireIntervalRemoved(self, newLength, oldLength - 1)
 
     def append(self, obj):
         list.append(self, obj)
