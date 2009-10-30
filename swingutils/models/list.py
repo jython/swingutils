@@ -24,11 +24,17 @@ class ListModel(AbstractListModel, list):
         self.fireContentsChanged(self, index, index)
 
     def __setslice__(self, start, end, value):
-        oldEnd = len(self) - 1
+        # This can change, add and remove rows
+        oldLength = len(self)
         list.__setslice__(self, start, end, value)
-        self.fireContentsChanged(self, start, min(oldEnd, end - 1))
-        if end > oldEnd:
-            self.fireIntervalAdded(self, oldEnd + 1, end)
+        newLength = len(self)
+
+        if newLength > 0 and oldLength > 0:
+            self.fireTableRowsUpdated(start, min(oldLength, newLength) - 1)
+        if newLength > oldLength:
+            self.fireTableRowsInserted(min(oldLength - 1, 0), newLength - 1)
+        elif newLength < oldLength:
+            self.fireTableRowsDeleted(min(newLength - 1, 0), oldLength - 1)
 
     def append(self, obj):
         list.append(self, obj)
