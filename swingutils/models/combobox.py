@@ -9,6 +9,9 @@ class ListComboModel(ListModel, MutableComboBoxModel):
 
     """
     _selectedItem = None
+    
+    def __init__(self, *args):
+        ListModel.__init__(self, *args)
 
     # ComboBoxModel methods
 
