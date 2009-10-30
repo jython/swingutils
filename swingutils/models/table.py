@@ -17,15 +17,16 @@ class ListTableModel(AbstractTableModel, list):
     """
     __columns__ = ()
 
-    def __init__(self, *columns):
+    def __init__(self, *args, **kwargs):
         """
         Initializes the column names and types.
-        Constructor arguments override any column definitions from the class.
-        
-        :param columns: tuples of (column name, column class)
+        You can override the column definitions with the `columns` keyword
+        argument.
 
         """
-        columns = columns or self.__columns__
+        list.__init__(self, *args)
+
+        columns = kwargs.get('columns', self.__columns__)
         self.__columns__ = tuple(self._validateColumn(col) for col in columns)
 
     @staticmethod
