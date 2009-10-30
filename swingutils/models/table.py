@@ -167,8 +167,8 @@ class ListTableModel(AbstractTableModel, list):
         that did not fire the appropriate table events.
 
         """
-        if len(self.data) > 0:
-            self.fireTableRowsUpdated(0, len(self.data) - 1)
+        if len(self) > 0:
+            self.fireTableRowsUpdated(0, len(self) - 1)
 
 
 class ObjectTableModel(ListTableModel):
