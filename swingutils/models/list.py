@@ -3,31 +3,12 @@ from javax.swing import AbstractListModel
 
 class ListModel(AbstractListModel, list):
     """List model that is also a Python `list` object, and fires events when
-    its contents are manipulated (through the list model).
+    its contents are manipulated.
 
     """
 
-    def replace(self, replacement):
-        """Replaces the data with the given replacement.
-
-        :type replacement: list or any iterable
-
-        """
-        if not isinstance(replacement, list):
-            if not hasattr(replacement, '__iter__'):
-                raise TypeError('replacement must be iterable')
-            replacement = list(replacement)
-        oldLength = len(self)
-        if oldLength:
-            list.__delslice__(self, 0, oldLength)
-            self.fireIntervalRemoved(0, oldLength - 1)
-
-        list.extend(self, replacement)
-        if len(self):
-            self.fireIntervalAdded(0, len(self) - 1)
-
     #
-    # Overridden methods from list
+    # list methods
     #
 
     def __delitem__(self, index):
