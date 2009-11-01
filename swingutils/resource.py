@@ -60,4 +60,5 @@ def loadImageIcon(path, classloader=jython.classloader):
     """
     from javax.swing import ImageIcon
 
-    return ImageIcon(loadImage(path, classloader))
+    resource = getResource(path, classloader)
+    return ImageIcon(resource)
