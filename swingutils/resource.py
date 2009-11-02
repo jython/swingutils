@@ -3,13 +3,12 @@ This module contains helper functions to load resources (=files) contained
 in jars, or anywhere else in the class path.
 
 """
-
-from org.python.util import jython
+from java.lang import Thread
 
 __all__ = ('getResource', 'getResourceAsStream', 'loadImage', 'loadImageIcon')
 
 
-def getResource(path, classloader=jython.classloader):
+def getResource(path, classloader=None):
     """
     Loads a resource from anywhere on the classpath.
     
@@ -18,10 +17,11 @@ def getResource(path, classloader=jython.classloader):
     :rtype: :class:`java.lang.Object`
 
     """
+    classloader = classloader or Thread.currentThread().contextClassLoader
     return classloader.getResource(path)
 
 
-def getResourceAsStream(path, classloader=jython.classloader):
+def getResourceAsStream(path, classloader=None):
     """
     Opens a stream to a resource anywhere on the classpath.
     
@@ -30,10 +30,11 @@ def getResourceAsStream(path, classloader=jython.classloader):
     :rtype: :class:`java.io.InputStream`
 
     """
+    classloader = classloader or Thread.currentThread().contextClassLoader
     return classloader.getResourceAsStream(path)
 
 
-def loadImage(path, classloader=jython.classloader):
+def loadImage(path, classloader=None):
     """Loads an image resource as java.awt.Image from anywhere on the
     class path. Supported image types are JPEG, PNG and GIF, and possibly
     others if 
@@ -49,7 +50,7 @@ def loadImage(path, classloader=jython.classloader):
     return ImageIO.read(stream)
 
 
-def loadImageIcon(path, classloader=jython.classloader):
+def loadImageIcon(path, classloader=None):
     """Loads an image resource as an ImageIcon from anywhere on the
     class path.
     
