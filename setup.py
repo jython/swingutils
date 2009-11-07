@@ -11,7 +11,7 @@ if not 'java' in sys.platform.lower():
 
 setup(
     name='jython-swingutils',
-    version='0.1',
+    version='0.2',
     description="Makes using Java's Swing UI toolkit easy on Jython",
     long_description="""\
 A collection of utility classes and helper functions to make it easier to build
@@ -20,11 +20,15 @@ to often clumsy Java interfaces.
 
 Included in this package:
  * enhanced table and list models
- * JavaBean support
+ * JavaBeans support and automatic property change notification
+ * property binding
  * enhanced file chooser
+ * preferences access
+ * text field formatters
  * shortcuts for common dialogs
  * wrappers for loading `JFormDesigner <http://www.jformdesigner.com/>`_ forms
  * decorators and functions for invoking Swing code from other threads
+ * support for running background tasks
  
 More will follow as the project progresses.
 
