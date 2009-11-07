@@ -30,12 +30,11 @@ class ResultHolder(RunnableFuture):
         self._event = Event()
 
     def run(self):
-        func = getattr(self, '_func', None)
-        if not func:
+        if not self._func:
             return
 
         try:
-            self._retval = func(*self._args, **self._kwargs)
+            self._retval = self._func(*self._args, **self._kwargs)
         except BaseException, e:
             self._exception = e
             traceback.print_exc()
@@ -46,7 +45,7 @@ class ResultHolder(RunnableFuture):
     def cancel(self, mayInterruptIfRunning):
         if self.isDone():
             return False
-        del self.func
+        self._func = None
         return True
 
     def get(self, timeout=None, unit=None):
@@ -62,7 +61,7 @@ class ResultHolder(RunnableFuture):
         return self._retval
 
     def isCancelled(self):
-        return not hasattr(self, '_func')
+        return self._func is None
 
     def isDone(self):
         return hasattr(self, '_retval') or hasattr(self, '_exception')
