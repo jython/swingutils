@@ -7,13 +7,18 @@ from java.beans import PropertyChangeListener, PropertyChangeEvent
 
 
 class _PropertyChangeWrapper(PropertyChangeListener):
-    def __init__(self, source, listener):
+    def __init__(self, source, listener, property):
         self.source = source
         self.listener = listener
+        self.property = property
 
-    def __call__(self, oldValue, newValue, property):
-        e = PropertyChangeEvent(self.source, property, oldValue, newValue)
+    def __call__(self, oldValue, newValue, property=None):
+        e = PropertyChangeEvent(self.source, property or self.property,
+                                oldValue, newValue)
         self.listener.propertyChange(e)
+
+    def __eq__(self, obj):
+        return obj in (self, self.listener)
 
 
 class JavaBeanSupport(object):
@@ -34,7 +39,7 @@ class JavaBeanSupport(object):
             raise TypeError('addPropertyChangeListener expected 1-2 '
                             'arguments, got 0')
         assert isinstance(listener, PropertyChangeListener)
-        wrapper = _PropertyChangeWrapper(self, listener)
+        wrapper = _PropertyChangeWrapper(self, listener, property)
         self.addPropertyListener(wrapper, property)
 
     def removePropertyChangeListener(self, *args):
@@ -46,9 +51,17 @@ class JavaBeanSupport(object):
             raise TypeError('removePropertyChangeListener expected 1-2 '
                             'arguments, got 0')
         assert isinstance(listener, PropertyChangeListener)
-            
-        self.removePropertyListener(listener, property)
-    
+        
+        if self._listeners:
+            try:
+                for wrapper in self._listeners[property]:
+                    if (isinstance(wrapper, _PropertyChangeWrapper) and
+                        wrapper.listener == listener):
+                        self._listeners[property].remove(wrapper)
+                        return
+            except KeyError:
+                pass
+
     #
     # Python API
     #
@@ -56,11 +69,11 @@ class JavaBeanSupport(object):
     def firePropertyChange(self, property, oldValue, newValue):
         if self._listeners and oldValue != newValue:
             if property in self._listeners:
-                for listener in self._listeners[property]:
-                    listener(oldValue, newValue)
+                for listener, args, kwargs in self._listeners[property]:
+                    listener(oldValue, newValue, *args, **kwargs)
             if None in self._listeners:
-                for listener in self._listeners[None]:
-                    listener(oldValue, newValue, property)
+                for listener, args, kwargs in self._listeners[None]:
+                    listener(oldValue, newValue, property, *args, **kwargs)
 
     def addPropertyListener(self, listener, property=None, *args, **kwargs):
         """
@@ -70,10 +83,10 @@ class JavaBeanSupport(object):
         Any extra positional and keyword arguments are passed on to the
         listener.
 
-        The listener is called with (oldValue, newValue, **args, **kwargs)
+        The listener is called with (oldValue, newValue, *args, **kwargs)
         if the property name was defined, and (oldValue, newValue, property,
         *args, **kwargs) if it's set to listen to all property changes.
-        
+
         :type listener: function or any callable
         :param property: name of the property, or None to listen to all
                          property changes
@@ -90,11 +103,12 @@ class JavaBeanSupport(object):
         self._listeners[property].append((listener, args, kwargs))
 
     def removePropertyListener(self, listener, property=None):
-        if self._listeners:
-            try:
-                self._listeners[property].remove(listener)
-            except (KeyError, ValueError):
-                pass
+        if self._listeners and property in self._listeners:
+            for i, (listener_, args, kwargs) in \
+                enumerate(self._listeners[property]):
+                if listener_ == listener:
+                    del self._listeners[property][i]
+                    return
 
 
 class AutoChangeNotifier(JavaBeanSupport):
