@@ -3,89 +3,108 @@ This module contains mix-in classes to make your classes support JavaBeans
 compatible property change notifications.
 
 """
-
-from java.beans import PropertyChangeSupport, PropertyChangeListener
+from java.beans import PropertyChangeListener, PropertyChangeEvent
 
 
 class _PropertyChangeWrapper(PropertyChangeListener):
-    def __init__(self, listener, all_properties, args, kwargs):
+    def __init__(self, source, listener):
+        self.source = source
         self.listener = listener
-        self.all_properties = all_properties
-        self.args = args
-        self.kwargs = kwargs
 
-    def propertyChange(self, evt):
-        if self.all_properties:
-            self.listener(evt.propertyName, evt.oldValue, evt.newValue,
-                          *self.args, **self.kwargs)
-        else:
-            self.listener(evt.oldValue, evt.newValue, *self.args,
-                          **self.kwargs)
+    def __call__(self, oldValue, newValue, property):
+        e = PropertyChangeEvent(self.source, property, oldValue, newValue)
+        self.listener.propertyChange(e)
 
 
 class JavaBeanSupport(object):
     """Class that provides support for listening to property change events"""
 
-    _changeSupport = None
+    _listeners = None
 
-    def addPropertyChangeListener(self, propertyName, listener=None):
-        if not self._changeSupport:
-            self._changeSupport = PropertyChangeSupport(self)
+    #
+    # Java-style API
+    #
 
-        if listener is None:
-            propertyName, listener = None, propertyName
-
-        if propertyName:
-            self._changeSupport.addPropertyChangeListener(propertyName,
-                                                          listener)
+    def addPropertyChangeListener(self, *args):
+        if len(args) == 2:
+            property, listener = args
+        elif len(args) == 1:
+            property, listener = None, args[0]
         else:
-            self._changeSupport.addPropertyChangeListener(listener)
+            raise TypeError('addPropertyChangeListener expected 1-2 '
+                            'arguments, got 0')
+        assert isinstance(listener, PropertyChangeListener)
+        wrapper = _PropertyChangeWrapper(self, listener)
+        self.addPropertyListener(wrapper, property)
 
-    def removePropertyChangeListener(self, propertyName, listener=None):
-        if self._changeSupport:
-            if listener is None:
-                propertyName, listener = None, propertyName
+    def removePropertyChangeListener(self, *args):
+        if len(args) == 2:
+            property, listener = args
+        elif len(args) == 1:
+            property, listener = None, args[0]
+        else:
+            raise TypeError('removePropertyChangeListener expected 1-2 '
+                            'arguments, got 0')
+        assert isinstance(listener, PropertyChangeListener)
+            
+        self.removePropertyListener(listener, property)
+    
+    #
+    # Python API
+    #
 
-            if propertyName:
-                self._changeSupport.removePropertyChangeListener(propertyName,
-                                                                 listener)
-            else:
-                self._changeSupport.removePropertyChangeListener(listener)
-
-    def _firePropertyChange(self, propertyName, oldValue, newValue):
-        if self._changeSupport:
-            self._changeSupport.firePropertyChange(propertyName, oldValue,
-                                                   newValue)
+    def firePropertyChange(self, property, oldValue, newValue):
+        if self._listeners and oldValue != newValue:
+            if property in self._listeners:
+                for listener in self._listeners[property]:
+                    listener(oldValue, newValue)
+            if None in self._listeners:
+                for listener in self._listeners[None]:
+                    listener(oldValue, newValue, property)
 
     def addPropertyListener(self, listener, property=None, *args, **kwargs):
         """
-        Python-style method for adding property listeners.
+        Adds a callback that is called when the given property has changed.
+        A listener can either listen to changes in a specific property,
+        or all properties (by supplying `None` as the property name).
+        Any extra positional and keyword arguments are passed on to the
+        listener.
+
+        The listener is called with (oldValue, newValue, **args, **kwargs)
+        if the property name was defined, and (oldValue, newValue, property,
+        *args, **kwargs) if it's set to listen to all property changes.
         
-        :param listener: callable that is called with (oldValue, newValue,
-                         **args, **kwargs) if property was defined, and
-                         (property, oldValue, newValue, *args, **kwargs) if
-                         property was None.
+        :type listener: function or any callable
+        :param property: name of the property, or None to listen to all
+                         property changes
 
         """
         if not hasattr(listener, '__call__'):
             raise TypeError('listener must be callable')
-        wrapper = _PropertyChangeWrapper(listener, property is None, args,
-                                         kwargs)
-        self.addPropertyChangeListener(property, wrapper)
-        return wrapper
+
+        if self._listeners is None:
+            self._listeners = {}
+
+        if not property in self._listeners:
+            self._listeners[property] = []
+        self._listeners[property].append((listener, args, kwargs))
 
     def removePropertyListener(self, listener, property=None):
-        self.removePropertyChangeListener(property, listener)
+        if self._listeners:
+            try:
+                self._listeners[property].remove(listener)
+            except (KeyError, ValueError):
+                pass
 
 
 class AutoChangeNotifier(JavaBeanSupport):
     """Automatically fires property change events for public properties"""
 
     def __setattr__(self, name, value):
-        if not self._changeSupport or name.startswith('_'):
+        if not self._listeners or name.startswith('_'):
             object.__setattr__(self, name, value)
         else:
             oldValue = getattr(self, name)
             object.__setattr__(self, name, value)
             newValue = getattr(self, name)
-            self._firePropertyChange(name, oldValue, newValue)
+            self.firePropertyChange(name, oldValue, newValue)
