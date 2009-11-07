@@ -7,7 +7,7 @@ from swingutils.beans import JavaBeanSupport, AutoChangeNotifier
 def testPropertyChange():
     class DummyBean(JavaBeanSupport):
         def testFire(self):
-            self._firePropertyChange(u'testProperty', None, u'newVal')
+            self.firePropertyChange(u'testProperty', None, u'newVal')
 
     def listener(old, new, listenerOk):
         listenerOk[0] = True
@@ -29,9 +29,9 @@ def testPropertyChange():
 def testAllPropertyChange():
     class DummyBean(JavaBeanSupport):
         def testFire(self):
-            self._firePropertyChange(u'testProperty', None, u'newVal')
+            self.firePropertyChange(u'testProperty', None, u'newVal')
 
-    def listener(property, old, new, listenerOk):
+    def listener(old, new, property, listenerOk):
         listenerOk[0] = True
         eq_(property, u'testProperty')
         eq_(old, None)
@@ -60,11 +60,11 @@ def testAutoProperty():
 
     listenerOk = [False]
     bean = DummyBean()
-    wrapper = bean.addPropertyListener(listener, u'prop', listenerOk)
+    bean.addPropertyListener(listener, u'prop', listenerOk)
     bean.prop = 'test2'
     eq_(listenerOk[0], True)
 
     listenerOk = [False]
-    bean.removePropertyListener(wrapper, u'prop')
+    bean.removePropertyListener(listener, u'prop')
     bean.prop = 'test3'
     eq_(listenerOk[0], False)
