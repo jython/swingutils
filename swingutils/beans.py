@@ -51,16 +51,7 @@ class JavaBeanSupport(object):
             raise TypeError('removePropertyChangeListener expected 1-2 '
                             'arguments, got 0')
         assert isinstance(listener, PropertyChangeListener)
-        
-        if self._listeners:
-            try:
-                for wrapper in self._listeners[property]:
-                    if (isinstance(wrapper, _PropertyChangeWrapper) and
-                        wrapper.listener == listener):
-                        self._listeners[property].remove(wrapper)
-                        return
-            except KeyError:
-                pass
+        self.removePropertyListener(listener, property)
 
     #
     # Python API
