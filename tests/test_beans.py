@@ -2,6 +2,7 @@
 from nose.tools import eq_
 
 from swingutils.beans import JavaBeanSupport, AutoChangeNotifier
+from swingutils.events import addPropertyListener
 
 
 def testPropertyChange():
@@ -9,19 +10,19 @@ def testPropertyChange():
         def testFire(self):
             self.firePropertyChange(u'testProperty', None, u'newVal')
 
-    def listener(old, new, listenerOk):
+    def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(old, None)
-        eq_(new, 'newVal')
+        eq_(event.oldValue, None)
+        eq_(event.newValue, 'newVal')
 
     listenerOk = [False]
     bean = DummyBean()
-    wrapper = bean.addPropertyListener(listener, u'testProperty', listenerOk)
+    wrapper = addPropertyListener(bean, u'testProperty', listener, listenerOk)
     bean.testFire()
     eq_(listenerOk[0], True)
 
     listenerOk = [False]
-    bean.removePropertyListener(wrapper, u'testProperty')
+    bean.removePropertyChangeListener(u'testProperty', wrapper)
     bean.testFire()
     eq_(listenerOk[0], False)
 
@@ -31,20 +32,20 @@ def testAllPropertyChange():
         def testFire(self):
             self.firePropertyChange(u'testProperty', None, u'newVal')
 
-    def listener(old, new, property, listenerOk):
+    def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(property, u'testProperty')
-        eq_(old, None)
-        eq_(new, 'newVal')
+        eq_(event.propertyName, u'testProperty')
+        eq_(event.oldValue, None)
+        eq_(event.newValue, 'newVal')
 
     listenerOk = [False]
     bean = DummyBean()
-    wrapper = bean.addPropertyListener(listener, None, listenerOk)
+    wrapper = addPropertyListener(bean, None, listener, listenerOk)
     bean.testFire()
     eq_(listenerOk[0], True)
 
     listenerOk = [False]
-    bean.removePropertyListener(wrapper)
+    bean.removePropertyChangeListener(wrapper)
     bean.testFire()
     eq_(listenerOk[0], False)
 
@@ -53,18 +54,18 @@ def testAutoProperty():
     class DummyBean(AutoChangeNotifier):
         prop = 'test1'
 
-    def listener(old, new, listenerOk):
+    def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(old, 'test1')
-        eq_(new, 'test2')
+        eq_(event.oldValue, 'test1')
+        eq_(event.newValue, 'test2')
 
     listenerOk = [False]
     bean = DummyBean()
-    bean.addPropertyListener(listener, u'prop', listenerOk)
+    wrapper = addPropertyListener(bean, u'prop', listener, listenerOk)
     bean.prop = 'test2'
     eq_(listenerOk[0], True)
 
     listenerOk = [False]
-    bean.removePropertyListener(listener, u'prop')
+    bean.removePropertyChangeListener(u'prop', wrapper)
     bean.prop = 'test3'
     eq_(listenerOk[0], False)
