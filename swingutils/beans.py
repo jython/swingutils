@@ -61,7 +61,7 @@ class AutoChangeNotifier(JavaBeanSupport):
         if not self._listeners or name.startswith('_'):
             object.__setattr__(self, name, value)
         else:
-            oldValue = getattr(self, name)
+            oldValue = getattr(self, name, None)
             object.__setattr__(self, name, value)
             newValue = getattr(self, name)
             self.firePropertyChange(name, oldValue, newValue)
