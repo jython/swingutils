@@ -1,4 +1,4 @@
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 from swingutils.beans import AutoChangeNotifier
 from swingutils.binding import connect
@@ -68,6 +68,24 @@ class TestBase(object):
         self.bean2.prop1 = 'testVal4'
         eq_(self.bean1.prop1, 'testVal4')
         eq_(self.bean2.prop1, 'testVal4')
+
+    def testConverter(self):
+        connect(self.bean1, 'prop1', self.bean2, 'prop1',
+                converter=lambda v: 'xx%sxx' % v)
+
+        # Nothing should've changed yet
+        eq_(self.bean1.prop1, 'testVal1')
+        eq_(self.bean2.prop1, 'testVal2')
+
+        # The change should propagate to bean2 (with modifications)
+        self.bean1.prop1 = 'testVal3'
+        eq_(self.bean1.prop1, 'testVal3')
+        eq_(self.bean2.prop1, 'xxtestVal3xx')
+
+    @raises(AssertionError)
+    def testTwowayConverter(self):
+        connect(self.bean1, 'prop1', self.bean2, 'prop1', True,
+                converter=lambda v: 'xx%sxx' % v)
 
     def testDisconnect(self):
         adapter = connect(self.bean1, 'prop1', self.bean2, 'prop1')
