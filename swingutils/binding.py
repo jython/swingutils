@@ -1,10 +1,12 @@
 """This module lets you synchronize properties between two objects."""
-from swingutils.events import addPropertyListener
+from javax.swing import JFormattedTextField
 import weakref
 
 from java.beans import PropertyChangeListener
+from java.awt.event import ItemListener, FocusListener
 
 from swingutils.beans import JavaBeanSupport
+from swingutils.events import addPropertyListener, addItemListener
 
 __all__ = ('ValueHolder', 'BeanHolder', 'PropertyAdapter', 'connect')
 
@@ -72,34 +74,117 @@ class ValueHolder(JavaBeanSupport):
 
 
 class PropertyAdapter(PropertyChangeListener):
-    def __init__(self, source, destination, converter):
-        self.source_ref = weakref.ref(source, self.disconnect)
-        self.destination_ref = weakref.ref(destination, self.disconnect)
+    def __init__(self, source, destination, converter, backConverter):
+        self.source = weakref.ref(source, self.disconnect)
+        self.destination = weakref.ref(destination, self.disconnect)
         self.converter = converter
+        self.backConverter = backConverter
 
     def propertyChange(self, event):
-        src = self.source_ref()
-        dst = self.destination_ref()
+        src = self.source()
+        dst = self.destination()
+        converter = self.converter
         if event.source is dst:
             dst = src
-            src = self.destination_ref()
+            src = self.destination()
+            converter = self.backConverter
         value = getattr(src, event.propertyName)
-        if self.converter:
-            value = self.converter(value)
+        value = converter(value)
         setattr(dst, event.propertyName, value)
 
     def disconnect(self, ref=None):
-        src = self.source_ref()
+        src = self.source()
         if src:
             src.removePropertyChangeListener(self)
 
-        dst = self.destination_ref()
+        dst = self.destination()
         if dst:
             dst.removePropertyChangeListener(self)
 
 
-def connectProperties(source, srcProperty, destination, dstProperty,
-                      twoway=False, syncNow=False, converter=None):
+class CheckBoxAdapter(PropertyChangeListener, ItemListener):
+    def __init__(self, source, srcProperty, checkBox, converter,
+                 backConverter):
+        self.source = weakref.ref(source, self.disconnect)
+        self.srcProperty = srcProperty
+        self.checkBox = weakref.ref(checkBox, self.disconnect)
+        self.converter = converter
+        self.backConverter = backConverter
+
+    def propertyChange(self, event):
+        src = self.source()
+        checkBox = self.checkBox()
+        value = getattr(src, self.srcProperty)
+        value = self.converter(value)
+        checkBox.selected = value
+
+    def stateChanged(self, event):
+        src = self.source()
+        checkBox = self.checkBox()
+        value = self.backConverter(checkBox.selected)
+        setattr(src, self.srcProperty, value)
+
+    def disconnect(self, ref=None):
+        src = self.source()
+        if src:
+            src.removePropertyChangeListener(self)
+
+        checkBox = self.checkBox()
+        if checkBox:
+            checkBox.removeItemListener(self)
+
+
+class ComboBoxAdapter(PropertyChangeListener, ItemListener):
+    def __init__(self, source, srcProperty, comboBox, converter,
+                 backConverter):
+        self.source = weakref.ref(source, self.disconnect)
+        self.srcProperty = srcProperty
+        self.comboBox = weakref.ref(comboBox, self.disconnect)
+        self.converter = converter
+        self.backConverter = backConverter
+
+    def propertyChange(self, event):
+        src = self.source()
+        combo = self.comboBox()
+        value = getattr(src, self.srcProperty)
+        value = self.converter(value)
+        combo.selectedItem = value
+
+    def stateChanged(self, event):
+        value = self.backConverter(event.item)
+        setattr(self.source, self.srcProperty, value)
+
+    def disconnect(self, ref=None):
+        src = self.source()
+        if src:
+            src.removePropertyChangeListener(self)
+
+        combo = self.comboBox()
+        if combo:
+            combo.removeItemListener(self)
+
+
+class TextComponentAdapter(PropertyChangeListener, FocusListener):
+    def __init__(self, source, srcProperty, textComponent):
+        self.source = weakref.ref(source, self.disconnect)
+        self.srcProperty = srcProperty
+        self.textComponent = weakref.ref(textComponent, self.disconnect)
+
+    def propertyChange(self, event):
+        src = self.source()
+        textComponent = self.textComponent()
+        value = getattr(src, self.srcProperty)
+        textComponent.text = value
+
+    def focusLost(self, event):
+        src = self.source()
+        textComponent = self.textField()
+        setattr(src, self.srcProperty, textComponent.text)
+
+
+def bindProperty(source, srcProperty, destination, dstProperty,
+                 twoway=False, syncNow=False, converter=lambda v: v,
+                 backConverter=lambda v: v):
     """
     Connects a property in the source object to a property in the destination
     object. When the source property changes, the destination property is set
@@ -135,9 +220,8 @@ def connectProperties(source, srcProperty, destination, dstProperty,
     if twoway:
         assert hasattr(destination, 'addPropertyChangeListener'), \
             'destination object has no addPropertyChangeListener method'
-        assert not converter, 'twoway and converter are mutually exclusive'
 
-    adapter = PropertyAdapter(source, destination, converter)
+    adapter = PropertyAdapter(source, destination, converter, backConverter)
     source.addPropertyChangeListener(srcProperty, adapter)
     if twoway:
         destination.addPropertyChangeListener(dstProperty, adapter)
@@ -147,3 +231,34 @@ def connectProperties(source, srcProperty, destination, dstProperty,
         setattr(destination, dstProperty, value)
 
     return adapter
+
+
+def bindCheckbox(source, srcProperty, checkBox, twoway=True):
+    adapter = CheckBoxAdapter(source, srcProperty, checkBox)
+
+    source.addPropertyChangeListener(srcProperty, adapter)
+    if twoway:
+        addItemListener(checkBox, adapter)
+
+
+def bindComboBox(source, srcProperty, comboBox, twoway=True,
+                 converter=lambda v: v, backConverter=lambda v: v):
+    adapter = ComboBoxAdapter(source, srcProperty, comboBox, converter,
+                              backConverter)
+    source.addPropertyChangeListener(srcProperty, adapter)
+    if twoway:
+        addItemListener(comboBox, adapter)
+
+
+def bindTextComponent(source, srcProperty, textComponent, twoway=True):
+    if isinstance(textComponent, JFormattedTextField):
+        bindProperty(source, srcProperty, textComponent, 'value', twoway)
+    else:
+        adapter = TextComponentAdapter(source, srcProperty, textComponent)
+        source.addPropertyChangeListener(srcProperty, adapter)
+        if twoway:
+            textComponent.addFocusListener(adapter)
+
+
+def bindFormattedTextField(source, srcProperty, textField, twoway=True):
+    bindProperty(source, srcProperty, textField, 'value', twoway)
