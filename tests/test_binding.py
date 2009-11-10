@@ -1,7 +1,7 @@
 from nose.tools import eq_, raises, set_trace
 
 from swingutils.beans import AutoChangeNotifier
-from swingutils.binding import ValueHolder, connectProperties
+from swingutils.binding import ValueHolder, bindProperty
 from swingutils.events import addPropertyListener
 
 
@@ -78,11 +78,9 @@ class TestValueHolder(object):
             listenerResult[0] = event
 
         listenerResult = [None]
-        print "hasprop1=%s" % hasattr(self.holder, 'prop1')
         self.holder.value = self.bean1
         addPropertyListener(self.bean1, 'prop1', listener, listenerResult)
 
-        print "hasprop1=%s" % hasattr(self.holder, 'prop1')
         self.holder.prop1 = 'anotherValue'
         event = listenerResult[0]
         eq_(event.propertyName, 'prop1')
@@ -119,7 +117,7 @@ class TestConnect(object):
         self.bean2.prop1 = 'testVal2'
 
     def testOneWayNoSync(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1')
+        bindProperty(self.bean1, 'prop1', self.bean2, 'prop1')
 
         # Nothing should've changed yet
         eq_(self.bean1.prop1, 'testVal1')
@@ -131,7 +129,7 @@ class TestConnect(object):
         eq_(self.bean2.prop1, 'testVal3')
 
     def testOneWaySync(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1',
+        bindProperty(self.bean1, 'prop1', self.bean2, 'prop1',
                           syncNow=True)
 
         # Bean2.prop1 should have changed
@@ -144,7 +142,7 @@ class TestConnect(object):
         eq_(self.bean2.prop1, 'testVal3')
 
     def testTwoWayNoSync(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1', True)
+        bindProperty(self.bean1, 'prop1', self.bean2, 'prop1', True)
 
         # Nothing should've changed yet
         eq_(self.bean1.prop1, 'testVal1')
@@ -161,7 +159,7 @@ class TestConnect(object):
         eq_(self.bean2.prop1, 'testVal4')
 
     def testTwoWaySync(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1', True, True)
+        bindProperty(self.bean1, 'prop1', self.bean2, 'prop1', True, True)
 
         # Bean2.prop1 should have changed
         eq_(self.bean1.prop1, 'testVal1')
@@ -178,7 +176,7 @@ class TestConnect(object):
         eq_(self.bean2.prop1, 'testVal4')
 
     def testConverter(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1',
+        bindProperty(self.bean1, 'prop1', self.bean2, 'prop1',
                           converter=lambda v: 'xx%sxx' % v)
 
         # Nothing should've changed yet
@@ -190,13 +188,8 @@ class TestConnect(object):
         eq_(self.bean1.prop1, 'testVal3')
         eq_(self.bean2.prop1, 'xxtestVal3xx')
 
-    @raises(AssertionError)
-    def testTwowayConverter(self):
-        connectProperties(self.bean1, 'prop1', self.bean2, 'prop1', True,
-                          converter=lambda v: 'xx%sxx' % v)
-
     def testDisconnect(self):
-        adapter = connectProperties(self.bean1, 'prop1', self.bean2, 'prop1')
+        adapter = bindProperty(self.bean1, 'prop1', self.bean2, 'prop1')
 
         # Nothing should've changed yet
         eq_(self.bean1.prop1, 'testVal1')
