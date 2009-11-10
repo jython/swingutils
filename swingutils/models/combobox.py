@@ -4,7 +4,8 @@ from swingutils.models.list import ListModel
 
 
 class ListComboModel(ListModel, MutableComboBoxModel):
-    """Combo box model that is also a Python `list` object, and fires events
+    """
+    Combo box model that is also a Python `list` object, and fires events
     when its contents are manipulated.
 
     """
@@ -19,7 +20,9 @@ class ListComboModel(ListModel, MutableComboBoxModel):
         return self._selectedItem
 
     def setSelectedItem(self, anItem):
-        self._selectedItem = anItem
+        if self._selectedItem != anItem:
+            self._selectedItem = anItem
+            self.fireContentsChanged(self, -1, -1)
 
     # MutableComboBoxModel methods
 
