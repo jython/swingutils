@@ -6,7 +6,7 @@ from java.beans import PropertyChangeListener
 from java.awt.event import ItemListener, FocusListener
 
 from swingutils.beans import JavaBeanSupport
-from swingutils.events import addPropertyListener, addItemListener
+from swingutils.events import addPropertyListener
 
 __all__ = ('ValueHolder', 'BeanHolder', 'PropertyAdapter', 'connect')
 
@@ -189,7 +189,7 @@ def bindProperty(source, srcProperty, destination, dstProperty,
     Connects a property in the source object to a property in the destination
     object. When the source property changes, the destination property is set
     to the same value.
-    
+
     It is also possible to modify the value being passed to the destination
     object by specifying a converter function. This callable receives the value
     from the source property, and should return the value that will be set as
@@ -238,7 +238,7 @@ def bindCheckbox(source, srcProperty, checkBox, twoway=True):
 
     source.addPropertyChangeListener(srcProperty, adapter)
     if twoway:
-        addItemListener(checkBox, adapter)
+        checkBox.addItemListener(adapter)
 
 
 def bindComboBox(source, srcProperty, comboBox, twoway=True,
@@ -247,7 +247,7 @@ def bindComboBox(source, srcProperty, comboBox, twoway=True,
                               backConverter)
     source.addPropertyChangeListener(srcProperty, adapter)
     if twoway:
-        addItemListener(comboBox, adapter)
+        comboBox.addItemListener(adapter)
 
 
 def bindTextComponent(source, srcProperty, textComponent, twoway=True):
