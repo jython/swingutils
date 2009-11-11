@@ -1,4 +1,4 @@
-from nose.tools import eq_, raises, set_trace
+from nose.tools import eq_
 
 from swingutils.beans import AutoChangeNotifier
 from swingutils.binding import ValueHolder, bindProperty
