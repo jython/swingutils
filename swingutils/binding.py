@@ -1,14 +1,22 @@
-"""This module lets you synchronize properties between two objects."""
-from javax.swing import JFormattedTextField
+"""
+This module lets you synchronize properties between two objects.
+
+The adapter objects returned by the binding methods store their endpoints
+using weak references, and automatically sever the connection if either side is
+garbage collected.
+
+"""
 import weakref
 
 from java.beans import PropertyChangeListener
 from java.awt.event import ItemListener, FocusListener
+from javax.swing import JFormattedTextField
 
 from swingutils.beans import JavaBeanSupport
 from swingutils.events import addPropertyListener
 
-__all__ = ('ValueHolder', 'BeanHolder', 'PropertyAdapter', 'connect')
+__all__ = ('ValueHolder', 'bindProperty', 'bindCheckbox', 'bindComboBox',
+           'bindTextComponent', 'bindFormattedTextField')
 
 
 class ValueHolder(JavaBeanSupport):
@@ -183,7 +191,7 @@ class TextComponentAdapter(PropertyChangeListener, FocusListener):
 
 
 def bindProperty(source, srcProperty, destination, dstProperty,
-                 twoway=False, syncNow=False, converter=lambda v: v,
+                 twoway=False, syncnow=False, converter=lambda v: v,
                  backConverter=lambda v: v):
     """
     Connects a property in the source object to a property in the destination
@@ -195,20 +203,18 @@ def bindProperty(source, srcProperty, destination, dstProperty,
     from the source property, and should return the value that will be set as
     the the value of the destination property.
 
-    The :class:`~PropertyAdapter` that binds the two properties only stores
-    weak references to the source and destination objects, and automatically
-    severs the connection if either side is garbage collected.
-
     :param twoway: if `True`, changes in the destination property are also
                    propagated to the source property
-    :param syncNow: if `True`, the value of the source property is copied to
+    :param syncnow: if `True`, the value of the source property is copied to
                     the destination property before this call returns.
     :param converter: callable that receives the source value and returns
                       the value that should be passed to the destination
                       object
+    :param converter: callable that receives the destination value and returns
+                      the value that should be passed to the source
+                      object when `twoway` is `True`
     :return: listener adapter that you can use to break the connection
              between the two objects
-    :rtype: :class:`PropertyAdapter`
 
     """
     assert hasattr(source, srcProperty), \
@@ -226,7 +232,7 @@ def bindProperty(source, srcProperty, destination, dstProperty,
     if twoway:
         destination.addPropertyChangeListener(dstProperty, adapter)
 
-    if syncNow:
+    if syncnow:
         value = getattr(source, srcProperty)
         setattr(destination, dstProperty, value)
 
@@ -234,6 +240,15 @@ def bindProperty(source, srcProperty, destination, dstProperty,
 
 
 def bindCheckbox(source, srcProperty, checkBox, twoway=True):
+    """
+    Binds an object to a check box.
+    
+    :param checkBox: the check box to bind to
+    :param twoway: `True` if changes in the check box state should also reflect
+                   in `source`
+    :type checkBox: :class:`javax.swing.JCheckBox`
+    
+    """
     adapter = CheckBoxAdapter(source, srcProperty, checkBox)
 
     source.addPropertyChangeListener(srcProperty, adapter)

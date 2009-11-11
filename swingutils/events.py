@@ -68,16 +68,15 @@ def addExplicitEventListener(target, eventInterface, event, listener,
     """
     Adds an event listener to `target`.
 
-    :param target: the object to add the event listener to
+    :param target: an object that supports listening to the events of the given
+                   type (the add*Listener methods must be inherited from a Java
+                   class so that autodetection will work)
     :param eventInterface: the interface that the listener wrapper has to
-                           implement (e.g. java.awt.MouseListener)
+                           implement (e.g. :class:`java.awt.MouseListener`)
     :param event: name of the event to listen for (e.g. "mouseClicked"
     :param listener: callable that is called with (event, *args, **kwargs)
                      when the event is fired
-    :type target: any type that supports listening to the events of the given
-                  type (the add*Listener methods must be inherited from a Java
-                  class so that autodetection will work)
-    :type eventInterface: Java class (interface)
+    :type eventInterface: Java interface
     :type event: string
     :type listener: callable
     :return: the listener wrapper that you can use to stop listening to these
@@ -100,10 +99,10 @@ def addEventListener(target, event, listener, *args, **kwargs):
     the name of the event and the declared Java methods on the target type.
     
     .. note:: This method is on the order of 200 times slower than
-    :func:addExplicitEventListener!
+              :func:`addExplicitEventListener`!
 
     :param target: the object to add the event listener to
-    :param event: name of the event to listen for (e.g. "mouseClicked"
+    :param event: name of the event to listen for (e.g. "mouseClicked")
     :param listener: callable that is called with (event, *args, **kwargs)
                      when the event is fired
     :type target: any type that supports listening to the events of the given
