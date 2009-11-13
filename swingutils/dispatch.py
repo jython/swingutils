@@ -5,7 +5,6 @@ run. These are necessary when you need to manipulate Swing objects from other
 (non-EDT) threads in a safe manner.
 
 """
-
 from threading import Event
 import traceback
 
@@ -14,11 +13,12 @@ from java.util.concurrent import RunnableFuture, ExecutionException,\
     CancellationException
 from javax.swing import SwingUtilities
 
-__all__ = ('execInEDT', 'invokeLater', 'invokeAndWait')
+__all__ = ('execInEDT', 'invokeEDT', 'invokeLater', 'invokeAndWait')
 
 
 class ResultHolder(RunnableFuture):
-    """Class that stores both the function reference, and the return value or
+    """
+    Class that stores both the function reference, and the return value or
     raised exception from an asynchronously invoked callable. Users should not
     instantiate or run these directly.
 
@@ -80,6 +80,23 @@ def execInEDT(func, *args, **kwargs):
         holder = ResultHolder(func, args, kwargs)
         SwingUtilities.invokeAndWait(holder)
         return holder.get()
+
+
+def invokeEDT(func):
+    """
+    Decorator that ensures that the given function is executed in the Event
+    Dispatch Thread. If the current thread is the EDT, the function is executed
+    normally. Otherwise, it is queued for execution in the EDT. The return
+    value and any raised exception are always discarded.
+
+    """
+    def wrapper(*args, **kwargs):
+        if SwingUtilities.isEventDispatchThread():
+            func(*args, **kwargs)
+        else:
+            holder = ResultHolder(func, args, kwargs)
+            SwingUtilities.invokeLater(holder)
+    return wrapper
 
 
 def invokeLater(func):
