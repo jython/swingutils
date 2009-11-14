@@ -130,7 +130,7 @@ class TestConnect(object):
 
     def testOneWaySync(self):
         bindProperty(self.bean1, 'prop1', self.bean2, 'prop1',
-                          syncNow=True)
+                          syncnow=True)
 
         # Bean2.prop1 should have changed
         eq_(self.bean1.prop1, 'testVal1')
