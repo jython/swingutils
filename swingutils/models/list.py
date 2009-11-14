@@ -1,11 +1,12 @@
-from javax.swing import AbstractListModel
+from javax.swing import ListModel
+from javax.swing.event import ListDataListener, ListDataEvent
+from javax.swing.event.ListDataEvent import (CONTENTS_CHANGED, INTERVAL_ADDED,
+                                             INTERVAL_REMOVED)
 
 
-class ListModel(AbstractListModel, list):
-    """List model that is also a Python `list` object, and fires events when
-    its contents are manipulated.
-
-    """    
+class ListModelBase(list):
+    __listeners = None
+    
     def __init__(self, *args):
         list.__init__(self, *args)
 
@@ -58,9 +59,49 @@ class ListModel(AbstractListModel, list):
     #
     # ListModel methods
     #
+    
+    def addListDataListener(self, listener):
+        assert isinstance(listener, ListDataListener)
+        if not self.__listeners:
+            self.__listeners = []
+        self.__listeners.append(listener)
 
     def getSize(self):
         return len(self)
 
     def getElementAt(self, index):
         return self[index]
+
+    def removeListDataListener(self, listener):
+        if self.__listeners and listener in self.__listeners:
+            self.__listeners.remove(listener)
+    
+    #
+    # Replacements for AbstractListModel methods
+    #
+
+    def fireContentsChanged(self, source, index0, index1):
+        if self.__listeners:
+            event = ListDataEvent(source, CONTENTS_CHANGED, index0, index1)
+            for listener in self.__listeners:
+                listener.contentsChanged(event)
+
+    def fireIntervalAdded(self, source, index0, index1):
+        if self.__listeners:
+            event = ListDataEvent(source, INTERVAL_ADDED, index0, index1)
+            for listener in self.__listeners:
+                listener.intervalAdded(event)
+
+    def fireIntervalRemoved(self, source, index0, index1):
+        if self.__listeners:
+            event = ListDataEvent(source, INTERVAL_REMOVED, index0, index1)
+            for listener in self.__listeners:
+                listener.intervalRemoved(event)
+
+
+class ListModel(ListModelBase, ListModel):
+    """
+    List model that is also a Python `list` object, and fires events when
+    its contents are manipulated.
+
+    """

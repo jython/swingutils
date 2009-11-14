@@ -1,9 +1,9 @@
 from javax.swing import MutableComboBoxModel
 
-from swingutils.models.list import ListModel
+from swingutils.models.list import ListModelBase
 
 
-class ListComboModel(ListModel, MutableComboBoxModel):
+class ListComboModel(ListModelBase, MutableComboBoxModel):
     """
     Combo box model that is also a Python `list` object, and fires events
     when its contents are manipulated.
@@ -12,7 +12,7 @@ class ListComboModel(ListModel, MutableComboBoxModel):
     _selectedItem = None
     
     def __init__(self, *args):
-        ListModel.__init__(self, *args)
+        ListModelBase.__init__(self, *args)
 
     # ComboBoxModel methods
 
