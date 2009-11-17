@@ -1,3 +1,5 @@
+import sys
+
 from java.lang import Object
 from javax.swing.table import AbstractTableModel
 
@@ -59,6 +61,8 @@ class ListTableModel(AbstractTableModel, list):
         self.fireTableRowsDeleted(index, index)
 
     def __delslice__(self, start, end):
+        if end == sys.maxint:
+            end = len(self)
         list.__delslice__(self, start, end)
         self.fireTableRowsDeleted(start, end - 1)
 
