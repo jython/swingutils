@@ -115,7 +115,7 @@ def showOpenDialog(filters, filename=None, parent=None, prefs=None,
     fileChooser = createFileChooserDialog(filters, filename, prefs, prefkey,
                                           multiselect)
 
-    if fileChooser.showSaveDialog(parent) != JFileChooser.APPROVE_OPTION:
+    if fileChooser.showOpenDialog(parent) != JFileChooser.APPROVE_OPTION:
         return () if multiselect else None
 
     # Save the current directory in preferences
