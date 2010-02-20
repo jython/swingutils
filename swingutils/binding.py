@@ -6,7 +6,10 @@ using weak references, and automatically sever the connection if either side is
 garbage collected.
 
 """
+from cStringIO import StringIO
 from types import MethodType
+from tokenize import generate_tokens, TokenError
+import logging
 
 from java.beans import PropertyChangeListener
 from java.awt.event import ItemListener, FocusListener
@@ -18,6 +21,12 @@ from swingutils.events import addPropertyListener
 __all__ = ('ValueHolder', 'bindProperty', 'bindCheckbox', 'bindComboBox',
            'bindTextComponent')
 
+
+READ_ONCE = 0
+READ_ONLY = 1
+READ_WRITE = 2
+
+adapters = {}
 
 class ValueHolder(JavaBeanSupport):
     """
@@ -41,7 +50,7 @@ class ValueHolder(JavaBeanSupport):
             object.__setattr__(self, name, value)
         else:
             setattr(self._value, name, value)
-    
+
     def __nonzero__(self):
         return self._value is not None
 
@@ -116,7 +125,7 @@ class PropertyAdapter(PropertyChangeListener):
             srcProperty = self.dstProperty
             dstProperty = self.srcProperty
             converter = self.backConverter
-        
+
         try:
             value = getattr(src, srcProperty)
             if converter:
@@ -215,92 +224,198 @@ class FormattedTextFieldAdapter(PropertyAdapter):
         self.destination.enabled = self.source.value is not None
 
 
-def bindProperty(source, srcProperty, destination, dstProperty,
-                 twoway=False, syncnow=False, converter=None,
-                 backConverter=None):
-    """
-    Connects a property in the source object to a property in the destination
-    object. When the source property changes, the destination property is set
-    to the same value.
 
-    It is also possible to modify the value being passed to the destination
-    object by specifying a converter function. This callable receives the value
-    from the source property, and should return the value that will be set as
-    the the value of the destination property.
-
-    :param twoway: if `True`, changes in the destination property are also
-                   propagated to the source property
-    :param syncnow: if `True`, the value of the source property is copied to
-                    the destination property before this call returns.
-    :param converter: callable that receives the source value and returns
-                      the value that should be passed to the destination
-                      object
-    :param converter: callable that receives the destination value and returns
-                      the value that should be passed to the source
-                      object when `twoway` is `True`
-    :return: listener adapter that you can use to break the connection
-             between the two objects
-
-    """
-    assert hasattr(source, srcProperty), \
-        'source object has no property named "%s"' % srcProperty
-    assert hasattr(destination, dstProperty), \
-        'destination object has no property named "%s"' % dstProperty
-    assert hasattr(source, 'addPropertyChangeListener'), \
-        'source object has no addPropertyChangeListener method'
-    if twoway:
-        assert hasattr(destination, 'addPropertyChangeListener'), \
-            'destination object has no addPropertyChangeListener method'
-
-    adapter = PropertyAdapter(source, srcProperty, destination, dstProperty,
-                              converter, backConverter)
-    source.addPropertyChangeListener(srcProperty, adapter)
-    if twoway:
-        destination.addPropertyChangeListener(dstProperty, adapter)
-
-    if syncnow:
-        value = getattr(source, srcProperty)
-        setattr(destination, dstProperty, value)
-
-    return adapter
+class BindingNode(object):
+    pass
 
 
-def bindCheckbox(holder, srcProperty, checkBox, twoway=True):
-    """
-    Binds an object to a check box.
+class BindingExpression(object):
+    def __init__(self, root, expr, logger=logging.getLogger(__name__)):
+        self.root = root
+        self.parseExpression(expr)
+
+    def parseExpression(self, expr):
+        """
+        Separates ``expr`` into plain strings and expression elements.
+        
+        :type expr: str or unicode
+        """
+        pos = 0
+        end = max(len(expr) - 1, 0)
+        self.parts = []
+        while pos < end:
+            newpos = expr.find(u'${', pos)
+            if newpos >= 0:
+                # Store any plain text leading up to this expression
+                if newpos > pos:
+                    self.parts.append(expr[pos:newpos])
     
-    :param checkBox: the check box to bind to
-    :param twoway: `True` if changes in the check box state should also reflect
-                   in `holder`
-    :type checkBox: :class:`javax.swing.JCheckBox`
+                expr_buf = StringIO(expr[newpos + 2:])
+                expr_end = None
+                nesting_level = 0
+                try:
+                    for token in generate_tokens(expr_buf.readline):
+                        if token[1] == u'{':
+                            nesting_level += 1
+                        elif token[1] == u'}':
+                            if nesting_level > 0:
+                                nesting_level -= 1
+                            else:
+                                expr_end = token[2][1]
+                                break
+                except TokenError:
+                    raise Exception('Unmatched }: %s' % expr[newpos:])
+
+                # Store the compiled expression and its source code
+                if expr_end is not None:
+                    source = expr[newpos + 2:newpos + 2 + expr_end]
+                    compiled = compile(source, 'binding-expression', 'eval')
+                    self.parts.append((compiled, source))
+                    pos = newpos + expr_end + 3
+                    continue
+
+            # The rest is plain text
+            self.parts.append(expr[pos:])
+            return
+
+    def evaluate(self):
+        results = []
+        for part in self.parts:
+            if isinstance(part, basestring):
+                results.append(part)
+            else:
+                compiled, source = part
+                try:
+                    result = eval(compiled, globals(), self.root.__dict__)
+                    results.append(result)
+                except:
+                    self.logger.debug(u'Error evaluating expression "%s"',
+                                      source, exc_info=True)
+                    return None
+
+        if len(results) == 1:
+            return results[0]
+        elif len(results) > 1:
+            return u''.join([unicode(r) for r in results])
+
+
+class Binding(object):
+    def __init__(self, mode, source, source_expr, target, target_expr):
+        self.source = BindingExpression(source, source_expr)
+        self.target = BindingExpression(target, target_expr)
     
-    """
-    adapter = CheckBoxAdapter(holder, srcProperty, checkBox)
-    holder.addPropertyChangeListener(srcProperty, adapter)
-    if twoway:
-        checkBox.addItemListener(adapter)
-    checkBox.enabled = holder.value is not None
+    def sync(self):
+        self.source.evaluate()
+
+    def unbind(self):
+        pass
 
 
-def bindComboBox(holder, srcProperty, comboBox, twoway=True,
-                 converter=None, backConverter=None):
-    adapter = ComboBoxAdapter(holder, srcProperty, comboBox, converter,
-                              backConverter)
-    holder.addPropertyChangeListener(srcProperty, adapter)
-    if twoway:
-        comboBox.addItemListener(adapter)
-    comboBox.enabled = holder.value is not None
+class BindingGroup(object):
+    def __init__(self, name=None, log=None):
+        self.name = name
+        self.log = log
+        self.bindings = []
+
+    def bind(self, mode, source, source_expr, target, target_expr):
+        b = Binding(mode, source, source_expr, target, target_expr)
+        self.bindings.append(b)
+
+    def unbindAll(self):
+        for b in self.bindings:
+            b.unbind()
+        del self.bindings[:]
 
 
-def bindTextComponent(holder, srcProperty, textComponent, twoway=True):
-    if isinstance(textComponent, JFormattedTextField):
-        adapter = FormattedTextFieldAdapter(holder, srcProperty, textComponent)
-        holder.addPropertyChangeListener(srcProperty, adapter)
-        if twoway:
-            textComponent.addPropertyChangeListener('value', adapter)
-    else:
-        adapter = TextComponentAdapter(holder, srcProperty, textComponent)
-        holder.addPropertyChangeListener(srcProperty, adapter)
-        if twoway:
-            textComponent.addFocusListener(adapter)
-    textComponent.enabled = holder.value is not None
+globalGroup = BindingGroup('root', logging.getLogger(__name__))
+bind = globalGroup.bind
+
+#def bindProperty(source, srcProperty, destination, dstProperty,
+#                 twoway=False, syncnow=False, converter=None,
+#                 backConverter=None):
+#    """
+#    Connects a property in the source object to a property in the destination
+#    object. When the source property changes, the destination property is set
+#    to the same value.
+#
+#    It is also possible to modify the value being passed to the destination
+#    object by specifying a converter function. This callable receives the value
+#    from the source property, and should return the value that will be set as
+#    the the value of the destination property.
+#
+#    :param twoway: if `True`, changes in the destination property are also
+#                   propagated to the source property
+#    :param syncnow: if `True`, the value of the source property is copied to
+#                    the destination property before this call returns.
+#    :param converter: callable that receives the source value and returns
+#                      the value that should be passed to the destination
+#                      object
+#    :param converter: callable that receives the destination value and returns
+#                      the value that should be passed to the source
+#                      object when `twoway` is `True`
+#    :return: listener adapter that you can use to break the connection
+#             between the two objects
+#
+#    """
+#    assert hasattr(source, srcProperty), \
+#        'source object has no property named "%s"' % srcProperty
+#    assert hasattr(destination, dstProperty), \
+#        'destination object has no property named "%s"' % dstProperty
+#    assert hasattr(source, 'addPropertyChangeListener'), \
+#        'source object has no addPropertyChangeListener method'
+#    if twoway:
+#        assert hasattr(destination, 'addPropertyChangeListener'), \
+#            'destination object has no addPropertyChangeListener method'
+#
+#    adapter = PropertyAdapter(source, srcProperty, destination, dstProperty,
+#                              converter, backConverter)
+#    source.addPropertyChangeListener(srcProperty, adapter)
+#    if twoway:
+#        destination.addPropertyChangeListener(dstProperty, adapter)
+#
+#    if syncnow:
+#        value = getattr(source, srcProperty)
+#        setattr(destination, dstProperty, value)
+#
+#    return adapter
+
+
+#def bindCheckbox(holder, srcProperty, checkBox, twoway=True):
+#    """
+#    Binds an object to a check box.
+#    
+#    :param checkBox: the check box to bind to
+#    :param twoway: `True` if changes in the check box state should also reflect
+#                   in `holder`
+#    :type checkBox: :class:`javax.swing.JCheckBox`
+#    
+#    """
+#    adapter = CheckBoxAdapter(holder, srcProperty, checkBox)
+#    holder.addPropertyChangeListener(srcProperty, adapter)
+#    if twoway:
+#        checkBox.addItemListener(adapter)
+#    checkBox.enabled = holder.value is not None
+#
+#
+#def bindComboBox(holder, srcProperty, comboBox, twoway=True,
+#                 converter=None, backConverter=None):
+#    adapter = ComboBoxAdapter(holder, srcProperty, comboBox, converter,
+#                              backConverter)
+#    holder.addPropertyChangeListener(srcProperty, adapter)
+#    if twoway:
+#        comboBox.addItemListener(adapter)
+#    comboBox.enabled = holder.value is not None
+#
+#
+#def bindTextComponent(holder, srcProperty, textComponent, twoway=True):
+#    if isinstance(textComponent, JFormattedTextField):
+#        adapter = FormattedTextFieldAdapter(holder, srcProperty, textComponent)
+#        holder.addPropertyChangeListener(srcProperty, adapter)
+#        if twoway:
+#            textComponent.addPropertyChangeListener('value', adapter)
+#    else:
+#        adapter = TextComponentAdapter(holder, srcProperty, textComponent)
+#        holder.addPropertyChangeListener(srcProperty, adapter)
+#        if twoway:
+#            textComponent.addFocusListener(adapter)
+#    textComponent.enabled = holder.value is not None
