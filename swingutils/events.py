@@ -54,13 +54,18 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs):
 
 
 class EventListenerWrapper(object):
-    def __init__(self, listener, args, kwargs):
+    def __init__(self, listener, args, kwargs, removeMethod, removeMethodArgs):
         self.listener = listener
         self.args = args
         self.kwargs = kwargs
+        self.removeMethod = removeMethod
+        self.removeMethodArgs = removeMethodArgs
 
     def handleEvent(self, event):
         self.listener(event, *self.args, **self.kwargs)
+    
+    def unlisten(self):
+        self.removeMethod(*self.removeMethodArgs)
 
 
 def addExplicitEventListener(target, eventInterface, event, listener,
@@ -80,13 +85,15 @@ def addExplicitEventListener(target, eventInterface, event, listener,
     :type event: string
     :type listener: callable
     :return: the listener wrapper that you can use to stop listening to these
-             events (with obj.removeXListener())
+             events (with :meth:`~EventListenerWrapper.unlisten`)
 
     """
-    wrapper = _createListenerWrapper(eventInterface, event, listener, args,
-                                     kwargs)
     addMethodName = 'add%s' % eventInterface.__name__
     addMethod = getattr(target, addMethodName)
+    removeMethodName = 'remove%s' % eventInterface.__name__
+    removeMethod = getattr(target, removeMethodName)
+    wrapper = _createListenerWrapper(eventInterface, event, listener, args,
+                                     kwargs, removeMethod, (listener,))
     addMethod(wrapper)
     return wrapper
 
@@ -135,6 +142,7 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
 
     """
     wrapper = _createListenerWrapper(PropertyChangeListener, 'propertyChange',
-                                     listener, args, kwargs)
+        listener, args, kwargs, target.removePropertyChangeListener,
+        (property, listener))
     target.addPropertyChangeListener(property, wrapper)
     return wrapper
