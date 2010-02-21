@@ -31,7 +31,8 @@ def _findEventInterface(target, event):
                     return class_
 
 
-def _createListenerWrapper(eventInterface, event, listener, args, kwargs):
+def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
+                           removeMethod, removeMethodArgs):
     assert issubclass(eventInterface, EventListener), \
         'event class must be a subclass of EventListener'
     assert hasattr(eventInterface, event), \
@@ -48,7 +49,8 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs):
         wrapperClass = _wrapperClassMap[className]
 
     # Create a listener instance and add handleEvent as an instance method
-    wrapper = wrapperClass(listener, args, kwargs)
+    wrapper = wrapperClass(listener, args, kwargs, removeMethod,
+                           removeMethodArgs)
     setattr(wrapper, event, wrapper.handleEvent)
     return wrapper
 
