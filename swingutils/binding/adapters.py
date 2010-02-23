@@ -1,8 +1,12 @@
 from swingutils.events import addPropertyListener, addExplicitEventListener
 
 
-class AdapterRegistry(dict):
-    def register(self, cls):
+class AdapterRegistry(object):
+    def __init__(self):
+        self._propertyAdapters = {}
+        self._listAdapters = {}
+    
+    def _registerAdapter(self, cls, adapters):
         try:
             classname = cls.__classname__
         except AttributeError:
@@ -10,7 +14,14 @@ class AdapterRegistry(dict):
                                  u'__classname__ attribute' %
                                  self._getClassName(cls))
 
-        self[classname] = cls
+        adapters[classname] = cls
+        return cls
+    
+    def registerPropertyAdapter(self, cls):
+        return self._registerAdapter(cls, self._propertyAdapters)
+
+    def registerListAdapter(self, cls):
+        return self._registerAdapter(cls, self._listAdapters)
 
     @staticmethod
     def _getClassName(cls):
@@ -18,7 +29,7 @@ class AdapterRegistry(dict):
             return u'%s.%s' % (cls.__module__, cls.__name__)
         return cls.__name__
 
-    def get(self, obj, options):
+    def _getAdapter(self, candidates, default, obj, options):
         # Gather a list of class names from the inheritance chain
         classnames = []
         cls = obj.__class__
@@ -27,9 +38,9 @@ class AdapterRegistry(dict):
             cls = getattr(cls, 'superclass', None)
 
         # Find the nearest matching adapter for this class
-        bestMatch = BaseAdapter
+        bestMatch = default
         bestMatchIndex = None
-        for key, value in self.iteritems():
+        for key, value in candidates.iteritems():
             if key in classnames:
                 index = classnames.index(key)
                 if not bestMatchIndex or bestMatchIndex > index:
@@ -39,55 +50,67 @@ class AdapterRegistry(dict):
                     break
 
         # Instantiate the adapter with the given options
-        return bestMatch(**options)
+        return bestMatch(options) if bestMatch else None
+
+    def getPropertyAdapter(self, obj, options):
+        return self._getAdapter(self._propertyAdapters, BasePropertyAdapter,
+                                obj, options)
+
+    def getListAdapter(self, obj, options):
+        return self._getAdapter(self._listAdapters, None, obj, options)
 
 registry = AdapterRegistry()
 
 
-class BaseAdapter(object):
+class BasePropertyAdapter(object):
     listener = None
+    
+    def __init__(self, options):
+        pass
 
-    def addListener(self, obj, property, callback):
-        self.listener = addPropertyListener(obj, property, callback)
+    def addListener(self, obj, property, callback, *args, **kwargs):
+        self.listener = addPropertyListener(obj, property, callback, *args,
+                                            **kwargs)
 
-    def removeListener(self, obj, property):
-        if self.listener:
+    def removeListener(self):
+        if self.listener is not None:
             self.listener.unlisten()
             del self.listener
 
 
-@registry.register
-class AbstractButtonAdapter(BaseAdapter):
+@registry.registerPropertyAdapter
+class AbstractButtonAdapter(BasePropertyAdapter):
     __classname__ = 'javax.swing.AbstractButton'
 
-    def addListener(self, obj, property, callback):
+    def addListener(self, obj, property, callback, *args, **kwargs):
         if property == 'selected':
             from java.awt.event import ItemListener
             self.itemlistener = addExplicitEventListener(obj, ItemListener,
-                'itemStateChanged', callback)
+                'itemStateChanged', callback, *args, **kwargs)
         else:
-            BaseAdapter.addListener(self, obj, property, callback)
+            BasePropertyAdapter.addListener(self, obj, property, callback,
+                                            *args, **kwargs)
 
 
-@registry.register
-class JTextComponentAdapter(BaseAdapter):
+@registry.registerPropertyAdapter
+class JTextComponentAdapter(BasePropertyAdapter):
+    """
+    :ivar onFocusLost: ``True`` if the binding should be synchronized
+        when the field loses focus, ``False`` to synchronize whenever the
+        associated document is changed. Default is ``False``.
+
+    """
     __classname__ = 'javax.swing.text.JTextComponent'
     
     docListener = None
 
-    def __init__(self, onFocusLost=False):
-        """
-        :param onFocusLost: ``True`` if the binding should be synchronized
-            when the field loses focus, ``False`` to synchronize whenever the
-            associated document is changed
+    def __init__(self, options):
+        self.onFocusLost = options.get('onFocusLost', False)
 
-        """
-        self.onFocusLost = onFocusLost
-
-    def addListener(self, obj, property, callback):
+    def addListener(self, obj, property, callback, *args, **kwargs):
         if property == 'text':
             if self.onFocusLost:
-                self.addFocusListener(obj, callback)
+                self.addFocusListener(obj, callback, *args, **kwargs)
             else:
                 # Track changes to both JTextComponent.document and the
                 # document itself
@@ -95,26 +118,41 @@ class JTextComponentAdapter(BaseAdapter):
                     self.documentChanged, obj, callback)
                 self.addDocumentListener(obj.document, callback)
         else:
-            BaseAdapter.addListener(self, obj, property, callback)
+            BasePropertyAdapter.addListener(self, obj, property, callback,
+                                            *args, **kwargs)
 
-    def addFocusListener(self, obj, callback):
+    def addFocusListener(self, obj, callback, *args, **kwargs):
         from java.awt.event import FocusListener
         self.listener = addExplicitEventListener(obj, FocusListener,
-                                                 'focusLost', callback)
+            'focusLost', callback, *args, **kwargs)
 
-    def addDocumentListener(self, document, callback):
+    def addDocumentListener(self, document, callback, *args, **kwargs):
         from javax.swing.event import DocumentListener
         for event in (u'changedUpdate', u'insertUpdate', u'removeUpdate'):
             self.docListener = addExplicitEventListener(document,
-                DocumentListener, event, callback)
+                DocumentListener, event, callback, *args, **kwargs)
 
-    def documentChanged(self, event, obj, callback):
+    def documentChanged(self, event, obj, callback, *args, **kwargs):
         self.listener.unlisten()
         self.addDocumentListener(obj, event.newValue)
-        callback()
+        callback(*args, **kwargs)
 
-    def removeListener(self, obj, property):
-        BaseAdapter.removeListener(self, obj, property)
-        if self.docListener:
+    def removeListener(self):
+        BasePropertyAdapter.removeListener(self)
+        if self.docListener is not None:
             self.docListener.unlisten()
             del self.docListener
+
+
+@registry.registerPropertyAdapter
+class JListAdapter(BasePropertyAdapter):
+    """
+    :ivar ignoreAdjusting: ``True`` if the callback should only be called
+        when the selection list has finished adjusting.
+        Default is ``True``.
+
+    """
+    __classname__ = 'javax.swing.JList'
+    
+    def __init__(self, options):
+        self.ignoreAdjusting = options.get('ignoreAdjusting', True)
