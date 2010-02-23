@@ -32,7 +32,7 @@ def _findEventInterface(target, event):
 
 
 def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
-                           removeMethod, removeMethodArgs):
+                           removeMethod):
     assert issubclass(eventInterface, EventListener), \
         'event class must be a subclass of EventListener'
     assert hasattr(eventInterface, event), \
@@ -49,19 +49,18 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
         wrapperClass = _wrapperClassMap[className]
 
     # Create a listener instance and add handleEvent as an instance method
-    wrapper = wrapperClass(listener, args, kwargs, removeMethod,
-                           removeMethodArgs)
+    wrapper = wrapperClass(listener, args, kwargs, removeMethod)
     setattr(wrapper, event, wrapper.handleEvent)
     return wrapper
 
 
 class EventListenerWrapper(object):
-    def __init__(self, listener, args, kwargs, removeMethod, removeMethodArgs):
+    def __init__(self, listener, args, kwargs, removeMethod):
         self.listener = listener
         self.args = args
         self.kwargs = kwargs
         self.removeMethod = removeMethod
-        self.removeMethodArgs = removeMethodArgs
+        self.removeMethodArgs = (self,)
 
     def handleEvent(self, event):
         self.listener(event, *self.args, **self.kwargs)
@@ -95,7 +94,7 @@ def addExplicitEventListener(target, eventInterface, event, listener,
     removeMethodName = 'remove%s' % eventInterface.__name__
     removeMethod = getattr(target, removeMethodName)
     wrapper = _createListenerWrapper(eventInterface, event, listener, args,
-                                     kwargs, removeMethod, (listener,))
+                                     kwargs, removeMethod)
     addMethod(wrapper)
     return wrapper
 
@@ -144,7 +143,7 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
 
     """
     wrapper = _createListenerWrapper(PropertyChangeListener, 'propertyChange',
-        listener, args, kwargs, target.removePropertyChangeListener,
-        (property, listener))
+        listener, args, kwargs, target.removePropertyChangeListener)
+    wrapper.removeMethodArgs = (property, wrapper)
     target.addPropertyChangeListener(property, wrapper)
     return wrapper
