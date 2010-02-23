@@ -263,14 +263,22 @@ class Binding(object):
         self.mode = options.get('mode')
         self.source = source
         self.target = target
-        self.sourceExpression = BindingExpression.create(sourceExpression,
-                                                         options)
-        self.targetExpression = BindingExpression.create(targetExpression,
-                                                         options)
+        if isinstance(sourceExpression, BindingExpression):
+            self.sourceExpression = sourceExpression
+        else:
+            self.sourceExpression = BindingExpression.create(sourceExpression,
+                                                             options)
+        if isinstance(targetExpression, BindingExpression):
+            self.targetExpression = targetExpression
+        else:
+            self.targetExpression = BindingExpression.create(targetExpression,
+                                                             options)
+
         if self.mode >= READ_ONLY:
             self.sourceExpression.bind(source, self.sourceChanged)
         if self.mode == READ_WRITE:
             self.targetExpression.bind(target, self.targetChanged)
+        
         self.sync()
 
     def sourceChanged(self):
