@@ -36,6 +36,23 @@ class BindingReadError(BindingError):
         BindingError.__init__(self, message)
 
 
+class LocalsDict(object):
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def __getitem__(self, key):
+        try:
+            return getattr(self.obj, key)
+        except AttributeError:
+            raise KeyError
+    
+    def __setitem__(self, key, value):
+        setattr(self.obj, key, value)
+    
+    def __contains__(self, key):
+        return hasattr(self.obj, key)
+
+
 class ClausePart(object):
     PROPERTY = 0
     LIST = 1
@@ -99,7 +116,7 @@ class ExpressionClause(object):
     def getValue(self, obj):
         if not self.reader:
             self.reader = compile(self.source, '$$binding-reader$$', 'eval')
-        return eval(self.reader, globals(), obj.__dict__)
+        return eval(self.reader, globals(), LocalsDict(obj))
 
     def setValue(self, obj, value):
         if not self.writer:
@@ -107,7 +124,7 @@ class ExpressionClause(object):
                                   '$$binding-writer$$', 'exec')
         writerGlobals = globals().copy()
         writerGlobals['___binding_value'] = value
-        exec(self.writer, writerGlobals, obj.__dict__)
+        exec(self.writer, writerGlobals, LocalsDict(obj))
 
     def _splitExpression(self):
         """Breaks the given expression into parts for event listening."""
