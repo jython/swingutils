@@ -115,8 +115,9 @@ class JTextComponentAdapter(BasePropertyAdapter):
                 # Track changes to both JTextComponent.document and the
                 # document itself
                 self.listener = addPropertyListener(obj, 'document',
-                    self.documentChanged, obj, callback)
-                self.addDocumentListener(obj.document, callback)
+                    self.documentChanged, obj, callback, *args, **kwargs)
+                self.addDocumentListener(obj.document, callback, *args,
+                                         **kwargs)
         else:
             BasePropertyAdapter.addListener(self, obj, property, callback,
                                             *args, **kwargs)
