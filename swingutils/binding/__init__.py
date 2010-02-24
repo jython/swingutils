@@ -39,16 +39,16 @@ class BindingReadError(BindingError):
 class LocalsDict(object):
     def __init__(self, obj):
         self.obj = obj
-    
+
     def __getitem__(self, key):
         try:
             return getattr(self.obj, key)
         except AttributeError:
             raise KeyError
-    
+
     def __setitem__(self, key, value):
         setattr(self.obj, key, value)
-    
+
     def __contains__(self, key):
         return hasattr(self.obj, key)
 
@@ -336,7 +336,7 @@ class BindingGroup(object):
         b = Binding(source, source_expr, target, target_expr, combined_opts)
         self.bindings.append(b)
 
-    def syncAll(self):
+    def sync(self):
         for b in self.bindings:
             b.sync()
 
@@ -345,5 +345,5 @@ class BindingGroup(object):
             b.unbind()
         del self.bindings[:]
 
-globalGroup = BindingGroup()
-bind = globalGroup.bind
+defaultGroup = BindingGroup()
+bind = defaultGroup.bind
