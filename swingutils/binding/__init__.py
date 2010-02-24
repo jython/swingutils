@@ -90,15 +90,16 @@ class ClausePart(object):
 
     def bind(self, obj, callback, *args, **kwargs):
         if self.type_ == self.PROPERTY:
-            self.adapter = registry.getPropertyAdapter(obj, self.options)
-            self.adapter.addListener(obj, self.item, callback, *args, **kwargs)
+            self.adapter = registry.getPropertyAdapter(obj, self.item,
+                                                       self.options)
+            self.adapter.addListeners(obj, callback, *args, **kwargs)
         elif self.type_ == self.LIST:
             self.adapter = registry.getListAdapter(obj, self.options)
-            self.adapter.addListener(obj, callback, *args, **kwargs)
+            self.adapter.addListeners(obj, callback, *args, **kwargs)
 
     def unbind(self):
         if self.adapter:
-            self.adapter.removeListener()
+            self.adapter.removeListeners()
             del self.adapter
 
 
@@ -350,19 +351,24 @@ class BindingGroup(object):
         self.bindings = []
 
     def bind(self, source, source_expr, target, target_expr, **options):
+        """
+        Binds the source object to the target object using binding expressions.
+
+        :type source_expr: string or :class:`~BindingExpression`
+        :type target_expr: string or :class:`~BindingExpression`
+
+        """
         combined_opts = self.options.copy()
         combined_opts.update(options)
         b = Binding(source, source_expr, target, target_expr, combined_opts)
         self.bindings.append(b)
 
-    def sync(self):
-        for b in self.bindings:
-            b.syncSourceToTarget()
-
-    def unbindAll(self):
+    def unbind(self):
         for b in self.bindings:
             b.unbind()
         del self.bindings[:]
 
-defaultGroup = BindingGroup()
-bind = defaultGroup.bind
+    def sync(self):
+        for b in self.bindings:
+            b.syncSourceToTarget()
+
