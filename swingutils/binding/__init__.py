@@ -274,6 +274,9 @@ class BindingExpression(object):
 
 
 class Binding(object):
+    # Flag that prevents infinite loops
+    _syncing = False
+
     def __init__(self, source, sourceExpression, target, targetExpression,
                  options):
         self.logger = options.get('logger')
@@ -296,27 +299,41 @@ class Binding(object):
         if self.mode == READ_WRITE:
             self.targetExpression.bind(target, self.targetChanged)
         
-        self.sync()
+        self.syncSourceToTarget()
 
     def sourceChanged(self):
         self.logger.debug('Source changed')
+        self.syncSourceToTarget()
+
+    def targetChanged(self):
+        self.logger.debug('Target changed')
+        self.syncTargetToSource()
+
+    def syncSourceToTarget(self):
+        if self._syncing:
+            return
+
+        self._syncing = True
         try:
             value = self.sourceExpression.getValue(self.source)
             self.targetExpression.setValue(self.target, value)
         except Exception:
             self.logger.exception('Error syncing source -> target')
+        finally:
+            self._syncing = False
 
-    def targetChanged(self):
-        self.logger.debug('Target changed')
+    def syncTargetToSource(self):
+        if self._syncing:
+            return
+
+        self._syncing = True
         try:
             value = self.targetExpression.getValue(self.target)
             self.sourceExpression.setValue(self.source, value)
         except Exception:
             self.logger.exception('Error syncing target -> source')
-
-    def sync(self):
-        value = self.sourceExpression.getValue(self.source)
-        self.targetExpression.setValue(self.target, value)
+        finally:
+            self._syncing = False
 
     def unbind(self):
         self.sourceExpression.unbind()
@@ -338,7 +355,7 @@ class BindingGroup(object):
 
     def sync(self):
         for b in self.bindings:
-            b.sync()
+            b.syncSourceToTarget()
 
     def unbindAll(self):
         for b in self.bindings:
