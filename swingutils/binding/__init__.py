@@ -243,8 +243,8 @@ class BindingExpression(object):
                 try:
                     result = part.getValue(obj)
                 except (Exception, JavaException), e:
-                    raise BindingReadError('Error evaluating expression %s' %
-                                           (part.source, e))
+                    raise BindingReadError('Error evaluating expression '
+                                           '%s: %s' % (part.source, e))
                 results.append(result)
             else:
                 results.append(part)
