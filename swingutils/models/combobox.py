@@ -1,20 +1,22 @@
 from javax.swing import MutableComboBoxModel
 
-from swingutils.models.list import ListModelBase
+from swingutils.models.list import DelegateListModel
 
 
-class ListComboModel(ListModelBase, MutableComboBoxModel):
+class DelegateComboBoxModel(MutableComboBoxModel, DelegateListModel):
     """
-    Combo box model that is also a Python `list` object, and fires events
+    A Combo box model that wraps a list-like object, and fires events
     when its contents are manipulated.
 
     """
     _selectedItem = None
-    
-    def __init__(self, *args):
-        ListModelBase.__init__(self, *args)
 
+    def __init__(self, delegate=None):
+        DelegateListModel.__init__(self, delegate)
+
+    #
     # ComboBoxModel methods
+    #
 
     def getSelectedItem(self):
         return self._selectedItem
@@ -24,7 +26,11 @@ class ListComboModel(ListModelBase, MutableComboBoxModel):
             self._selectedItem = anItem
             self.fireContentsChanged(self, -1, -1)
 
+    selectedItem = property(getSelectedItem, setSelectedItem)
+
+    #
     # MutableComboBoxModel methods
+    #
 
     def addElement(self, obj):
         self.append(obj)
