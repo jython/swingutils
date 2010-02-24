@@ -3,7 +3,7 @@ from javax.swing import MutableComboBoxModel
 from swingutils.models.list import DelegateListModel
 
 
-class DelegateComboBoxModel(MutableComboBoxModel, DelegateListModel):
+class DelegateComboBoxModel(DelegateListModel, MutableComboBoxModel):
     """
     A Combo box model that wraps a list-like object, and fires events
     when its contents are manipulated.
