@@ -1,14 +1,19 @@
 from javax.swing import AbstractListModel
 
 
-class DelegateListModel(AbstractListModel):
+class AbstractDelegateList(object):
     """
-    A list model that delegates actual list operations to a plain list object,
-    and fires the appropriate events on such operations.
-
+    An abstract class that acts as a proxy to an actual list object.
+    Supports firing events for additions/removals/changes, but these methods
+    must be implemented in a subclass.
+    
     """
-    def __init__(self, delegate=None):
+    def __init__(self, delegate):
         self._delegate = delegate
+
+    #
+    # Getter and setter for the "delegate" property
+    #
 
     def getDelegate(self):
         return self._delegate
@@ -22,25 +27,28 @@ class DelegateListModel(AbstractListModel):
         maxLength = max(oldLength, newLength)
         if maxLength:
             if maxLength > oldLength:
-                self.fireIntervalAdded(self, minLength, maxLength - 1)
+                self._fireItemsAdded(minLength, maxLength - 1)
             elif maxLength < oldLength:
-                self.fireIntervalRemoved(self, minLength, maxLength - 1)
-            self.fireContentsChanged(self, 0, maxLength - 1)
+                self._fireItemsRemoved(minLength, maxLength - 1)
+            self._fireItemsChanged(0, maxLength - 1)
 
     delegate = property(getDelegate, setDelegate)
+    
+    #
+    # 
+    #
+
+    def _fireItemsChanged(self, start, end):
+        raise NotImplementedError
+
+    def _fireItemsAdded(self, start, end):
+        raise NotImplementedError
+
+    def _fireItemsRemoved(self, start, end):
+        raise NotImplementedError
 
     #
-    # ListModel methods
-    #
-
-    def getSize(self):
-        return len(self._delegate) if self._delegate else 0
-
-    def getElementAt(self, index):
-        return self._delegate[index]
-
-    #
-    # list methods
+    # Methods to emulate the "list" type
     #
 
     def __getitem__(self, index):
@@ -57,32 +65,32 @@ class DelegateListModel(AbstractListModel):
         if slice_.step:
             # Stepping can't remove or add items
             for i in xrange(start, end, slice_.step):
-                self.fireContentsChanged(self, i, i)
+                self._fireItemsChanged(i, i)
         elif newLength > oldLength:
             # Items were added
             if start < oldLength:
-                self.fireContentsChanged(self, start, oldLength - 1)
-            self.fireIntervalAdded(self, oldLength, newLength - 1)
+                self._fireItemsChanged(start, oldLength - 1)
+            self._fireItemsAdded(oldLength, newLength - 1)
         elif newLength < oldLength:
             # Items were removed
             if newLength > 0:
-                self.fireContentsChanged(self, start, newLength - 1)
-            self.fireIntervalRemoved(self, newLength, oldLength - 1)
+                self._fireItemsChanged(start, newLength - 1)
+            self._fireItemsRemoved(newLength, oldLength - 1)
         else:
             # Items were changed
-            self.fireContentsChanged(self, start, end)
+            self._fireItemsChanged(start, end)
 
     def __delitem__(self, index):
         self._delegate.__delitem__(index)
         slice_ = index if isinstance(index, slice) else slice(index, index)
         indices = slice_.indices(len(self._delegate))
         if indices[2] > 1:
-            # Remove from bottom first so as not to cause problems
+            # Remove from bottom first so as not to cause problems with indices
             range_ = xrange(indices[0], indices[1], indices[2])
             for i in reversed(range_):
-                self.fireIntervalRemoved(self, i, i)
+                self._fireItemsRemoved(i, i)
         else:
-            self.fireIntervalRemoved(self, indices[0], indices[1])
+            self._fireItemsRemoved(indices[0], indices[1])
 
     def __iter__(self):
         return self._delegate.__iter__()
@@ -93,15 +101,42 @@ class DelegateListModel(AbstractListModel):
     def append(self, obj):
         self._delegate.append(obj)
         pos = len(self._delegate) - 1
-        self.fireIntervalAdded(self, pos, pos)
+        self._fireItemsAdded(pos, pos)
 
     def insert(self, index, obj):
         self._delegate.insert(index, obj)
-        self.fireIntervalAdded(self, index, index)
+        self._fireItemsAdded(index, index)
 
     def extend(self, items):
         start = len(self._delegate)
         self._delegate.extend(items)
         end = len(self._delegate)
         if end > start:
-            self.fireIntervalAdded(self, start, end - 1)
+            self._fireItemsAdded(start, end - 1)
+
+
+class DelegateListModel(AbstractListModel, AbstractDelegateList):
+    """A delegate list model that provides a ListModel interface."""
+
+    def __init__(self, delegate=None):
+        AbstractListModel.__init__(self)
+        AbstractDelegateList.__init__(self, delegate)
+
+    def _fireItemsChanged(self, start, end):
+        self.fireContentsChanged(self, start, end)
+
+    def _fireItemsAdded(self, start, end):
+        self.fireIntervalAdded(self, start, end)
+
+    def _fireItemsRemoved(self, start, end):
+        self.fireIntervalRemoved(self, start, end)
+
+    #
+    # ListModel methods
+    #
+
+    def getSize(self):
+        return len(self)
+
+    def getElementAt(self, index):
+        return self[index]
