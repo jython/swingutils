@@ -24,7 +24,7 @@ class AdapterRegistry(object):
         properties = cls.__targetproperty__
         if isinstance(cls.__targetproperty__, basestring):
             properties = (cls.__targetproperty__,)
-        
+
         for property in properties:
             key = (cls.__targetclass__, property)
             self.propertyAdapters[key] = cls
@@ -127,12 +127,6 @@ class JTextComponentAdapter(DefaultPropertyAdapter):
             self.addDocumentListeners(obj.document, callback, *args,
                                       **kwargs)
 
-    def removeListeners(self):
-        DefaultPropertyAdapter.removeListeners(self)
-        for listener in self.docListeners:
-            listener.unlisten()
-        del self.docListeners[:]
-
     def addFocusListener(self, obj, callback, *args, **kwargs):
         from java.awt.event import FocusListener
         self.listener = addExplicitEventListener(obj, FocusListener,
@@ -145,9 +139,15 @@ class JTextComponentAdapter(DefaultPropertyAdapter):
                 event, callback, *args, **kwargs)
             self.docListeners.append(listener)
 
+    def removeListeners(self):
+        DefaultPropertyAdapter.removeListeners(self)
+        for listener in self.docListeners:
+            listener.unlisten()
+        del self.docListeners[:]
+
     def documentChanged(self, event, obj, callback, *args, **kwargs):
-        self.listener.unlisten()
-        self.addDocumentListeners(obj, event.newValue)
+        self.removeListeners()
+        self.addListeners(obj, callback, *args, **kwargs)
         callback(*args, **kwargs)
 
 
@@ -155,17 +155,41 @@ class JTextComponentAdapter(DefaultPropertyAdapter):
 class JListAdapter(DefaultPropertyAdapter):
     """
     Adapter for :class:`javax.swing.JList`.
-    
+
     :ivar ignoreAdjusting: ``True`` if the callback should only be called
         when the selection list has finished adjusting.
         Default is ``True``.
 
     """
     __targetclass__ = 'javax.swing.JList'
-    __targetproperty__ = ('selectedItem', 'selectedIndex',
+    __targetproperty__ = ('selectedValue', 'selectedIndex', 'selectedIndices',
                           'leadSelectionIndex', 'anchorSelectionIndex',
                           'maxSelectionIndex', 'minSelectionIndex')
+
+    selectionModeListener = None
 
     def __init__(self, property, options):
         DefaultPropertyAdapter.__init__(self, property, options)
         self.ignoreAdjusting = options.get('ignoreAdjusting', True)
+
+    def addListeners(self, obj, callback, *args, **kwargs):
+        from javax.swing.event import ListSelectionListener
+        self.listener = addPropertyListener(obj, 'selectionModel',
+            self.selectionModelChanged, obj, callback, *args, **kwargs)
+        self.selectionModeListener = addExplicitEventListener(obj,
+            ListSelectionListener, 'valueChanged', callback, *args, **kwargs)
+
+    def removeListeners(self):
+        DefaultPropertyAdapter.removeListeners(self)
+        if self.selectionModeListener:
+            self.selectionModeListener.unlisten()
+            del self.selectionModeListener
+
+    def selectionChanged(self, event, callback, *args, **kwargs):
+        if not event.valueIsAdjusting or not self.ignoreAdjusting:
+            callback(*args, **kwargs)
+
+    def selectionModelChanged(self, event, obj, callback, *args, **kwargs):
+        self.removeListeners()
+        self.addListeners(obj, callback, *args, **kwargs)
+        callback(*args, **kwargs)
