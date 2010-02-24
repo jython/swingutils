@@ -1,9 +1,11 @@
 from nose.tools import eq_, raises
 
+from javax.swing import JTextField, JFormattedTextField, JList
+
 from swingutils.binding import BindingGroup, BindingExpression, \
     BindingWriteError, READ_WRITE, READ_ONCE
 from swingutils.beans import AutoChangeNotifier
-from javax.swing import JTextField, JFormattedTextField
+from swingutils.models.list import DelegateListModel
 
 
 class Person(AutoChangeNotifier):
@@ -115,3 +117,25 @@ class TestBinding(object):
         self.person.lastName = u'Mediocre'
         eq_(lastNameField.text, u'Mediocre')
         eq_(self.dummy.value, u'Susan Mediocre, 1970')
+
+    def testJList(self):
+        personList = [self.person]
+        personList.append(Person(u'Mary', u'Mediocre', 1970))
+        personList.append(Person(u'Bob', u'Mediocre', 1972))
+        
+        listModel = DelegateListModel(personList)
+        jlist = JList(listModel)
+        self.group.bind(jlist, u'${selectedValue.firstName}', self.dummy,
+                        u'${value}')
+
+        jlist.selectedIndex = 1
+        eq_(jlist.selectedValue, personList[1])
+        eq_(self.dummy.value, u'Mary')
+
+        jlist.selectedIndex = 2
+        eq_(jlist.selectedValue, personList[2])
+        eq_(self.dummy.value, u'Bob')
+
+        jlist.setSelectedValue(self.person, False)
+        eq_(jlist.selectedIndex, 0)
+        eq_(self.dummy.value, u'Joe')
