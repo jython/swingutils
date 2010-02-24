@@ -11,6 +11,8 @@ from tokenize import generate_tokens, TokenError, untokenize
 import __builtin__
 import logging
 
+from java.lang import Exception as JavaException
+
 from swingutils.events import addPropertyListener
 from swingutils.binding.adapters import registry
 
@@ -75,8 +77,7 @@ class ClausePart(object):
         else:
             # Any other expression
             self.type_ = self.CODE
-            text = untokenize(tokens)
-            self.item = compile(text, '$$binding-code$$', 'eval')
+            self.item = compile(untokenize(tokens), '$$binding-code$$', 'eval')
 
     def getValue(self, obj):
         if self.type_ == self.PROPERTY:
@@ -88,8 +89,6 @@ class ClausePart(object):
         return eval(self.item, clauseGlobals, {})
 
     def bind(self, obj, callback, *args, **kwargs):
-        self.unbind()
-
         if self.type_ == self.PROPERTY:
             self.adapter = registry.getPropertyAdapter(obj, self.options)
             self.adapter.addListener(obj, self.item, callback, *args, **kwargs)
@@ -162,8 +161,9 @@ class ExpressionClause(object):
         parent callback.
 
         """
-        self.bind(obj, callback, index)
-        callback()
+        self.unbind(index + 1)
+        self.bind(obj, callback, index + 1)
+        callback(self.source)
 
     def bind(self, obj, callback, index=0):
         if self.parts is None:
@@ -175,9 +175,9 @@ class ExpressionClause(object):
             part.bind(obj, self._partChanged, obj, callback, i)
             obj = part.getValue(obj)
     
-    def unbind(self):
+    def unbind(self, index=0):
         if self.parts:
-            for part in self.parts:
+            for part in self.parts[index:]:
                 part.unbind()
 
 
@@ -241,7 +241,7 @@ class BindingExpression(object):
             if isinstance(part, ExpressionClause):
                 try:
                     result = part.getValue(obj)
-                except Exception, e:
+                except (Exception, JavaException), e:
                     raise BindingReadError('Error evaluating expression %s' %
                                            (part.source, e))
                 results.append(result)
@@ -301,12 +301,12 @@ class Binding(object):
         
         self.syncSourceToTarget()
 
-    def sourceChanged(self):
-        self.logger.debug('Source changed')
+    def sourceChanged(self, source):
+        self.logger.debug('Source (%s) changed', source)
         self.syncSourceToTarget()
 
-    def targetChanged(self):
-        self.logger.debug('Target changed')
+    def targetChanged(self, source):
+        self.logger.debug('Target (%s) changed', source)
         self.syncTargetToSource()
 
     def syncSourceToTarget(self):
@@ -316,8 +316,9 @@ class Binding(object):
         self._syncing = True
         try:
             value = self.sourceExpression.getValue(self.source)
+            self.logger.debug('Writing source value (%s) to target', repr(value))
             self.targetExpression.setValue(self.target, value)
-        except Exception:
+        except (Exception, JavaException):
             self.logger.exception('Error syncing source -> target')
         finally:
             self._syncing = False
@@ -329,8 +330,9 @@ class Binding(object):
         self._syncing = True
         try:
             value = self.targetExpression.getValue(self.target)
+            self.logger.debug('Writing target value (%s) to source', repr(value))
             self.sourceExpression.setValue(self.source, value)
-        except Exception:
+        except (Exception, JavaException):
             self.logger.exception('Error syncing target -> source')
         finally:
             self._syncing = False
