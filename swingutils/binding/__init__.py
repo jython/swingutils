@@ -1,9 +1,9 @@
 """
-This module lets you synchronize properties between two objects.
+This module lets you automatically synchronize properties between two objects.
 
-The adapter objects returned by the binding methods store their endpoints
-using weak references, and automatically sever the connection if either side is
-garbage collected.
+Some UI components require special handling to get them to behave as expected,
+and this is provided by a collection of adapters. Adapters are used
+automatically when a matching object is encountered.
 
 """
 from cStringIO import StringIO
