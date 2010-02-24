@@ -101,11 +101,10 @@ class JTextComponentAdapter(BasePropertyAdapter):
 
     """
     __classname__ = 'javax.swing.text.JTextComponent'
-    
-    docListener = None
 
     def __init__(self, options):
         self.onFocusLost = options.get('onFocusLost', False)
+        self.docListeners = []
 
     def addListener(self, obj, property, callback, *args, **kwargs):
         if property == 'text':
@@ -116,8 +115,8 @@ class JTextComponentAdapter(BasePropertyAdapter):
                 # document itself
                 self.listener = addPropertyListener(obj, 'document',
                     self.documentChanged, obj, callback, *args, **kwargs)
-                self.addDocumentListener(obj.document, callback, *args,
-                                         **kwargs)
+                self.addDocumentListeners(obj.document, callback, *args,
+                                          **kwargs)
         else:
             BasePropertyAdapter.addListener(self, obj, property, callback,
                                             *args, **kwargs)
@@ -127,22 +126,23 @@ class JTextComponentAdapter(BasePropertyAdapter):
         self.listener = addExplicitEventListener(obj, FocusListener,
             'focusLost', callback, *args, **kwargs)
 
-    def addDocumentListener(self, document, callback, *args, **kwargs):
+    def addDocumentListeners(self, document, callback, *args, **kwargs):
         from javax.swing.event import DocumentListener
         for event in (u'changedUpdate', u'insertUpdate', u'removeUpdate'):
-            self.docListener = addExplicitEventListener(document,
-                DocumentListener, event, callback, *args, **kwargs)
+            listener = addExplicitEventListener(document, DocumentListener,
+                event, callback, *args, **kwargs)
+            self.docListeners.append(listener)
 
     def documentChanged(self, event, obj, callback, *args, **kwargs):
         self.listener.unlisten()
-        self.addDocumentListener(obj, event.newValue)
+        self.addDocumentListeners(obj, event.newValue)
         callback(*args, **kwargs)
 
     def removeListener(self):
         BasePropertyAdapter.removeListener(self)
-        if self.docListener is not None:
-            self.docListener.unlisten()
-            del self.docListener
+        for listener in self.docListeners:
+            listener.unlisten()
+        del self.docListeners[:]
 
 
 @registry.registerPropertyAdapter
