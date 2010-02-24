@@ -185,11 +185,22 @@ class JListAdapter(DefaultPropertyAdapter):
             self.selectionModeListener.unlisten()
             del self.selectionModeListener
 
-    def selectionChanged(self, event, callback, *args, **kwargs):
-        if not event.valueIsAdjusting or not self.ignoreAdjusting:
-            callback(*args, **kwargs)
-
     def selectionModelChanged(self, event, obj, callback, *args, **kwargs):
         self.removeListeners()
         self.addListeners(obj, callback, *args, **kwargs)
         callback(*args, **kwargs)
+
+    def selectionChanged(self, event, callback, *args, **kwargs):
+        if not event.valueIsAdjusting or not self.ignoreAdjusting:
+            callback(*args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JComboBoxAdapter(DefaultPropertyAdapter):
+    __targetclass__ = 'javax.swing.JComboBox'
+    __targetproperty__ = ('selectedItem', 'selectedIndex', 'selectedObjects')
+
+    def addListeners(self, obj, callback, *args, **kwargs):
+        from java.awt.event import ItemListener
+        self.listener = addExplicitEventListener(obj, ItemListener,
+            'itemStateChanged', callback, *args, **kwargs)
