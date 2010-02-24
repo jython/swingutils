@@ -2,21 +2,30 @@ from javax.swing.event import ListDataEvent, ListDataListener
 
 from nose.tools import eq_
 
-from swingutils.models.list import ListModel
+from swingutils.models.list import DelegateListModel
 from swingutils.events import addExplicitEventListener
 
 
 class TestListModel(object):
     def setup(self):
-        self.model = ListModel()
+        self.model = DelegateListModel([])
+
+    @staticmethod
+    def contentsChanged(event, result):
+        result[0] = event
+
+    @staticmethod
+    def intervalAdded(event, result):
+        result[0] = event
+
+    @staticmethod
+    def intervalRemoved(event, result):
+        result[0] = event
 
     def testDelItem(self):
-        def intervalRemoved(event, result):
-            result[0] = event
-
         result = [None]
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalRemoved', intervalRemoved, result)
+            'intervalRemoved', self.intervalRemoved, result)
 
         self.model.append('TEST')
         self.model.append('123')
@@ -24,6 +33,7 @@ class TestListModel(object):
         eq_(len(self.model), 3)
 
         del self.model[1]
+
         event = result[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_REMOVED)
@@ -32,13 +42,10 @@ class TestListModel(object):
         eq_(len(self.model), 2)
 
     def testDelSlice(self):
-        def intervalRemoved(event, result):
-            result[0] = event
-
         result = [None]
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalRemoved', intervalRemoved, result)
-        
+            'intervalRemoved', self.intervalRemoved, result)
+
         self.model.append('TEST')
         self.model.append('123')
         self.model.append(456)
@@ -54,14 +61,12 @@ class TestListModel(object):
         eq_(len(self.model), 2)
 
     def testAppend(self):
-        def intervalAdded(event, result):
-            result[0] = event
-
         result = [None]
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalAdded', intervalAdded, result)
+                                 'intervalAdded', self.intervalAdded, result)
 
         self.model.append(u'Test')
+
         event = result[0]
         assert event
         eq_(event.index0, 0)
@@ -70,6 +75,7 @@ class TestListModel(object):
         eq_(self.model[0], u'Test')
 
         self.model.append(345)
+
         event = result[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_ADDED)
@@ -79,9 +85,6 @@ class TestListModel(object):
         eq_(self.model[1], 345)
 
     def testInsert(self):
-        def intervalAdded(event, result):
-            result[0] = event
-
         result = [None]
         self.model.append(u'Test')
         self.model.append(u'Test3')
@@ -89,9 +92,10 @@ class TestListModel(object):
         eq_(self.model[1], u'Test3')
 
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalAdded', intervalAdded, result)
+                                 'intervalAdded', self.intervalAdded, result)
 
         self.model.insert(1, 'Test2')
+
         event = result[0]
         assert event
         eq_(event.index0, 1)
@@ -101,6 +105,7 @@ class TestListModel(object):
         eq_(self.model[1], 'Test2')
 
         self.model.insert(0, 345)
+
         event = result[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_ADDED)
@@ -110,14 +115,12 @@ class TestListModel(object):
         eq_(len(self.model), 4)
 
     def testExtend(self):
-        def intervalAdded(event, result):
-            result[0] = event
-
         result = [None]
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalAdded', intervalAdded, result)
+                                 'intervalAdded', self.intervalAdded, result)
 
         self.model.extend([u'Test', 'Test2', 678])
+
         event = result[0]
         assert event
         eq_(event.index0, 0)
@@ -128,6 +131,7 @@ class TestListModel(object):
         eq_(self.model[2], 678)
 
         self.model.extend([345, 7.0])
+
         event = result[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_ADDED)
@@ -137,27 +141,24 @@ class TestListModel(object):
         eq_(self.model[4], 7.0)
 
     def testSetSlice(self):
-        def contentsChanged(event, result):
-            result[0] = event
-        
-        def intervalAdded(event, result):
-            result[1] = event
-
-        result = [None, None]
+        result1 = [None]
+        result2 = [None]
         self.model.extend([u'Test', 'Test2', 678])
 
         addExplicitEventListener(self.model, ListDataListener,
-                                 'contentsChanged', contentsChanged, result)
+            'contentsChanged', self.contentsChanged, result1)
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalAdded', intervalAdded, result)
+            'intervalAdded', self.intervalAdded, result2)
+
         self.model[2:4] = ['abc', 'xyz', 'foo']
-        event = result[0]
+
+        event = result1[0]
         assert event
         eq_(event.type, ListDataEvent.CONTENTS_CHANGED)
         eq_(event.index0, 2)
         eq_(event.index1, 2)
 
-        event = result[1]
+        event = result2[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_ADDED)
         eq_(event.index0, 3)
@@ -167,27 +168,24 @@ class TestListModel(object):
             eq_(self.model[i], val)
 
     def testSetSliceReplace(self):
-        def contentsChanged(event, result):
-            result[0] = event
-        
-        def intervalRemoved(event, result):
-            result[1] = event
-
-        result = [None, None]
+        result1 = [None]
+        result2 = [None]
         self.model.extend([u'Test', 'Test2', 678])
 
         addExplicitEventListener(self.model, ListDataListener,
-                                 'contentsChanged', contentsChanged, result)
+            'contentsChanged', self.contentsChanged, result1)
         addExplicitEventListener(self.model, ListDataListener,
-                                 'intervalRemoved', intervalRemoved, result)
+            'intervalRemoved', self.intervalRemoved, result2)
+
         self.model[:] = ['abc', 'xyz']
-        event = result[0]
+
+        event = result1[0]
         assert event
         eq_(event.type, ListDataEvent.CONTENTS_CHANGED)
         eq_(event.index0, 0)
         eq_(event.index1, 1)
 
-        event = result[1]
+        event = result2[0]
         assert event
         eq_(event.type, ListDataEvent.INTERVAL_REMOVED)
         eq_(event.index0, 2)
