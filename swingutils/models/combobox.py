@@ -26,8 +26,6 @@ class DelegateComboBoxModel(DelegateListModel, MutableComboBoxModel):
             self._selectedItem = anItem
             self.fireContentsChanged(self, -1, -1)
 
-    selectedItem = property(getSelectedItem, setSelectedItem)
-
     #
     # MutableComboBoxModel methods
     #
