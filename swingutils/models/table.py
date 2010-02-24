@@ -1,12 +1,12 @@
-import sys
-
 from java.lang import Object
 from javax.swing.table import AbstractTableModel
 
+from swingutils.models.list import AbstractDelegateList
 
-class ListTableModel(AbstractTableModel, list):
+
+class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
     """
-    Table model that wraps a Python `list` object, and fires events when its
+    Table model that wraps any list-like object, and fires events when its
     contents are manipulated (through the table model).
 
     The :attr:`__columns__` attribute should be a sequence of
@@ -15,100 +15,49 @@ class ListTableModel(AbstractTableModel, list):
     (usually for the purpose of choosing an appropriate cell renderer).
     You can either override :attr:`__columns__` in a subclass, or supply it via
     the constructor.
+    
+    List data is assumed to be a two-dimensional table (list of lists).
 
     """
     __columns__ = ()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, delegate, *args):
         """
         Initializes the column names and types.
-        You can override the column definitions with the `columns` keyword
-        argument.
+        You can supply the column names and types as a series of either
+        (name, type) tuples or column names to the constructor, or provide a
+        __columns__ variable in a subclass.
 
         """
-        list.__init__(self, *args)
+        if args:
+            self.__columns__ = args
 
-        columns = kwargs.get('columns', self.__columns__)
-        self.__columns__ = tuple(self._validateColumn(col) for col in columns)
+        for index, column in enumerate(self.__columns__):
+            self._validateColumn(column, index)
 
-    @staticmethod
-    def _validateColumn(column):
+    def _validateColumn(self, column, index):
         if isinstance(column, basestring):
-            return (column, Object)
+            self.__columns__[index] = (column, Object)
+        if not isinstance(column[0], basestring):
+            raise ValueError('Column %d: name must be a string' % index)
         if not isinstance(column[1], type):
-            raise ValueError('Column "%s": expected a type for second item, '
-                             'got %s instead' % (column[0], type(column[1])))
-        return column
+            raise ValueError('Column %d: type must be a type object' % index)
 
-    def replace(self, replacement):
-        """Replaces the data with the given replacement.
+    def _fireItemsChanged(self, start, end):
+        self.fireTableRowsUpdated(self, start, end)
 
-        :type replacement: list or any iterable
+    def _fireItemsAdded(self, start, end):
+        self.fireTableRowsInserted(self, start, end)
 
-        """
-        if not isinstance(replacement, list):
-            if not hasattr(replacement, '__iter__'):
-                raise TypeError('replacement must be iterable')
-            replacement = list(replacement)
-        list.__delslice__(self, 0, len(self))
-        list.extend(self, replacement)
-        self.fireTableDataChanged()
+    def _fireItemsRemoved(self, start, end):
+        self.fireTableRowsDeleted(self, start, end)
 
-    # Methods from list
-
-    def __delitem__(self, index):
-        list.__delitem__(self, index)
-        self.fireTableRowsDeleted(index, index)
-
-    def __delslice__(self, start, end):
-        if end == sys.maxint:
-            end = len(self)
-        list.__delslice__(self, start, end)
-        self.fireTableRowsDeleted(start, end - 1)
-
-    def __setitem__(self, row, value):
-        list.__setitem__(self, row, value)
-        self.fireTableRowsUpdated(row, row)
-
-    def __setslice__(self, start, end, value):
-        # This can change, add and remove rows
-        oldLength = len(self)
-        list.__setslice__(self, start, end, value)
-        newLength = len(self)
-
-        if newLength > 0 and oldLength > 0:
-            self.fireTableRowsUpdated(start, min(oldLength, newLength) - 1)
-        if newLength > oldLength:
-            self.fireTableRowsInserted(min(oldLength - 1, 0), newLength - 1)
-        elif newLength < oldLength:
-            self.fireTableRowsDeleted(min(newLength - 1, 0), oldLength - 1)
-
-    def append(self, obj):
-        list.append(self, obj)
-        length = len(self)
-        self.fireTableRowsInserted(length - 1, length - 1)
-
-    def insert(self, index, obj):
-        list.insert(self, index, obj)
-        self.fireTableRowsInserted(index, index)
-
-    def extend(self, items):
-        start = len(self)
-        list.extend(self, items)
-        end = len(self)
-        if end > start:
-            self.fireTableRowsInserted(start, end - 1)
-
-    # Methods from AbstractTableModel
-
-    def getColumnClass(self, columnIndex):
-        return self.__columns__[columnIndex][1] or Object
+    #
+    # TableModel methods
+    #
 
     def getColumnCount(self):
         return len(self.__columns__)
-
-    def getColumnName(self, columnIndex):
-        return self.__columns__[columnIndex][0]
 
     def getRowCount(self):
         return len(self)
@@ -116,11 +65,22 @@ class ListTableModel(AbstractTableModel, list):
     def getValueAt(self, rowIndex, columnIndex):
         return self[rowIndex][columnIndex]
 
+    #
+    # Overridden AbstractTableModel methods
+    #
+
+    def getColumnClass(self, columnIndex):
+        return self.__columns__[columnIndex][1]
+
+    def getColumnName(self, columnIndex):
+        return self.__columns__[columnIndex][0]
+
     def setValueAt(self, aValue, rowIndex, columnIndex):
         self[rowIndex][columnIndex] = aValue
-        self.fireTableCellUpdated(rowIndex, columnIndex)
 
+    #
     # Convenience methods
+    #
 
     def getSelectedRow(self, table):
         """
@@ -160,7 +120,7 @@ class ListTableModel(AbstractTableModel, list):
         """
         assert table.model is self
         visible = []
-        for viewRow in xrange(0, table.rowCount):
+        for viewRow in xrange(table.rowCount):
             modelRow = table.convertRowIndexToModel(viewRow)
             visible.append(self[modelRow])
         return visible
@@ -176,24 +136,30 @@ class ListTableModel(AbstractTableModel, list):
             self.fireTableRowsUpdated(0, len(self) - 1)
 
 
-class ObjectTableModel(ListTableModel):
+class ObjectTableModel(DelegateTableModel):
     """
-    A variant of :class:`ListTableModel` where each row is a single object.
+    A variant of :class:`DelegateTableModel` where each row in the delegate
+    is assumed to be a single object.
+
     Columns are mapped to object attributes.
     The :attr:`__column__` attribute should be a sequence of
     (name, class, attrname) tuples where attrname is the name of the attribute
     the column is mapped to.
 
     """
-    @staticmethod
-    def _validateColumn(column):
-        column = ListTableModel._validateColumn(column)
-        if not isinstance(column[2], basestring):
-            raise ValueError('Column "%s": the attribute name must be a '
-                             'string' % column[0])
-        return column
 
-    # Methods from AbstractTableModel
+    #
+    # Overridden DelegateTableModel methods
+    #
+
+    def _validateColumn(self, column, index):
+        DelegateTableModel._validateColumn(column)
+        if len(column) < 3:
+            raise ValueError('Column %d: missing object attribute name' %
+                             index)
+        if not isinstance(column[2], basestring):
+            raise ValueError('Column %d: object attribute name must be a '
+                             'string' % index)
 
     def getValueAt(self, rowIndex, columnIndex):
         attrname = self.__columns__[columnIndex][2]
@@ -204,7 +170,9 @@ class ObjectTableModel(ListTableModel):
         setattr(self[rowIndex], attrname, aValue)
         self.fireTableCellUpdated(rowIndex, columnIndex)
 
+    #
     # Convenience methods
+    #
 
     def getRowIndex(self, obj):
         """
