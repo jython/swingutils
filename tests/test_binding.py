@@ -1,6 +1,7 @@
 from nose.tools import eq_, raises
 
-from javax.swing import JTextField, JFormattedTextField, JList, JComboBox
+from javax.swing import JTextField, JFormattedTextField, JList, JComboBox,\
+    SpinnerNumberModel, JSpinner
 
 from swingutils.binding import BindingGroup, BindingExpression, \
     BindingWriteError, READ_WRITE, READ_ONCE
@@ -169,3 +170,28 @@ class TestBinding(object):
         eq_(jcombobox.selectedIndex, -1)
         eq_(self.dummy.value, None)
         eq_(dummy2.value, u'Test123')
+
+    def testJSpinner(self):
+        valueDummy = DummyObject()
+        nextValueDummy = DummyObject()
+        prevValueDummy = DummyObject()
+        spinnerModel = SpinnerNumberModel(3, 0, 5, 1)
+        
+        spinner = JSpinner(spinnerModel)
+        self.group.bind(spinner, '${value}', valueDummy, '${value}')
+        self.group.bind(spinner, '${nextValue}', nextValueDummy, '${value}')
+        self.group.bind(spinner, '${previousValue}', prevValueDummy, '${value}')
+
+        eq_(valueDummy.value, 3)
+        eq_(nextValueDummy.value, 4)
+        eq_(prevValueDummy.value, 2)
+
+        spinner.setValue(5)
+        eq_(valueDummy.value, 5)
+        eq_(nextValueDummy.value, None)
+        eq_(prevValueDummy.value, 4)
+
+        spinner.setValue(0)
+        eq_(valueDummy.value, 0)
+        eq_(nextValueDummy.value, 1)
+        eq_(prevValueDummy.value, None)

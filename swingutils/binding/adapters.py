@@ -204,3 +204,14 @@ class JComboBoxAdapter(DefaultPropertyAdapter):
         from java.awt.event import ItemListener
         self.listener = addExplicitEventListener(obj, ItemListener,
             'itemStateChanged', callback, *args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JSpinnerAdapter(DefaultPropertyAdapter):
+    __targetclass__ = 'javax.swing.JSpinner'
+    __targetproperty__ = ('value', 'nextValue', 'previousValue')
+
+    def addListeners(self, obj, callback, *args, **kwargs):
+        from javax.swing.event import ChangeListener
+        self.listener = addExplicitEventListener(obj, ChangeListener,
+            'stateChanged', callback, *args, **kwargs)
