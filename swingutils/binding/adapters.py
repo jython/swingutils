@@ -144,15 +144,20 @@ class JTextComponentAdapter(DefaultPropertyAdapter):
                 event, callback, *args, **kwargs)
             self.docListeners.append(listener)
 
-    def removeListeners(self):
-        DefaultPropertyAdapter.removeListeners(self)
+    def removeDocumentListeners(self):
         for listener in self.docListeners:
             listener.unlisten()
         del self.docListeners[:]
 
+    def removeListeners(self):
+        DefaultPropertyAdapter.removeListeners(self)
+        self.removeDocumentListeners()
+
     def documentChanged(self, event, obj, callback, *args, **kwargs):
-        self.removeListeners()
-        self.addListeners(obj, callback, *args, **kwargs)
+        self.removeDocumentListeners()
+        if event.newValue:
+            self.addDocumentListeners(event.newValue, callback, *args,
+                                      **kwargs)
         callback(*args, **kwargs)
 
 
