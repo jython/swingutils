@@ -179,25 +179,13 @@ class JListAdapter(DefaultPropertyAdapter):
 
     def addListeners(self, obj, callback, *args, **kwargs):
         from javax.swing.event import ListSelectionListener
-        self.listener = addPropertyListener(obj, 'selectionModel',
-            self.selectionModelChanged, obj, callback, *args, **kwargs)
-        self.selectionModeListener = addExplicitEventListener(obj,
-            ListSelectionListener, 'valueChanged', callback, *args, **kwargs)
-
-    def removeListeners(self):
-        DefaultPropertyAdapter.removeListeners(self)
-        if self.selectionModeListener:
-            self.selectionModeListener.unlisten()
-            del self.selectionModeListener
-
-    def selectionModelChanged(self, event, obj, callback, *args, **kwargs):
-        self.removeListeners()
-        self.addListeners(obj, callback, *args, **kwargs)
-        callback(*args, **kwargs)
+        self.listener = addExplicitEventListener(obj,
+            ListSelectionListener, 'valueChanged', self.selectionChanged,
+            callback, *args, **kwargs)
 
     def selectionChanged(self, event, callback, *args, **kwargs):
         if not event.valueIsAdjusting or not self.ignoreAdjusting:
-            callback(*args, **kwargs)
+            callback(event, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
