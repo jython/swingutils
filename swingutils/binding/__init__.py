@@ -195,7 +195,7 @@ class BindingExpression(object):
         self.parts = parts
 
     @classmethod
-    def create(cls, expr, options):
+    def parse(cls, expr, options):
         bindingExpr = cls([])
         bindingExpr.logger = options.get('logger')
         
@@ -298,12 +298,12 @@ class Binding(object):
         if isinstance(sourceExpression, BindingExpression):
             self.sourceExpression = sourceExpression
         else:
-            self.sourceExpression = BindingExpression.create(sourceExpression,
+            self.sourceExpression = BindingExpression.parse(sourceExpression,
                                                              options)
         if isinstance(targetExpression, BindingExpression):
             self.targetExpression = targetExpression
         else:
-            self.targetExpression = BindingExpression.create(targetExpression,
+            self.targetExpression = BindingExpression.parse(targetExpression,
                                                              options)
 
         if self.mode >= READ_ONLY:
