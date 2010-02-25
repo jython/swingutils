@@ -197,6 +197,8 @@ class BindingExpression(object):
     @classmethod
     def create(cls, expr, options):
         bindingExpr = cls([])
+        bindingExpr.logger = options.get('logger')
+        
         pos = 0
         end = max(len(expr) - 1, 0)
         while pos < end:
@@ -248,11 +250,12 @@ class BindingExpression(object):
         results = []
         for part in self.parts:
             if isinstance(part, ExpressionClause):
+                result = None
                 try:
                     result = part.getValue(obj)
-                except (Exception, JavaException), e:
-                    raise BindingReadError('Error evaluating expression '
-                                           '%s: %s' % (part.source, e))
+                except (Exception, JavaException):
+                    self.logger.debug('Error evaluating expression %s',
+                                      part.source, exc_info=True)
                 results.append(result)
             else:
                 results.append(part)
@@ -325,10 +328,11 @@ class Binding(object):
         self._syncing = True
         try:
             value = self.sourceExpression.getValue(self.source)
-            self.logger.debug('Writing source value (%s) to target', repr(value))
+            self.logger.debug('Writing source value (%s) to target',
+                              repr(value))
             self.targetExpression.setValue(self.target, value)
         except (Exception, JavaException):
-            self.logger.exception('Error syncing source -> target')
+            self.logger.debug('Error syncing source -> target', exc_info=True)
         finally:
             self._syncing = False
 
@@ -339,10 +343,11 @@ class Binding(object):
         self._syncing = True
         try:
             value = self.targetExpression.getValue(self.target)
-            self.logger.debug('Writing target value (%s) to source', repr(value))
+            self.logger.debug('Writing target value (%s) to source',
+                              repr(value))
             self.sourceExpression.setValue(self.source, value)
         except (Exception, JavaException):
-            self.logger.exception('Error syncing target -> source')
+            self.logger.debug('Error syncing target -> source', exc_info=True)
         finally:
             self._syncing = False
 
