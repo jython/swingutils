@@ -39,10 +39,16 @@ class BindingReadError(BindingError):
 
 
 class LocalsDict(object):
-    def __init__(self, obj):
+    def __init__(self, obj, includeBuiltin=False):
         self.obj = obj
+        self.extra = {}
+        if includeBuiltin:
+            self.extra['__builtins__'] = __builtin__
 
     def __getitem__(self, key):
+        if key in self.extra:
+            return self.extra[key]
+
         try:
             return getattr(self.obj, key)
         except AttributeError:
@@ -79,14 +85,14 @@ class ClausePart(object):
             self.type_ = self.CODE
             self.item = compile(untokenize(tokens), '$$binding-code$$', 'eval')
 
-    def getValue(self, obj):
+    def getValue(self, obj, globals_):
         if self.type_ == self.PROPERTY:
             return getattr(obj, self.item, None)
 
-        clauseGlobals = {'__builtins__': __builtin__}
+        locals_ = LocalsDict(obj)
         if self.type_ == self.LIST:
-            clauseGlobals['___binding_value'] = obj
-        return eval(self.item, clauseGlobals, {})
+            locals_.extra['___binding_value'] = obj
+        return eval(self.item, globals_, locals_)
 
     def bind(self, obj, callback, *args, **kwargs):
         if self.type_ == self.PROPERTY:
@@ -116,7 +122,8 @@ class ExpressionClause(object):
     def getValue(self, obj):
         if not self.reader:
             self.reader = compile(self.source, '$$binding-reader$$', 'eval')
-        return eval(self.reader, globals(), LocalsDict(obj))
+        globals_ = LocalsDict(obj)
+        return eval(self.reader, globals_, {})
 
     def setValue(self, obj, value):
         if not self.writer:
@@ -170,11 +177,12 @@ class ExpressionClause(object):
         if self.parts is None:
             self._splitExpression()
 
+        globals_ = LocalsDict(obj, True)
         for i, part in enumerate(self.parts[index:]):
             if obj is None:
                 return
             part.bind(obj, self._partChanged, obj, callback, i)
-            obj = part.getValue(obj)
+            obj = part.getValue(obj, globals_)
     
     def unbind(self, index=0):
         if self.parts:
