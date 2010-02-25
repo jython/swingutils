@@ -1,11 +1,12 @@
 from nose.tools import eq_, raises
 
-from javax.swing import JTextField, JFormattedTextField, JList
+from javax.swing import JTextField, JFormattedTextField, JList, JComboBox
 
 from swingutils.binding import BindingGroup, BindingExpression, \
     BindingWriteError, READ_WRITE, READ_ONCE
 from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
+from swingutils.models.combobox import DelegateComboBoxModel
 
 
 class Person(AutoChangeNotifier):
@@ -139,3 +140,32 @@ class TestBinding(object):
         jlist.setSelectedValue(self.person, False)
         eq_(jlist.selectedIndex, 0)
         eq_(self.dummy.value, u'Joe')
+
+    def testJComboBox(self):
+        personList = [self.person]
+        personList.append(Person(u'Mary', u'Mediocre', 1970))
+        personList.append(Person(u'Bob', u'Mediocre', 1972))
+        dummy2 = DummyObject()
+
+        comboBoxModel = DelegateComboBoxModel(personList)
+        jcombobox = JComboBox(model=comboBoxModel, editable=True)
+        self.group.bind(jcombobox, u'${selectedItem.firstName}', self.dummy,
+                        u'${value}')
+        self.group.bind(jcombobox, u'${selectedItem}', dummy2, u'${value}')
+
+        jcombobox.selectedIndex = 1
+        eq_(jcombobox.selectedItem, personList[1])
+        eq_(self.dummy.value, u'Mary')
+
+        jcombobox.selectedIndex = 2
+        eq_(jcombobox.selectedItem, personList[2])
+        eq_(self.dummy.value, u'Bob')
+
+        jcombobox.selectedItem = self.person
+        eq_(jcombobox.selectedIndex, 0)
+        eq_(self.dummy.value, u'Joe')
+
+        jcombobox.selectedItem = u'Test123'
+        eq_(jcombobox.selectedIndex, -1)
+        eq_(self.dummy.value, None)
+        eq_(dummy2.value, u'Test123')
