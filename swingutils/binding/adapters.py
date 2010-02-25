@@ -21,13 +21,18 @@ class AdapterRegistry(object):
         return names
 
     def registerPropertyAdapter(self, cls):
+        classNames = cls.__targetclass__
+        if isinstance(cls.__targetclass__, basestring):
+            classNames = (cls.__targetclass__,)
+
         properties = cls.__targetproperty__
         if isinstance(cls.__targetproperty__, basestring):
             properties = (cls.__targetproperty__,)
 
-        for property in properties:
-            key = (cls.__targetclass__, property)
-            self.propertyAdapters[key] = cls
+        for className in classNames:
+            for property in properties:
+                key = (className, property)
+                self.propertyAdapters[key] = cls
 
         return cls
 
@@ -207,7 +212,7 @@ class JComboBoxAdapter(DefaultPropertyAdapter):
 
 
 @registry.registerPropertyAdapter
-class JSpinnerAdapter(DefaultPropertyAdapter):
+class JSpinnerAdapter(JComboBoxAdapter):
     __targetclass__ = 'javax.swing.JSpinner'
     __targetproperty__ = ('value', 'nextValue', 'previousValue')
 
@@ -215,3 +220,15 @@ class JSpinnerAdapter(DefaultPropertyAdapter):
         from javax.swing.event import ChangeListener
         self.listener = addExplicitEventListener(obj, ChangeListener,
             'stateChanged', callback, *args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JSliderAdapter(JSpinnerAdapter):
+    __targetclass__ = 'javax.swing.JSlider'
+    __targetproperty__ = 'value'
+
+
+@registry.registerPropertyAdapter
+class JProgressBarAdapter(JSpinnerAdapter):
+    __targetclass__ = 'javax.swing.JProgressBar'
+    __targetproperty__ = ('value', 'percentComplete')

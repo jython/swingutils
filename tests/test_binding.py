@@ -1,7 +1,7 @@
 from nose.tools import eq_, raises
 
 from javax.swing import JTextField, JFormattedTextField, JList, JComboBox,\
-    SpinnerNumberModel, JSpinner
+    SpinnerNumberModel, JSpinner, JSlider, JProgressBar
 
 from swingutils.binding import BindingGroup, BindingExpression, \
     BindingWriteError, READ_WRITE, READ_ONCE
@@ -195,3 +195,27 @@ class TestBinding(object):
         eq_(valueDummy.value, 0)
         eq_(nextValueDummy.value, 1)
         eq_(prevValueDummy.value, None)
+
+    def testJSlider(self):
+        slider = JSlider(0, 10, 5)
+        self.group.bind(slider, '${value}', self.dummy, '${value}')
+
+        eq_(self.dummy.value, 5)
+
+        slider.setValue(3)
+        eq_(self.dummy.value, 3)
+
+    def testJProgressBar(self):
+        percentCompleteDummy = DummyObject()
+        
+        progressBar = JProgressBar(0, 10)
+        self.group.bind(progressBar, '${value}', self.dummy, '${value}')
+        self.group.bind(progressBar, '${percentComplete}',
+                        percentCompleteDummy, '${value}')
+
+        eq_(self.dummy.value, 0)
+        eq_(percentCompleteDummy.value, 0)
+
+        progressBar.setValue(2)
+        eq_(self.dummy.value, 2)
+        eq_(percentCompleteDummy.value, 0.2)
