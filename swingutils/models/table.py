@@ -28,6 +28,8 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         (name, type) tuples or column names to the constructor, or provide a
         __columns__ variable in a subclass.
 
+        :param delegate: the list where this table model gets its data from
+
         """
         if args:
             self.__columns__ = args
@@ -82,49 +84,6 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
     # Convenience methods
     #
 
-    def getSelectedRow(self, table):
-        """
-        Returns the selected row, or first selected row if the table has
-        multi-row selection enabled.
-
-        """
-        assert table.model is self
-        if table.selectedRow >= 0:
-            modelRow = table.convertRowIndexToModel(table.selectedRow)
-            return self[modelRow]
-
-    def getSelectedRows(self, table):
-        """
-        Returns rows that have been selected in the given table.
-        This table model must be the given table's model.
-
-        :return: rows that were selected in the given table
-        :rtype: list
-
-        """
-        assert table.model is self
-        selected = []
-        for viewRow in table.selectedRows:
-            modelRow = table.convertRowIndexToModel(viewRow)
-            selected.append(self[modelRow])
-        return selected
-
-    def getVisibleRows(self, table):
-        """
-        Returns rows not hidden by any table filters.
-        This table model must be the given table's model.
-
-        :return: rows that were visible in the given table
-        :rtype: list
-
-        """
-        assert table.model is self
-        visible = []
-        for viewRow in xrange(table.rowCount):
-            modelRow = table.convertRowIndexToModel(viewRow)
-            visible.append(self[modelRow])
-        return visible
-
     def refresh(self):
         """
         Forces a visual refresh for all rows on related tables.
@@ -174,7 +133,7 @@ class ObjectTableModel(DelegateTableModel):
     # Convenience methods
     #
 
-    def getRowIndex(self, obj):
+    def getObjectIndex(self, obj):
         """
         Returns the row number that contains the object that is equal
         to the given object.
@@ -186,3 +145,46 @@ class ObjectTableModel(DelegateTableModel):
             if row == obj:
                 return i
         return -1
+
+    def getSelectedObject(self, table):
+        """
+        Returns the selected object, or first selected object if the table has
+        multi-row selection enabled.
+
+        """
+        assert table.model is self
+        if table.selectedRow >= 0:
+            modelRow = table.convertRowIndexToModel(table.selectedRow)
+            return self[modelRow]
+
+    def getSelectedObjects(self, table):
+        """
+        Returns objects that have been selected in the given table.
+        This table model must be the given table's model.
+
+        :return: objects that were selected in the given table
+        :rtype: list
+
+        """
+        assert table.model is self
+        selected = []
+        for viewRow in table.selectedRows:
+            modelRow = table.convertRowIndexToModel(viewRow)
+            selected.append(self[modelRow])
+        return selected
+
+    def getVisibleObjects(self, table):
+        """
+        Returns objects not hidden by any table filters.
+        This table model must be the given table's model.
+
+        :return: objects that were visible in the given table
+        :rtype: list
+
+        """
+        assert table.model is self
+        visible = []
+        for viewRow in xrange(table.rowCount):
+            modelRow = table.convertRowIndexToModel(viewRow)
+            visible.append(self[modelRow])
+        return visible
