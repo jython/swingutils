@@ -4,42 +4,17 @@ from java.beans import PropertyChangeListener
 
 _wrapperClassMap = {}       # event interface name -> wrapper class
 
-def _findListenerAddMethods(target):
-    """
-    Finds the add*Listener methods in `target`.
-
-    """
-    for attrName in dir(target):
-        if attrName.startswith('add') and attrName.endswith('Listener'):
-            attr = getattr(target, attrName)
-            if hasattr(attr, 'argslist'):
-                yield attr
-
-
-def _findEventInterface(target, event):
-    """
-    Finds the event interface from target's method that contains the `event`
-    method.
-
-    """
-    for method in _findListenerAddMethods(target):
-        for variation in method.argslist:
-            if len(variation.args) == 1:
-                class_ = variation.args[0]
-                if (issubclass(class_, EventListener) and
-                    hasattr(class_, event)):
-                    return class_
-
-
 def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
                            removeMethod):
+    events = (event,) if isinstance(event, basestring) else event
     assert issubclass(eventInterface, EventListener), \
         'event class must be a subclass of EventListener'
-    assert hasattr(eventInterface, event), \
-        '%s has no method named "%s"' % (eventInterface.__name__, event)
     assert hasattr(listener, '__call__'), 'listener must be callable'
+    for event in events:
+        assert hasattr(eventInterface, event), \
+            '%s has no method named "%s"' % (eventInterface.__name__, event)
 
-    # Create a wrapper class for this event class
+    # Create a wrapper class for this event class if one doesn't exist already
     className = eventInterface.__name__
     if not className in _wrapperClassMap:
         wrapperClass = type('%sWrapper' % eventInterface.__name__,
@@ -50,7 +25,8 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
 
     # Create a listener instance and add handleEvent as an instance method
     wrapper = wrapperClass(listener, args, kwargs, removeMethod)
-    setattr(wrapper, event, wrapper.handleEvent)
+    for event in events:
+        setattr(wrapper, event, wrapper.handleEvent)
     return wrapper
 
 
@@ -69,7 +45,7 @@ class EventListenerWrapper(object):
         self.removeMethod(*self.removeMethodArgs)
 
 
-def addExplicitEventListener(target, eventInterface, event, listener,
+def addEventListener(target, eventInterface, event, listener,
                              *args, **kwargs):
     """
     Adds an event listener to `target`.
@@ -79,11 +55,11 @@ def addExplicitEventListener(target, eventInterface, event, listener,
                    class so that autodetection will work)
     :param eventInterface: the interface that the listener wrapper has to
                            implement (e.g. :class:`java.awt.MouseListener`)
-    :param event: name of the event to listen for (e.g. "mouseClicked"
+    :param event: name(s) of the event(s) to listen for (e.g. "mouseClicked")
     :param listener: callable that is called with (event, *args, **kwargs)
                      when the event is fired
     :type eventInterface: Java interface
-    :type event: string
+    :type event: string or an iterable of strings
     :type listener: callable
     :return: the listener wrapper that you can use to stop listening to these
              events (with :meth:`~EventListenerWrapper.unlisten`)
@@ -98,33 +74,7 @@ def addExplicitEventListener(target, eventInterface, event, listener,
     addMethod(wrapper)
     return wrapper
 
-
-def addEventListener(target, event, listener, *args, **kwargs):
-    """
-    Adds an event listener to `target`.
-
-    The appropriate event listener interface is automatically guessed from
-    the name of the event and the declared Java methods on the target type.
-    
-    .. note:: This method is on the order of 200 times slower than
-              :func:`addExplicitEventListener`!
-
-    :param target: the object to add the event listener to
-    :param event: name of the event to listen for (e.g. "mouseClicked")
-    :param listener: callable that is called with (event, *args, **kwargs)
-                     when the event is fired
-    :type target: any type that supports listening to the events of the given
-                  type (the add*Listener methods must be inherited from a Java
-                  class so that autodetection will work)
-    :type event: string
-    :type listener: callable
-    :return: the listener wrapper that you can use to stop listening to these
-             events (with obj.removeXListener())
-
-    """
-    eventInterface = _findEventInterface(target, event)
-    return addExplicitEventListener(target, eventInterface, event, listener,
-                                    *args, **kwargs)
+addExplicitEventListener = addEventListener
 
 
 def addPropertyListener(target, property, listener, *args, **kwargs):
