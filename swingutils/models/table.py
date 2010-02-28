@@ -35,18 +35,19 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         AbstractDelegateList.__init__(self, delegate)
 
         if args:
-            self.__columns__ = args
+            self.__columns__ = list(args)
 
         for index, column in enumerate(self.__columns__):
-            self._validateColumn(column, index)
+            self.__columns__[index] = self._validateColumn(column, index)
 
     def _validateColumn(self, column, index):
         if isinstance(column, basestring):
-            self.__columns__[index] = (column, Object)
+            column = (column, Object)
         if not isinstance(column[0], basestring):
             raise ValueError('Column %d: name must be a string' % index)
         if not isinstance(column[1], type):
             raise ValueError('Column %d: type must be a type object' % index)
+        return column
 
     def _fireItemsChanged(self, start, end):
         self.fireTableRowsUpdated(self, start, end)
@@ -115,13 +116,14 @@ class ObjectTableModel(DelegateTableModel):
     #
 
     def _validateColumn(self, column, index):
-        DelegateTableModel._validateColumn(column)
+        column = DelegateTableModel._validateColumn(self, column, index)
         if len(column) < 3:
             raise ValueError('Column %d: missing object attribute name' %
                              index)
         if not isinstance(column[2], basestring):
             raise ValueError('Column %d: object attribute name must be a '
                              'string' % index)
+        return column
 
     def getValueAt(self, rowIndex, columnIndex):
         attrname = self.__columns__[columnIndex][2]
