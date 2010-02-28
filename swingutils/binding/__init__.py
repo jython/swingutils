@@ -98,10 +98,10 @@ class ClausePart(object):
         if self.type_ == self.PROPERTY:
             self.adapter = registry.getPropertyAdapter(obj, self.item,
                                                        self.options)
-            self.adapter.addListeners(obj, callback, *args, **kwargs)
+            self.adapter.addListeners(obj, callback, args, kwargs)
         elif self.type_ == self.LIST:
             self.adapter = registry.getListAdapter(obj, self.options)
-            self.adapter.addListeners(obj, callback, *args, **kwargs)
+            self.adapter.addListeners(obj, callback, args, kwargs)
 
     def unbind(self):
         if self.adapter:
