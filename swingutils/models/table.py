@@ -31,6 +31,9 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         :param delegate: the list where this table model gets its data from
 
         """
+        AbstractTableModel.__init__(self)
+        AbstractDelegateList.__init__(self, delegate)
+
         if args:
             self.__columns__ = args
 
