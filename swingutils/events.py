@@ -74,8 +74,6 @@ def addEventListener(target, eventInterface, event, listener,
     addMethod(wrapper)
     return wrapper
 
-addExplicitEventListener = addEventListener
-
 
 def addPropertyListener(target, property, listener, *args, **kwargs):
     """

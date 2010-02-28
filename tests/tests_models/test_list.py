@@ -3,7 +3,7 @@ from javax.swing.event import ListDataEvent, ListDataListener
 from nose.tools import eq_
 
 from swingutils.models.list import DelegateListModel
-from swingutils.events import addExplicitEventListener
+from swingutils.events import addEventListener
 
 
 class TestListModel(object):
@@ -24,7 +24,7 @@ class TestListModel(object):
 
     def testDelItem(self):
         result = [None]
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'intervalRemoved', self.intervalRemoved, result)
 
         self.model.append('TEST')
@@ -43,7 +43,7 @@ class TestListModel(object):
 
     def testDelSlice(self):
         result = [None]
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'intervalRemoved', self.intervalRemoved, result)
 
         self.model.append('TEST')
@@ -62,7 +62,7 @@ class TestListModel(object):
 
     def testAppend(self):
         result = [None]
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
                                  'intervalAdded', self.intervalAdded, result)
 
         self.model.append(u'Test')
@@ -91,7 +91,7 @@ class TestListModel(object):
         eq_(self.model[0], u'Test')
         eq_(self.model[1], u'Test3')
 
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
                                  'intervalAdded', self.intervalAdded, result)
 
         self.model.insert(1, 'Test2')
@@ -116,7 +116,7 @@ class TestListModel(object):
 
     def testExtend(self):
         result = [None]
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
                                  'intervalAdded', self.intervalAdded, result)
 
         self.model.extend([u'Test', 'Test2', 678])
@@ -145,9 +145,9 @@ class TestListModel(object):
         result2 = [None]
         self.model.extend([u'Test', 'Test2', 678])
 
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'contentsChanged', self.contentsChanged, result1)
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'intervalAdded', self.intervalAdded, result2)
 
         self.model[2:4] = ['abc', 'xyz', 'foo']
@@ -172,9 +172,9 @@ class TestListModel(object):
         result2 = [None]
         self.model.extend([u'Test', 'Test2', 678])
 
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'contentsChanged', self.contentsChanged, result1)
-        addExplicitEventListener(self.model, ListDataListener,
+        addEventListener(self.model, ListDataListener,
             'intervalRemoved', self.intervalRemoved, result2)
 
         self.model[:] = ['abc', 'xyz']

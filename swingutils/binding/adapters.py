@@ -1,4 +1,4 @@
-from swingutils.events import addPropertyListener, addExplicitEventListener
+from swingutils.events import addPropertyListener, addEventListener
 
 
 class AdapterRegistry(object):
@@ -99,7 +99,7 @@ class ItemSelectableAdapter(DefaultPropertyAdapter):
 
     def addListeners(self, obj, callback, *args, **kwargs):
         from java.awt.event import ItemListener
-        self.listener = addExplicitEventListener(obj, ItemListener,
+        self.listener = addEventListener(obj, ItemListener,
             'itemStateChanged', callback, *args, **kwargs)
 
 
@@ -134,13 +134,13 @@ class JTextComponentAdapter(DefaultPropertyAdapter):
 
     def addFocusListener(self, obj, callback, *args, **kwargs):
         from java.awt.event import FocusListener
-        self.listener = addExplicitEventListener(obj, FocusListener,
+        self.listener = addEventListener(obj, FocusListener,
             'focusLost', callback, *args, **kwargs)
 
     def addDocumentListeners(self, document, callback, *args, **kwargs):
         from javax.swing.event import DocumentListener
         for event in (u'changedUpdate', u'insertUpdate', u'removeUpdate'):
-            listener = addExplicitEventListener(document, DocumentListener,
+            listener = addEventListener(document, DocumentListener,
                 event, callback, *args, **kwargs)
             self.docListeners.append(listener)
 
@@ -182,7 +182,7 @@ class JListAdapter(DefaultPropertyAdapter):
 
     def addListeners(self, obj, callback, *args, **kwargs):
         from javax.swing.event import ListSelectionListener
-        self.listener = addExplicitEventListener(obj,
+        self.listener = addEventListener(obj,
             ListSelectionListener, 'valueChanged', self.selectionChanged,
             callback, *args, **kwargs)
 
@@ -217,7 +217,7 @@ class JTableRowSelectionAdapter(DefaultPropertyAdapter):
 
     def addSelectionListener(self, obj, callback, *args, **kwargs):
         from javax.swing.event import ListSelectionListener
-        self.selectionListener = addExplicitEventListener(
+        self.selectionListener = addEventListener(
             obj.selectionModel, ListSelectionListener, 'valueChanged',
             self.selectionChanged, callback, *args, **kwargs)
 
@@ -264,7 +264,7 @@ class JTableColumnSelectionAdapter(DefaultPropertyAdapter):
 
     def addSelectionListener(self, obj, callback, *args, **kwargs):
         from javax.swing.event import ListSelectionListener
-        self.selectionListener = addExplicitEventListener(
+        self.selectionListener = addEventListener(
             obj.columnModel.selectionModel, ListSelectionListener,
             'valueChanged', self.selectionChanged, callback, *args, **kwargs)
 
@@ -292,8 +292,8 @@ class JComboBoxAdapter(DefaultPropertyAdapter):
 
     def addListeners(self, obj, callback, *args, **kwargs):
         from java.awt.event import ItemListener
-        self.listener = addExplicitEventListener(obj, ItemListener,
-            'itemStateChanged', callback, *args, **kwargs)
+        self.listener = addEventListener(obj, ItemListener, 'itemStateChanged',
+                                         callback, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -303,8 +303,8 @@ class JSpinnerAdapter(JComboBoxAdapter):
 
     def addListeners(self, obj, callback, *args, **kwargs):
         from javax.swing.event import ChangeListener
-        self.listener = addExplicitEventListener(obj, ChangeListener,
-            'stateChanged', callback, *args, **kwargs)
+        self.listener = addEventListener(obj, ChangeListener, 'stateChanged',
+                                         callback, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
