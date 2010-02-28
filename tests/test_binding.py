@@ -1,13 +1,19 @@
-from nose.tools import eq_, raises
+from jarray import array
 
-from javax.swing import JTextField, JFormattedTextField, JList, JComboBox,\
-    SpinnerNumberModel, JSpinner, JSlider, JProgressBar
+from java.lang import String, Integer
+from javax.swing import JTextField, JFormattedTextField, JList, JComboBox, \
+    SpinnerNumberModel, JSpinner, JSlider, JProgressBar, JTable, \
+    DefaultListSelectionModel
+from javax.swing.table import DefaultTableColumnModel, TableColumn
+
+from nose.tools import eq_, raises
 
 from swingutils.binding import BindingGroup, BindingExpression, \
     BindingWriteError, READ_WRITE, READ_ONCE
 from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
+from swingutils.models.table import ObjectTableModel
 
 
 class Person(AutoChangeNotifier):
@@ -124,7 +130,7 @@ class TestBinding(object):
         personList = [self.person]
         personList.append(Person(u'Mary', u'Mediocre', 1970))
         personList.append(Person(u'Bob', u'Mediocre', 1972))
-        
+
         listModel = DelegateListModel(personList)
         jlist = JList(listModel)
         self.group.bind(jlist, u'${selectedValue.firstName}', self.dummy,
@@ -141,6 +147,56 @@ class TestBinding(object):
         jlist.setSelectedValue(self.person, False)
         eq_(jlist.selectedIndex, 0)
         eq_(self.dummy.value, u'Joe')
+
+    def testJTableRows(self):
+        personList = [self.person]
+        personList.append(Person(u'Mary', u'Mediocre', 1970))
+        personList.append(Person(u'Bob', u'Mediocre', 1972))
+
+        tableModel = ObjectTableModel(personList)
+        table = JTable(tableModel)
+        self.group.bind(table, u'${selectedRows}', self.dummy, u'${value}')
+
+        table.setRowSelectionInterval(1, 1)
+        eq_(tableModel.getSelectedObject(table), personList[1])
+        eq_(self.dummy.value, array([1], 'i'))
+
+        table.setRowSelectionInterval(2, 2)
+        eq_(tableModel.getSelectedObject(table), personList[2])
+        eq_(self.dummy.value, array([2], 'i'))
+
+        table.setRowSelectionInterval(0, 1)
+        eq_(tableModel.getSelectedObjects(table), [self.person, personList[1]])
+        eq_(self.dummy.value, array([0, 1], 'i'))
+
+        table.selectionModel = DefaultListSelectionModel()
+        eq_(self.dummy.value, array([], 'i'))
+
+    def testJTableColumns(self):
+        personList = [self.person]
+        personList.append(Person(u'Mary', u'Mediocre', 1970))
+        personList.append(Person(u'Bob', u'Mediocre', 1972))
+
+        tableModel = ObjectTableModel(personList,
+                                      (u'First name', String, 'firstName'),
+                                      (u'Last name', String, 'lastName'),
+                                      (u'Birth year', Integer, 'birthYear'))
+        table = JTable(tableModel)
+        self.group.bind(table, u'${selectedColumns}', self.dummy, u'${value}')
+
+        table.setColumnSelectionInterval(1, 1)
+        eq_(self.dummy.value, array([1], 'i'))
+
+        table.setColumnSelectionInterval(1, 2)
+        eq_(self.dummy.value, array([1, 2], 'i'))
+
+        columnModel = DefaultTableColumnModel()
+        columnModel.addColumn(TableColumn())
+        columnModel.addColumn(TableColumn())
+        table.setColumnModel(columnModel)
+
+        table.setColumnSelectionInterval(0, 1)
+        eq_(self.dummy.value, array([0, 1], 'i'))
 
     def testJComboBox(self):
         personList = [self.person]
@@ -176,7 +232,7 @@ class TestBinding(object):
         nextValueDummy = DummyObject()
         prevValueDummy = DummyObject()
         spinnerModel = SpinnerNumberModel(3, 0, 5, 1)
-        
+
         spinner = JSpinner(spinnerModel)
         self.group.bind(spinner, '${value}', valueDummy, '${value}')
         self.group.bind(spinner, '${nextValue}', nextValueDummy, '${value}')
@@ -207,7 +263,7 @@ class TestBinding(object):
 
     def testJProgressBar(self):
         percentCompleteDummy = DummyObject()
-        
+
         progressBar = JProgressBar(0, 10)
         self.group.bind(progressBar, '${value}', self.dummy, '${value}')
         self.group.bind(progressBar, '${percentComplete}',

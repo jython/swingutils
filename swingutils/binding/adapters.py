@@ -176,8 +176,6 @@ class JListAdapter(DefaultPropertyAdapter):
                           'leadSelectionIndex', 'anchorSelectionIndex',
                           'maxSelectionIndex', 'minSelectionIndex')
 
-    selectionModeListener = None
-
     def __init__(self, property, options):
         DefaultPropertyAdapter.__init__(self, property, options)
         self.ignoreAdjusting = options.get('ignoreAdjusting', True)
@@ -190,6 +188,100 @@ class JListAdapter(DefaultPropertyAdapter):
 
     def selectionChanged(self, event, callback, *args, **kwargs):
         if not event.valueIsAdjusting or not self.ignoreAdjusting:
+            callback(event, *args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JTableRowSelectionAdapter(DefaultPropertyAdapter):
+    """
+    Adapter for row selection attributes on :class:`javax.swing.JTable`.
+
+    :ivar ignoreAdjusting: ``True`` if the callback should only be called
+        when the selection list has finished adjusting.
+        Default is ``True``.
+
+    """
+    __targetclass__ = 'javax.swing.JTable'
+    __targetproperty__ = ('selectedRow', 'selectedRows', 'selectedRowCount')
+
+    selectionListener = None
+
+    def __init__(self, property, options):
+        DefaultPropertyAdapter.__init__(self, property, options)
+        self.ignoreAdjusting = options.get('ignoreAdjusting', True)
+
+    def addListeners(self, obj, callback, *args, **kwargs):
+        self.listener = addPropertyListener(obj, 'selectionModel',
+            self.selectionModelChanged, obj, callback, *args, **kwargs)
+        self.addSelectionListener(obj, callback, *args, **kwargs)
+
+    def addSelectionListener(self, obj, callback, *args, **kwargs):
+        from javax.swing.event import ListSelectionListener
+        self.selectionListener = addExplicitEventListener(
+            obj.selectionModel, ListSelectionListener, 'valueChanged',
+            self.selectionChanged, callback, *args, **kwargs)
+
+    def removeListeners(self):
+        DefaultPropertyAdapter.removeListeners(self)
+        if self.selectionListener:
+            self.selectionListener.unlisten()
+
+    def selectionModelChanged(self, event, obj, callback, *args, **kwargs):
+        if self.selectionListener:
+            self.selectionListener.unlisten()
+        self.selectionChanged(None, callback, *args, **kwargs)
+        self.addSelectionListener(obj, callback, *args, **kwargs)
+
+    def selectionChanged(self, event, callback, *args, **kwargs):
+        if not event or not event.valueIsAdjusting or not self.ignoreAdjusting:
+            callback(event, *args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JTableColumnSelectionAdapter(DefaultPropertyAdapter):
+    """
+    Adapter for row selection attributes on :class:`javax.swing.JTable`.
+
+    :ivar ignoreAdjusting: ``True`` if the callback should only be called
+        when the selection list has finished adjusting.
+        Default is ``True``.
+
+    """
+    __targetclass__ = 'javax.swing.JTable'
+    __targetproperty__ = ('selectedColumn', 'selectedColumns',
+                          'selectedColumnCount')
+
+    selectionListener = None
+
+    def __init__(self, property, options):
+        DefaultPropertyAdapter.__init__(self, property, options)
+        self.ignoreAdjusting = options.get('ignoreAdjusting', True)
+
+    def addListeners(self, obj, callback, *args, **kwargs):
+        self.listener = addPropertyListener(obj, 'columnModel',
+            self.columnModelChanged, obj, callback, *args, **kwargs)
+        self.addSelectionListener(obj, callback, *args, **kwargs)
+
+    def addSelectionListener(self, obj, callback, *args, **kwargs):
+        from javax.swing.event import ListSelectionListener
+        self.selectionListener = addExplicitEventListener(
+            obj.columnModel.selectionModel, ListSelectionListener,
+            'valueChanged', self.selectionChanged, callback, *args, **kwargs)
+
+    def removeListeners(self):
+        DefaultPropertyAdapter.removeListeners(self)
+        if self.selectionListener:
+            self.selectionListener.unlisten()
+
+    def columnModelChanged(self, event, obj, callback, *args, **kwargs):
+        if self.selectionListener:
+            self.selectionListener.unlisten()
+            del self.selectionListener
+        self.selectionChanged(None, callback, *args, **kwargs)
+        self.addSelectionListener(obj, callback, *args, **kwargs)
+
+    def selectionChanged(self, event, callback, *args, **kwargs):
+        if not event or not event.valueIsAdjusting or not self.ignoreAdjusting:
             callback(event, *args, **kwargs)
 
 
