@@ -62,47 +62,65 @@ class AdapterRegistry(object):
         targetClassNames.sort()
 
         # Find the nearest matching adapter for this class
-        adapterClass = None
+        adapterClass = DefaultListAdapter
         for className in targetClassNames:
             if className in self.listAdapters:
                 adapterClass = self.listAdapters[className]
                 break
 
-        if adapterClass:
-            return adapterClass(options)
+        return adapterClass(options)
 
 registry = AdapterRegistry()
 
 
-class BaseAdapter(object):
+class BindingAdapter(object):
     __slots__ = ('listeners')
 
-    def __init__(self, options, size):
+    def __init__(self, options, size=1):
         self.listeners = [None] * size
 
+    def addListeners(self, parent, callback, args, kwargs):
+        pass
+
     def removeListeners(self, index=0):
-        for index, listener in enumerate(self.listeners[index:]):
-            if listener is not None:
-                listener.unlisten()
-                self.listeners[index] = None
+        for i in xrange(index, len(self.listeners)):
+            if self.listeners[i] is not None:
+                self.listeners[i].unlisten()
+                self.listeners[i] = None
+
+    def getValue(self, parent):
+        raise NotImplementedError
+
+    def setValue(self, parent, value):
+        raise NotImplementedError
 
 
-class DefaultPropertyAdapter(BaseAdapter):
+class DefaultPropertyAdapter(BindingAdapter):
     __slots__ = ('property')
 
     def __init__(self, property, options, size=1):
-        BaseAdapter.__init__(self, options, size)
+        BindingAdapter.__init__(self, options, size)
         self.property = property
 
     def addListeners(self, parent, callback, args, kwargs):
         self.listeners[0] = addPropertyListener(parent, self.property,
                                                 callback, *args, **kwargs)
 
-    def getValue(self, obj):
-        return getattr(obj, self.property, None)
+    def getValue(self, parent):
+        return getattr(parent, self.property, None)
 
-    def setValue(self, obj, value):
-        setattr(obj, self.property, value)
+    def setValue(self, parent, value):
+        setattr(parent, self.property, value)
+
+
+class DefaultListAdapter(BindingAdapter):
+    __slots__ = ()
+
+    def getValue(self, parent, index):
+        return parent[index]
+
+    def setValue(self, parent, index, value):
+        parent[index] = value
 
 
 @registry.registerPropertyAdapter
@@ -291,9 +309,9 @@ class JComboBoxAdapter(DefaultPropertyAdapter):
     __targetclass__ = 'javax.swing.JComboBox'
     __targetproperty__ = ('selectedItem', 'selectedIndex', 'selectedObjects')
 
-    def addListeners(self, obj, callback, args, kwargs):
+    def addListeners(self, parent, callback, args, kwargs):
         from java.awt.event import ItemListener
-        self.listeners[0] = addEventListener(obj, ItemListener,
+        self.listeners[0] = addEventListener(parent, ItemListener,
             'itemStateChanged', callback, *args, **kwargs)
 
 
