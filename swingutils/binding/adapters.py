@@ -70,6 +70,21 @@ class AdapterRegistry(object):
 
         return adapterClass(options)
 
+    def dumpAdapters(self):
+        """Prints a list of all registered adapters to standard output."""
+        
+        print 'Registered property adapters:'
+        for key in sorted(self.propertyAdapters.keys()):
+            adapter = self.propertyAdapters[key]
+            print '* %s (class=%s property=%s)' % (adapter.__name__, key[0],
+                                                   key[1])
+
+        print
+        print 'Registered list adapters:'
+        for key in sorted(self.listAdapters.keys()):
+            adapter = self.listAdapters[key]
+            print '* %s (class=%s)' % (adapter, key)
+
 registry = AdapterRegistry()
 
 
