@@ -8,8 +8,8 @@ from javax.swing.table import DefaultTableColumnModel, TableColumn
 
 from nose.tools import eq_, raises
 
-from swingutils.binding import BindingGroup, BindingExpression, \
-    BindingWriteError, READ_WRITE, READ_ONCE
+from swingutils.binding import BindingGroup, Binding, BindingWriteError, \
+    READ_WRITE, READ_ONCE
 from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
@@ -32,30 +32,30 @@ class TestExpressions(object):
         self.person = Person(u'Joe', u'Average', 1970)
 
     def testReadSimpleProperty(self):
-        expr = BindingExpression.parse(u'${birthYear}', {})
+        expr = Binding.parseExpression(u'${birthYear}', {})
         value = expr.getValue(self.person)
         eq_(value, 1970)
 
     def testReadCompoundProperty(self):
-        expr = BindingExpression.parse(
+        expr = Binding.parseExpression(
             u'${firstName} ${lastName}, ${birthYear}', {})
         eq_(expr.getValue(self.person), u'Joe Average, 1970')
 
     def testReadJoinedProperty(self):
-        expr1 = BindingExpression.parse(u'${firstName} ', {})
-        expr2 = BindingExpression.parse(u'${lastName}, ', {})
-        expr3 = BindingExpression.parse(u'${birthYear}', {})
+        expr1 = Binding.parseExpression(u'${firstName} ', {})
+        expr2 = Binding.parseExpression(u'${lastName}, ', {})
+        expr3 = Binding.parseExpression(u'${birthYear}', {})
         expr = expr1 + expr2 + expr3
         eq_(expr.getValue(self.person), u'Joe Average, 1970')
 
     def testWriteSimpleProperty(self):
-        expr = BindingExpression.parse(u'${birthYear}', {})
+        expr = Binding.parseExpression(u'${birthYear}', {})
         expr.setValue(self.person, 1980)
         eq_(self.person.birthYear, 1980)
 
     @raises(BindingWriteError)
     def testWriteCompoundProperty(self):
-        expr = BindingExpression.parse(
+        expr = Binding.parseExpression(
             u'${firstName} ${lastName}, ${birthYear}', {})
         expr.setValue(self.person, u'Joe Average, 1980')
 

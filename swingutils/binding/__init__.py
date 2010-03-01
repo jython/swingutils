@@ -6,7 +6,7 @@ and this is provided by a collection of adapters. Adapters are used
 automatically when a matching object is encountered.
 
 """
-from cStringIO import StringIO
+from StringIO import StringIO
 from tokenize import generate_tokens, TokenError, untokenize
 import __builtin__
 import logging
@@ -109,7 +109,7 @@ class ClausePart(object):
             del self.adapter
 
 
-class ExpressionClause(object):
+class BindingExpression(object):
     reader = None
     writer = None
     parts = None
@@ -118,22 +118,9 @@ class ExpressionClause(object):
         self.source = source
         self.tokens = tokens
         self.options = options
+        self.logger = options.get('logger')
 
-    def getValue(self, obj):
-        if not self.reader:
-            self.reader = compile(self.source, '$$binding-reader$$', 'eval')
-        globals_ = LocalsDict(obj)
-        return eval(self.reader, globals_, {})
-
-    def setValue(self, obj, value):
-        if not self.writer:
-            self.writer = compile('%s=___binding_value' % self.source,
-                                  '$$binding-writer$$', 'exec')
-        writerGlobals = globals().copy()
-        writerGlobals['___binding_value'] = value
-        exec(self.writer, writerGlobals, LocalsDict(obj))
-
-    def _splitExpression(self):
+    def _parseExpression(self):
         """Breaks the given expression into parts for event listening."""
         self.parts = []
         storedTokens = []
@@ -173,9 +160,33 @@ class ExpressionClause(object):
         self.bind(obj, callback, index + 1)
         callback(self.source)
 
+    def getValue(self, obj):
+        if not self.reader:
+            self.reader = compile(self.source, '$$binding-reader$$', 'eval')
+
+        try:
+            globals_ = LocalsDict(obj)
+            return eval(self.reader, globals_, {})
+        except (Exception, JavaException):
+            self.logger.debug('Error evaluating expression %s',
+                              self.source, exc_info=True)
+
+    def setValue(self, obj, value):
+        if not self.writer:
+            self.writer = compile('%s=___binding_value' % self.source,
+                                  '$$binding-writer$$', 'exec')
+
+        try:
+            writerGlobals = globals().copy()
+            writerGlobals['___binding_value'] = value
+            exec(self.writer, writerGlobals, LocalsDict(obj))
+        except (Exception, JavaException):
+            self.logger.debug('Error writing to expression %s',
+                              self.source, exc_info=True)
+
     def bind(self, obj, callback, index=0):
         if self.parts is None:
-            self._splitExpression()
+            self._parseExpression()
 
         globals_ = LocalsDict(obj, True)
         for i, part in enumerate(self.parts[index:]):
@@ -183,22 +194,89 @@ class ExpressionClause(object):
                 return
             part.bind(obj, self._partChanged, obj, callback, i)
             obj = part.getValue(obj, globals_)
-    
+
     def unbind(self, index=0):
         if self.parts:
             for part in self.parts[index:]:
                 part.unbind()
 
 
-class BindingExpression(object):
+class CompoundBindingExpression(object):
     def __init__(self, parts):
         self.parts = parts
 
-    @classmethod
-    def parse(cls, expr, options):
-        bindingExpr = cls([])
-        bindingExpr.logger = options.get('logger')
+    def __add__(self, expr):
+        if isinstance(expr, CompoundBindingExpression):
+            return CompoundBindingExpression(self.parts + expr.parts)
+        if isinstance(expr, BindingExpression):
+            return CompoundBindingExpression(self.parts + [expr])
+        if isinstance(expr, basestring):
+            return CompoundBindingExpression(self.parts + [unicode(expr)])
+
+    def getValue(self, obj):
+        buffer = StringIO()
+        for part in self.parts:
+            if isinstance(part, unicode):
+                buffer.write(part)
+            else:
+                result = part.getValue(obj)
+                if result is not None:
+                    buffer.write(unicode(result))
+
+        return buffer.getvalue()
+
+    def setValue(self, obj, value):
+        raise BindingWriteError('Cannot write to a compound expression')
+
+    def bind(self, obj, callback):
+        for part in self.parts:
+            if not isinstance(part, basestring):
+                part.bind(obj, callback)
+
+    def unbind(self):
+        for part in self.parts:
+            if not isinstance(part, basestring):
+                part.unbind()
+
+
+class Binding(object):
+    # Flag that prevents infinite loops
+    _syncing = False
+
+    def __init__(self, source, sourceExpression, target, targetExpression,
+                 options):
+        self.logger = options.get('logger')
+        self.mode = options.get('mode')
+        self.source = source
+        self.target = target
+
+        if isinstance(sourceExpression, BindingExpression):
+            self.sourceExpression = sourceExpression
+        else:
+            self.sourceExpression = self.parseExpression(sourceExpression,
+                                                         options)
+        if isinstance(targetExpression, BindingExpression):
+            self.targetExpression = targetExpression
+        else:
+            self.targetExpression = self.parseExpression(targetExpression,
+                                                         options)
+
+        if self.mode >= READ_ONLY:
+            self.sourceExpression.bind(source, self.sourceChanged)
+        if self.mode == READ_WRITE:
+            self.targetExpression.bind(target, self.targetChanged)
+
+    @staticmethod
+    def parseExpression(expr, options):
+        """
+        Parses the given expression into one or more BindingExpressions
+        using the given options and returns the appropriate result.
         
+        :type expr: str or unicode
+        :rtype: CompoundBindingExpression, BindingExpression or None
+
+        """
+        parts = []
         pos = 0
         end = max(len(expr) - 1, 0)
         while pos < end:
@@ -208,7 +286,7 @@ class BindingExpression(object):
 
             # Store any plain text leading up to this expression
             if newpos > pos:
-                bindingExpr.parts.append(expr[pos:newpos])
+                parts.append(unicode(expr[pos:newpos]))
 
             # Find the matching }, taking nested {} into account
             expr_buf = StringIO(expr[newpos + 2:])
@@ -230,88 +308,21 @@ class BindingExpression(object):
                 raise Exception('Unmatched }: %s' % expr[newpos:])
 
             # Create the expression clause
-            source = expr_buf.value[:expr_end]
-            clause = ExpressionClause(source, tokens, options)
-            bindingExpr.parts.append(clause)
+            source = expr_buf.getvalue()[:expr_end]
+            bindExpr = BindingExpression(source, tokens, options)
+            parts.append(bindExpr)
             pos = newpos + expr_end + 3
             continue
 
         # The rest is plain text
         leftover = expr[pos:]
         if leftover:
-            bindingExpr.parts.append(expr[pos:])
+            parts.append(unicode(expr[pos:]))
 
-        return bindingExpr
-
-    def __add__(self, expr):
-        return BindingExpression(self.parts + expr.parts)
-
-    def getValue(self, obj):
-        results = []
-        for part in self.parts:
-            if isinstance(part, ExpressionClause):
-                result = None
-                try:
-                    result = part.getValue(obj)
-                except (Exception, JavaException):
-                    self.logger.debug('Error evaluating expression %s',
-                                      part.source, exc_info=True)
-                results.append(result)
-            else:
-                results.append(part)
-
-        # Always return a string if the expression contains more than one part,
-        # otherwise return the result as is, or None
-        if len(self.parts) == 1:
-            return results[0] if results else None
-
-        return u''.join([unicode(r) for r in results])
-
-    def setValue(self, obj, value):
-        if len(self.parts) > 1:
-            raise BindingWriteError('Cannot write to a compound expression')
-        if not isinstance(self.parts[0], ExpressionClause):
-            raise BindingWriteError('Cannot write to a plain-string expression')
-        self.parts[0].setValue(obj, value)
-
-    def bind(self, obj, callback):
-        for part in self.parts:
-            if isinstance(part, ExpressionClause):
-                part.bind(obj, callback)
-
-    def unbind(self):
-        for part in self.parts:
-            if isinstance(part, ExpressionClause):
-                part.unbind()
-
-
-class Binding(object):
-    # Flag that prevents infinite loops
-    _syncing = False
-
-    def __init__(self, source, sourceExpression, target, targetExpression,
-                 options):
-        self.logger = options.get('logger')
-        self.mode = options.get('mode')
-        self.source = source
-        self.target = target
-        if isinstance(sourceExpression, BindingExpression):
-            self.sourceExpression = sourceExpression
-        else:
-            self.sourceExpression = BindingExpression.parse(sourceExpression,
-                                                             options)
-        if isinstance(targetExpression, BindingExpression):
-            self.targetExpression = targetExpression
-        else:
-            self.targetExpression = BindingExpression.parse(targetExpression,
-                                                             options)
-
-        if self.mode >= READ_ONLY:
-            self.sourceExpression.bind(source, self.sourceChanged)
-        if self.mode == READ_WRITE:
-            self.targetExpression.bind(target, self.targetChanged)
-        
-        self.syncSourceToTarget()
+        if len(parts) > 1:
+            return CompoundBindingExpression(parts)
+        elif len(parts) == 1:
+            return parts[0]
 
     def sourceChanged(self, source):
         self.logger.debug('Source (%s) changed', source)
@@ -375,6 +386,7 @@ class BindingGroup(object):
         combined_opts.update(options)
         b = Binding(source, source_expr, target, target_expr, combined_opts)
         self.bindings.append(b)
+        b.syncSourceToTarget()
 
     def unbind(self):
         for b in self.bindings:
