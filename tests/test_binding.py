@@ -8,8 +8,7 @@ from javax.swing.table import DefaultTableColumnModel, TableColumn
 
 from nose.tools import eq_
 
-from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, \
-    MANUAL 
+from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, MANUAL 
 from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel

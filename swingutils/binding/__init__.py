@@ -49,10 +49,10 @@ class BindingExpression(object):
     writer = None
     chains = None
 
-    def __init__(self, root, source, options=None):
+    def __init__(self, root, source, **options):
         self.root = root
         self.source = source
-        self.options = options or {}
+        self.options = options
         self.globalsDict = LocalsProxy(root, True, self.options)
         self.localsDict = LocalsProxy(root, False, self.options)
 
@@ -95,7 +95,7 @@ class Binding(object):
     _syncing = False
 
     def __init__(self, source, sourceExpression, target, targetExpression,
-                 options):
+                 **options):
         self.logger = options.get('logger')
         self.mode = options.get('mode')
         self.ignoreErrors = options.get('ignoreErrors')
@@ -105,12 +105,12 @@ class Binding(object):
             self.sourceExpression = sourceExpression
         else:
             self.sourceExpression = BindingExpression(source, sourceExpression,
-                                                      options)
+                                                      **options)
         if isinstance(targetExpression, BindingExpression):
             self.targetExpression = targetExpression
         else:
             self.targetExpression = BindingExpression(target, targetExpression,
-                                                      options)
+                                                      **options)
 
     def sourceChanged(self):
         if self.logger:
@@ -221,7 +221,7 @@ class BindingGroup(object):
         """
         combined_opts = self.options.copy()
         combined_opts.update(options)
-        b = Binding(source, source_expr, target, target_expr, combined_opts)
+        b = Binding(source, source_expr, target, target_expr, **combined_opts)
         self.bindings.append(b)
         b.bind()
         if b.mode != MANUAL:
