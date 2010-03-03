@@ -8,7 +8,6 @@ automatically when a matching object is encountered.
 """
 from StringIO import StringIO
 import __builtin__
-import logging
 
 from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
@@ -18,23 +17,6 @@ from swingutils.binding.parser import createChains
 MANUAL = 0
 ONEWAY = 1
 TWOWAY = 2
-
-
-class BindingError(Exception):
-    """Base class for all binding exceptions."""
-
-
-class BindingWriteError(BindingError):
-    """Raised when there is an error writing to a binding expression."""
-    def __init__(self, message):
-        BindingError.__init__(self, message)
-
-
-class BindingReadError(BindingError):
-    """Raised when there is an error reading from a binding expression."""
-    def __init__(self, message):
-        BindingError.__init__(self, message)
-
 
 class LocalsProxy(object):
     def __init__(self, obj, builtins, options, **kwargs):
@@ -103,6 +85,12 @@ class BindingExpression(object):
 
 
 class Binding(object):
+    """
+    Holds two expressions -- target and source, and manages synchronization
+    between them.
+
+    """
+
     # Flag that prevents infinite loops
     _syncing = False
 
@@ -111,6 +99,7 @@ class Binding(object):
         self.logger = options.get('logger')
         self.mode = options.get('mode')
         self.ignoreErrors = options.get('ignoreErrors')
+        self.errorValue = options.get('errorValue')
 
         if isinstance(sourceExpression, BindingExpression):
             self.sourceExpression = sourceExpression
@@ -124,14 +113,25 @@ class Binding(object):
                                                       options)
 
     def sourceChanged(self):
-        self.logger.debug(u'Source (%s) changed', self.sourceExpression.source)
+        if self.logger:
+            self.logger.debug(u'Source (%s) changed',
+                              self.sourceExpression.source)
         self.sync(False)
 
     def targetChanged(self):
-        self.logger.debug(u'Target (%s) changed', self.targetExpression.source)
+        if self.logger:
+            self.logger.debug(u'Target (%s) changed',
+                              self.targetExpression.source)
         self.sync(True)
 
     def sync(self, reverse=False):
+        """
+        Evalutes the source expression and copies the result to the location
+        pointed the target expression. Synchronizing in either direction will
+        not trigger any further automatic synchronizations within the same
+        binding.
+
+        """
         if self._syncing:
             return
         
@@ -151,25 +151,37 @@ class Binding(object):
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            self.logger.debug(u'Error reading from %s', source, exc_info=True)
+            if self.logger:
+                self.logger.debug(u'Error reading from %s', source,
+                                  exc_info=True)
             if not self.ignoreErrors:
                 raise
-            value = None
+            value = self.errorValue
 
-        self.logger.debug(u'Writing target value (%s) to source', repr(value))
+        if self.logger:
+            self.logger.debug(u'Writing target value (%s) to source',
+                              repr(value))
         self._syncing = True
         try:
             targetExpression.setValue(value)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            self.logger.debug(u'Error writing to %s', target, exc_info=True)
+            if self.logger:
+                self.logger.debug(u'Error writing to %s', target,
+                                  exc_info=True)
             if not self.ignoreErrors:
                 raise
         finally:
             self._syncing = False
 
     def bind(self):
+        """
+        Causes event listeners to be added in source and target expression as
+        dictated by the current synchronization mode. Releases any existing
+        event listeners first to ensure that they aren't added twice.
+
+        """
         self.unbind()
         if self.mode >= ONEWAY:
             self.sourceExpression.bind(self.sourceChanged)
@@ -177,14 +189,23 @@ class Binding(object):
             self.targetExpression.bind(self.targetChanged)
 
     def unbind(self):
+        """
+        Releases all event listeners from both source and target expressions.
+
+        """
         self.sourceExpression.unbind()
         self.targetExpression.unbind()
 
 
 class BindingGroup(object):
+    """
+    Binding groups are containers for a number of Bindings.
+    Each group provides default options for any bindings created through it,
+    and allow synchronizing all bindings in them at once.
+
+    """
     def __init__(self, **options):
         self.options = options
-        self.options.setdefault('logger', logging.getLogger(__name__))
         self.options.setdefault('mode', ONEWAY)
         self.options.setdefault('ignoreErrors', True)
         self.bindings = []
@@ -208,10 +229,19 @@ class BindingGroup(object):
         return b
 
     def unbind(self):
+        """Releases all event listeners from all bindings in this group."""
+
         for b in self.bindings:
             b.unbind()
         del self.bindings[:]
 
     def sync(self, reverse=False):
+        """
+        Synchronizes all bindings in this group.
+        
+        :param reverse: ``True`` to synchronize targets to sources,
+                        ``False`` to synchronize sources to targets
+
+        """
         for b in self.bindings:
             b.sync(reverse)
