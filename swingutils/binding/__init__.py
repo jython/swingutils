@@ -7,14 +7,13 @@ automatically when a matching object is encountered.
 
 """
 from StringIO import StringIO
-from tokenize import generate_tokens, TokenError, untokenize
 import __builtin__
 import logging
 
 from java.lang import Exception as JavaException
 
 from swingutils.events import addPropertyListener
-from swingutils.binding.adapters import registry
+from swingutils.binding.parser import createChains
 
 
 READ_ONCE = 0
@@ -38,16 +37,19 @@ class BindingReadError(BindingError):
         BindingError.__init__(self, message)
 
 
-class LocalsDict(object):
-    def __init__(self, obj, includeBuiltin=False):
+class LocalsProxy(object):
+    def __init__(self, obj, builtins, options, **kwargs):
         self.obj = obj
-        self.extra = {}
-        if includeBuiltin:
-            self.extra['__builtins__'] = __builtin__
+        self.vars = {}
+        if builtins:
+            self.vars['__builtins__'] = __builtin__
+        if 'vars' in options:
+            self.vars.update(options['vars'])
+        self.vars.update(kwargs)
 
     def __getitem__(self, key):
-        if key in self.extra:
-            return self.extra[key]
+        if key in self.vars:
+            return self.vars[key]
 
         try:
             return getattr(self.obj, key)
@@ -61,182 +63,44 @@ class LocalsDict(object):
         return hasattr(self.obj, key)
 
 
-class ClausePart(object):
-    PROPERTY = 0
-    LIST = 1
-    CODE = 2
-
-    adapter = None
-
-    def __init__(self, tokens, options):
-        self.options = options
-
-        if len(tokens) == 1 and tokens[0][0] == 1:
-            # Token type 1 = NAME (an identifier)
-            self.type_ = self.PROPERTY
-            self.item = tokens[0][1]
-        elif tokens[0][1] == '[':
-            # Start of a list expression
-            self.type_ = self.LIST
-            text = '___binding_value%s' % untokenize(tokens)
-            self.item = compile(text, '$$binding-list$$', 'eval')
-        else:
-            # Any other expression
-            self.type_ = self.CODE
-            self.item = compile(untokenize(tokens), '$$binding-code$$', 'eval')
-
-    def getValue(self, obj, globals_):
-        if self.type_ == self.PROPERTY:
-            return getattr(obj, self.item, None)
-
-        locals_ = LocalsDict(obj)
-        if self.type_ == self.LIST:
-            locals_.extra['___binding_value'] = obj
-        return eval(self.item, globals_, locals_)
-
-    def bind(self, obj, callback, *args, **kwargs):
-        if self.type_ == self.PROPERTY:
-            self.adapter = registry.getPropertyAdapter(obj, self.item,
-                                                       self.options)
-            self.adapter.addListeners(obj, callback, args, kwargs)
-        elif self.type_ == self.LIST:
-            self.adapter = registry.getListAdapter(obj, self.options)
-            self.adapter.addListeners(obj, callback, args, kwargs)
-
-    def unbind(self):
-        if self.adapter:
-            self.adapter.removeListeners()
-            del self.adapter
-
-
 class BindingExpression(object):
     reader = None
     writer = None
-    parts = None
+    chains = None
 
-    def __init__(self, source, tokens, options):
+    def __init__(self, root, source, options=None):
+        self.root = root
         self.source = source
-        self.tokens = tokens
-        self.options = options
-        self.logger = options.get('logger')
+        self.options = options or {}
+        self.globalsDict = LocalsProxy(root, True, self.options)
+        self.localsDict = LocalsProxy(root, False, self.options)
 
-    def _parseExpression(self):
-        """Breaks the given expression into parts for event listening."""
-        self.parts = []
-        storedTokens = []
-        nestingLevel = 0
-        for t in self.tokens:
-            if t[1] in u'{([':
-                nestingLevel += 1
-            elif t[1] in u'})]':
-                nestingLevel -= 1
-
-            if nestingLevel == 0:
-                if t[1] == '.':
-                    self.parts.append(ClausePart(storedTokens, self.options))
-                    del storedTokens[:]
-                    continue
-                if t[1] == ']':
-                    storedTokens.append(t)
-                    self.parts.append(ClausePart(storedTokens, self.options))
-                    del storedTokens[:]
-                    continue
-
-            storedTokens.append(t)
-
-        if storedTokens:
-            self.parts.append(ClausePart(storedTokens, self.options))
-
-        # The tokens are never needed again
-        del self.tokens
-
-    def _partChanged(self, event, obj, callback, index):
-        """
-        Rebinds the chain from the point it was changed from, and calls the
-        parent callback.
-
-        """
-        self.unbind(index + 1)
-        self.bind(obj, callback, index + 1)
-        callback(self.source)
-
-    def getValue(self, obj):
+    def getValue(self):
         if not self.reader:
             self.reader = compile(self.source, '$$binding-reader$$', 'eval')
 
-        try:
-            globals_ = LocalsDict(obj)
-            return eval(self.reader, globals_, {})
-        except (Exception, JavaException):
-            self.logger.debug('Error evaluating expression %s',
-                              self.source, exc_info=True)
+        return eval(self.reader, self.globalsDict)
 
-    def setValue(self, obj, value):
+    def setValue(self, value):
         if not self.writer:
             self.writer = compile('%s=___binding_value' % self.source,
                                   '$$binding-writer$$', 'exec')
 
-        try:
-            writerGlobals = globals().copy()
-            writerGlobals['___binding_value'] = value
-            exec(self.writer, writerGlobals, LocalsDict(obj))
-        except (Exception, JavaException):
-            self.logger.debug('Error writing to expression %s',
-                              self.source, exc_info=True)
+        globals_ = dict(__builtins__=__builtin__, ___binding_value=value)
+        exec(self.writer, globals_, self.localsDict)
 
-    def bind(self, obj, callback, index=0):
-        if self.parts is None:
-            self._parseExpression()
+    def bind(self, callback):
+        if self.chains is None:
+            self.chains = createChains(self.source, callback, self.globalsDict,
+                                       self.options)
 
-        globals_ = LocalsDict(obj, True)
-        for i, part in enumerate(self.parts[index:]):
-            if obj is None:
-                return
-            part.bind(obj, self._partChanged, obj, callback, i)
-            obj = part.getValue(obj, globals_)
-
-    def unbind(self, index=0):
-        if self.parts:
-            for part in self.parts[index:]:
-                part.unbind()
-
-
-class CompoundBindingExpression(object):
-    def __init__(self, parts):
-        self.parts = parts
-
-    def __add__(self, expr):
-        if isinstance(expr, CompoundBindingExpression):
-            return CompoundBindingExpression(self.parts + expr.parts)
-        if isinstance(expr, BindingExpression):
-            return CompoundBindingExpression(self.parts + [expr])
-        if isinstance(expr, basestring):
-            return CompoundBindingExpression(self.parts + [unicode(expr)])
-
-    def getValue(self, obj):
-        buffer = StringIO()
-        for part in self.parts:
-            if isinstance(part, unicode):
-                buffer.write(part)
-            else:
-                result = part.getValue(obj)
-                if result is not None:
-                    buffer.write(unicode(result))
-
-        return buffer.getvalue()
-
-    def setValue(self, obj, value):
-        raise BindingWriteError('Cannot write to a compound expression')
-
-    def bind(self, obj, callback):
-        for part in self.parts:
-            if not isinstance(part, basestring):
-                part.bind(obj, callback)
+        for chain in self.chains:
+            chain.bind(self.root)
 
     def unbind(self):
-        for part in self.parts:
-            if not isinstance(part, basestring):
-                part.unbind()
+        if self.chains:
+            for chain in self.chains:
+                chain.unbind()
 
 
 class Binding(object):
@@ -247,120 +111,67 @@ class Binding(object):
                  options):
         self.logger = options.get('logger')
         self.mode = options.get('mode')
-        self.source = source
-        self.target = target
+        self.ignoreErrors = options.get('ignoreErrors')
 
         if isinstance(sourceExpression, BindingExpression):
             self.sourceExpression = sourceExpression
         else:
-            self.sourceExpression = self.parseExpression(sourceExpression,
-                                                         options)
+            self.sourceExpression = BindingExpression(source, sourceExpression,
+                                                      options)
         if isinstance(targetExpression, BindingExpression):
             self.targetExpression = targetExpression
         else:
-            self.targetExpression = self.parseExpression(targetExpression,
-                                                         options)
+            self.targetExpression = BindingExpression(target, targetExpression,
+                                                      options)
 
-        if self.mode >= READ_ONLY:
-            self.sourceExpression.bind(source, self.sourceChanged)
-        if self.mode == READ_WRITE:
-            self.targetExpression.bind(target, self.targetChanged)
+    def sourceChanged(self):
+        self.logger.debug(u'Source (%s) changed', self.sourceExpression.source)
+        self.sync(False)
 
-    @staticmethod
-    def parseExpression(expr, options):
-        """
-        Parses the given expression into one or more BindingExpressions
-        using the given options and returns the appropriate result.
+    def targetChanged(self):
+        self.logger.debug(u'Target (%s) changed', self.targetExpression.source)
+        self.sync(True)
+
+    def sync(self, reverse=False):
+        if self._syncing:
+            return
         
-        :type expr: str or unicode
-        :rtype: CompoundBindingExpression, BindingExpression or None
+        if reverse:
+            sourceExpression = self.targetExpression
+            targetExpression = self.sourceExpression
+            source = 'target'
+            target = 'source'
+        else:
+            sourceExpression = self.sourceExpression
+            targetExpression = self.targetExpression
+            source = 'source'
+            target = 'target'
+            
+        try:
+            value = sourceExpression.getValue()
+        except (Exception, JavaException):
+            self.logger.debug(u'Error reading from %s', source, exc_info=True)
+            if not self.ignoreErrors:
+                raise
+            value = None
 
-        """
-        parts = []
-        pos = 0
-        end = max(len(expr) - 1, 0)
-        while pos < end:
-            newpos = expr.find(u'${', pos)
-            if newpos == -1:
-                break
-
-            # Store any plain text leading up to this expression
-            if newpos > pos:
-                parts.append(unicode(expr[pos:newpos]))
-
-            # Find the matching }, taking nested {} into account
-            expr_buf = StringIO(expr[newpos + 2:])
-            expr_end = None
-            nesting_level = 0
-            tokens = []
-            try:
-                for token in generate_tokens(expr_buf.readline):
-                    if token[1] == u'{':
-                        nesting_level += 1
-                    elif token[1] == u'}':
-                        if nesting_level > 0:
-                            nesting_level -= 1
-                        else:
-                            expr_end = token[2][1]
-                            break
-                    tokens.append(token)
-            except TokenError:
-                raise Exception('Unmatched }: %s' % expr[newpos:])
-
-            # Create the expression clause
-            source = expr_buf.getvalue()[:expr_end]
-            bindExpr = BindingExpression(source, tokens, options)
-            parts.append(bindExpr)
-            pos = newpos + expr_end + 3
-            continue
-
-        # The rest is plain text
-        leftover = expr[pos:]
-        if leftover:
-            parts.append(unicode(expr[pos:]))
-
-        if len(parts) > 1:
-            return CompoundBindingExpression(parts)
-        elif len(parts) == 1:
-            return parts[0]
-
-    def sourceChanged(self, source):
-        self.logger.debug('Source (%s) changed', source)
-        self.syncSourceToTarget()
-
-    def targetChanged(self, source):
-        self.logger.debug('Target (%s) changed', source)
-        self.syncTargetToSource()
-
-    def syncSourceToTarget(self):
-        if self._syncing:
-            return
-
+        self.logger.debug(u'Writing target value (%s) to source', repr(value))
         self._syncing = True
         try:
-            value = self.sourceExpression.getValue(self.source)
-            self.logger.debug('Writing source value (%s) to target',
-                              repr(value))
-            self.targetExpression.setValue(self.target, value)
+            targetExpression.setValue(value)
         except (Exception, JavaException):
-            self.logger.debug('Error syncing source -> target', exc_info=True)
+            self.logger.debug(u'Error writing to %s', target, exc_info=True)
+            if not self.ignoreErrors:
+                raise
         finally:
             self._syncing = False
 
-    def syncTargetToSource(self):
-        if self._syncing:
-            return
-
-        self._syncing = True
-        try:
-            value = self.targetExpression.getValue(self.target)
-            self.logger.debug('Writing target value (%s) to source',
-                              repr(value))
-            self.sourceExpression.setValue(self.source, value)
-        except (Exception, JavaException):
-            self.logger.debug('Error syncing target -> source', exc_info=True)
-        finally:
-            self._syncing = False
+    def bind(self):
+        self.unbind()
+        if self.mode >= READ_ONLY:
+            self.sourceExpression.bind(self.sourceChanged)
+        if self.mode == READ_WRITE:
+            self.targetExpression.bind(self.targetChanged)
 
     def unbind(self):
         self.sourceExpression.unbind()
@@ -372,6 +183,7 @@ class BindingGroup(object):
         self.options = options
         self.options.setdefault('logger', logging.getLogger(__name__))
         self.options.setdefault('mode', READ_ONLY)
+        self.options.setdefault('ignoreErrors', True)
         self.bindings = []
 
     def bind(self, source, source_expr, target, target_expr, **options):
@@ -380,20 +192,23 @@ class BindingGroup(object):
 
         :type source_expr: string or :class:`~BindingExpression`
         :type target_expr: string or :class:`~BindingExpression`
+        :rtype: :class:`~Binding`
 
         """
         combined_opts = self.options.copy()
         combined_opts.update(options)
         b = Binding(source, source_expr, target, target_expr, combined_opts)
         self.bindings.append(b)
-        b.syncSourceToTarget()
+        b.bind()
+        if b.mode != READ_ONCE:
+            b.sync()
+        return b
 
     def unbind(self):
         for b in self.bindings:
             b.unbind()
         del self.bindings[:]
 
-    def sync(self):
+    def sync(self, reverse=False):
         for b in self.bindings:
-            b.syncSourceToTarget()
-
+            b.sync(reverse)
