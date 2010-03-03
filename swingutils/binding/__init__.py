@@ -14,9 +14,10 @@ from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
 
 
-READ_ONCE = 0
-READ_ONLY = 1
-READ_WRITE = 2
+# Synchronization modes
+MANUAL = 0
+ONEWAY = 1
+TWOWAY = 2
 
 
 class BindingError(Exception):
@@ -170,9 +171,9 @@ class Binding(object):
 
     def bind(self):
         self.unbind()
-        if self.mode >= READ_ONLY:
+        if self.mode >= ONEWAY:
             self.sourceExpression.bind(self.sourceChanged)
-        if self.mode == READ_WRITE:
+        if self.mode == TWOWAY:
             self.targetExpression.bind(self.targetChanged)
 
     def unbind(self):
@@ -184,7 +185,7 @@ class BindingGroup(object):
     def __init__(self, **options):
         self.options = options
         self.options.setdefault('logger', logging.getLogger(__name__))
-        self.options.setdefault('mode', READ_ONLY)
+        self.options.setdefault('mode', ONEWAY)
         self.options.setdefault('ignoreErrors', True)
         self.bindings = []
 
@@ -202,7 +203,7 @@ class BindingGroup(object):
         b = Binding(source, source_expr, target, target_expr, combined_opts)
         self.bindings.append(b)
         b.bind()
-        if b.mode != READ_ONCE:
+        if b.mode != MANUAL:
             b.sync()
         return b
 

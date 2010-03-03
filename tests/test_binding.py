@@ -8,8 +8,8 @@ from javax.swing.table import DefaultTableColumnModel, TableColumn
 
 from nose.tools import eq_
 
-from swingutils.binding import BindingGroup, BindingExpression, READ_WRITE, \
-    READ_ONCE 
+from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, \
+    MANUAL 
 from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
@@ -59,7 +59,7 @@ class TestBinding(object):
     def testReadOnce(self):
         self.group.bind(self.person,
                         u'"%s %s, %s" % (firstName, lastName, birthYear)',
-                        self.dummy, u'value', mode=READ_ONCE)
+                        self.dummy, u'value', mode=MANUAL)
         eq_(self.dummy.value, None)
 
         self.group.sync()
@@ -82,7 +82,7 @@ class TestBinding(object):
 
     def testReadWrite(self):
         self.group.bind(self.person, u'birthYear', self.dummy, u'value',
-                        mode=READ_WRITE)
+                        mode=TWOWAY)
 
         self.person.birthYear = 1972
         eq_(self.person.birthYear, 1972)
@@ -97,11 +97,11 @@ class TestBinding(object):
         lastNameField = JTextField()
         birthYearField = JFormattedTextField()
         self.group.bind(self.person, u'firstName', firstNameField,
-                        u'text', mode=READ_WRITE)
+                        u'text', mode=TWOWAY)
         self.group.bind(self.person, u'lastName', lastNameField,
-                        u'text', mode=READ_WRITE)
+                        u'text', mode=TWOWAY)
         self.group.bind(self.person, u'birthYear', birthYearField,
-                        u'value', mode=READ_WRITE)
+                        u'value', mode=TWOWAY)
         self.group.bind(self.person,
                         u'"%s %s, %s" % (firstName, lastName, birthYear)',
                         self.dummy, u'value')
