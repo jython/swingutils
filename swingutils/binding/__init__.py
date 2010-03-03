@@ -10,8 +10,6 @@ from StringIO import StringIO
 import __builtin__
 import logging
 
-from java.lang import Exception as JavaException
-
 from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
 
@@ -149,7 +147,9 @@ class Binding(object):
             
         try:
             value = sourceExpression.getValue()
-        except (Exception, JavaException):
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
             self.logger.debug(u'Error reading from %s', source, exc_info=True)
             if not self.ignoreErrors:
                 raise
@@ -159,7 +159,9 @@ class Binding(object):
         self._syncing = True
         try:
             targetExpression.setValue(value)
-        except (Exception, JavaException):
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
             self.logger.debug(u'Error writing to %s', target, exc_info=True)
             if not self.ignoreErrors:
                 raise
