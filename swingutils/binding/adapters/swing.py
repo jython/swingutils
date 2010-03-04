@@ -91,7 +91,42 @@ class JTextComponentAdapter(JavaBeansPropertyAdapter):
 
 
 @registry.registerPropertyAdapter
-class JListAdapter(JavaBeansPropertyAdapter):
+class JTreeAdapter(JavaBeansPropertyAdapter):
+    __targetclass__ = 'javax.swing.JTree'
+    __targetproperty__ = ('selectionCount', 'selectionPath', 'selectionPaths',
+                          'selectionRows', 'lastSelectedPathComponent',
+                          'leadSelectionRow', 'maxSelectionRow',
+                          'minSelectionRow')
+
+    def addListeners(self, parent, callback, *args, **kwargs):
+        self.addSelectionModelListener(parent, callback, *args, **kwargs)
+        self.addSelectionListener(parent, callback, *args, **kwargs)
+
+    def addSelectionModelListener(self, parent, callback, *args, **kwargs):
+        self.listeners['selectionModel'] = addPropertyListener(parent,
+            'selectionModel', self.selectionModelChanged, parent, callback,
+            *args, **kwargs)
+
+    def addSelectionListener(self, parent, callback, *args, **kwargs):
+        selectionModel = parent.selectionModel
+        if selectionModel is not None:
+            from javax.swing.event import TreeSelectionListener
+            self.listeners['selection'] = addEventListener(selectionModel,
+                TreeSelectionListener, 'valueChanged', self.selectionChanged,
+                callback, *args, **kwargs)
+
+    def selectionModelChanged(self, event, parent, callback, *args, **kwargs):
+        self.removeListeners('selection')
+        self.selectionChanged(None, callback, *args, **kwargs)
+        self.addSelectionListener(parent, callback, *args, **kwargs)
+
+    def selectionChanged(self, event, callback, *args, **kwargs):
+        if not event or not event.valueIsAdjusting or not self.ignoreAdjusting:
+            callback(event, *args, **kwargs)
+
+
+@registry.registerPropertyAdapter
+class JListAdapter(JTreeAdapter):
     """
     Adapter for :class:`javax.swing.JList`.
 
@@ -110,15 +145,6 @@ class JListAdapter(JavaBeansPropertyAdapter):
         JavaBeansPropertyAdapter.__init__(self, property, options)
         self.ignoreAdjusting = options.get('ignoreAdjusting', True)
 
-    def addListeners(self, parent, callback, *args, **kwargs):
-        self.addSelectionModelListener(parent, callback, *args, **kwargs)
-        self.addSelectionListener(parent, callback, *args, **kwargs)
-
-    def addSelectionModelListener(self, parent, callback, *args, **kwargs):
-        self.listeners['selectionModel'] = addPropertyListener(parent,
-            'selectionModel', self.selectionModelChanged, parent, callback,
-            *args, **kwargs)
-
     def addSelectionListener(self, parent, callback, *args, **kwargs):
         selectionModel = parent.selectionModel
         if selectionModel is not None:
@@ -126,15 +152,6 @@ class JListAdapter(JavaBeansPropertyAdapter):
             self.listeners['selection'] = addEventListener(selectionModel,
                 ListSelectionListener, 'valueChanged', self.selectionChanged,
                 callback, *args, **kwargs)
-
-    def selectionModelChanged(self, event, parent, callback, *args, **kwargs):
-        self.removeListeners('selection')
-        self.selectionChanged(None, callback, *args, **kwargs)
-        self.addSelectionListener(parent, callback, *args, **kwargs)
-
-    def selectionChanged(self, event, callback, *args, **kwargs):
-        if not event or not event.valueIsAdjusting or not self.ignoreAdjusting:
-            callback(event, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -174,12 +191,12 @@ class JTableColumnSelectionAdapter(JavaBeansPropertyAdapter):
     def addListeners(self, parent, callback, *args, **kwargs):
         self.addColumnModelListener(parent, callback, *args, **kwargs)
         self.addSelectionListener(parent, callback, *args, **kwargs)
-    
+
     def addColumnModelListener(self, parent, callback, *args, **kwargs):
         self.listeners['columnModel'] = addPropertyListener(parent,
             'columnModel', self.columnModelChanged, parent, callback, *args,
             **kwargs)
-    
+
     def addSelectionListener(self, parent, callback, *args, **kwargs):
         columnModel = parent.columnModel
         selectionModel = columnModel.selectionModel if columnModel else None
