@@ -252,3 +252,15 @@ class JProgressBarAdapter(JSpinnerAdapter):
     __slots__ = ()
     __targetclass__ = 'javax.swing.JProgressBar'
     __targetproperty__ = ('value', 'percentComplete')
+
+
+@registry.registerListAdapter
+class ListModelAdapter(BindingAdapter):
+    __slots__ = ()
+    __targetclass__ = 'javax.swing.ListModel'
+
+    def addListeners(self, parent, callback, *args, **kwargs):
+        from javax.swing.event import ListDataListener
+        events = ('contentsChanged', 'intervalAdded', 'intervalRemoved')
+        self.listeners['list'] = addEventListener(parent, ListDataListener,
+            events, callback, *args, **kwargs)
