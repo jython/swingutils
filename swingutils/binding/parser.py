@@ -59,13 +59,15 @@ class AttributeNode(BindingNode):
     def getAdapter(self, parent):
         return registry.getPropertyAdapter(parent, self.attr, self.options)
 
+    def __unicode__(self):
+        return self.attr
+
 
 class SubscriptNode(BindingNode):
     def __init__(self, node, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
-        value = ast.Name(identifier='___binding_parent')
-        subscript = ast.Subscript(value=value, slice=node.slice,
-                                  expr_context=node.expr_context)
+        value = ast.Name(id='___binding_parent')
+        subscript = ast.Subscript(value=value, slice=node.slice)
         expr = ast.Expression(body=subscript)
         self.code = compile(expr, '$$binding-subscript$$', 'eval')
 
@@ -76,11 +78,14 @@ class SubscriptNode(BindingNode):
     def getAdapter(self, parent):
         return registry.getListAdapter(parent, self.options)
 
+    def __unicode__(self):
+        return u'subscript[]'
+
 
 class CallNode(BindingNode):
     def __init__(self, node, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
-        func = ast.Name(identifier='___binding_parent')
+        func = ast.Name(id='___binding_parent')
         call = ast.Call(func=func, args=node.args, keywords=node.keywords,
                         starargs=node.starargs, kwargs=node.kwargs)
         expr = ast.Expression(body=call)
@@ -88,6 +93,9 @@ class CallNode(BindingNode):
 
     def getValue(self, parent):
         return eval(self.code, self.globals_, dict(___binding_parent=parent))
+
+    def __unicode__(self):
+        return u'call[]'
 
 
 class ChainVisitor(ast.NodeVisitor):
