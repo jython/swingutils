@@ -13,7 +13,6 @@ from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
 from swingutils.models.table import ObjectTableModel
-import swingutils.binding.adapters.swing
 
 
 class Person(AutoChangeNotifier):

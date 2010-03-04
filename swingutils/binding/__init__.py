@@ -11,7 +11,7 @@ import __builtin__
 
 from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
-
+from swingutils.binding.adapters import swing
 
 # Synchronization modes
 MANUAL = 0
@@ -134,7 +134,7 @@ class Binding(object):
         """
         if self._syncing:
             return
-        
+
         if reverse:
             sourceExpression = self.targetExpression
             targetExpression = self.sourceExpression
@@ -145,7 +145,7 @@ class Binding(object):
             targetExpression = self.targetExpression
             source = 'source'
             target = 'target'
-            
+
         try:
             value = sourceExpression.getValue()
         except (KeyboardInterrupt, SystemExit):
