@@ -8,6 +8,7 @@ automatically when a matching object is encountered.
 """
 from StringIO import StringIO
 import __builtin__
+import sys
 
 from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
@@ -82,6 +83,25 @@ class BindingExpression(object):
         if self.chains:
             for chain in self.chains:
                 chain.unbind()
+
+    def dump(self, indent=0, outfile=None):
+        """
+        Prints the list of binding chains in this expression to standard
+        output or `outfile` if one was provided.
+
+        """
+        outfile = outfile or sys.stdout
+        print u'%sSource code: %s' % (u' ' * indent, self.source)
+        if not self.chains:
+            print u'%sExpression not bound yet' % (u' ' * indent)
+
+        for i, chain in enumerate(self.chains):
+            node = chain
+            txts = []
+            while node:
+                txts.append(unicode(node))
+                node = node.next
+            print u'%sChain #%d: %s' % (u' ' * indent, i + 1, u'.'.join(txts))
 
 
 class Binding(object):
@@ -196,6 +216,18 @@ class Binding(object):
         self.sourceExpression.unbind()
         self.targetExpression.unbind()
 
+    def dump(self, indent=0, outfile=None):
+        """
+        Prints the source code of source and target expressions plus their
+        binding chains to the standard output or `outfile` if one was provided.
+
+        """
+        outfile = outfile or sys.stdout
+        print u'%sSource:' % (u' ' * indent)
+        self.sourceExpression.dumpChains(indent + 2)
+        print u'%sTarget:' % (u' ' * indent)
+        self.targetExpression.dumpChains(indent + 2)
+
 
 class BindingGroup(object):
     """
@@ -245,3 +277,15 @@ class BindingGroup(object):
         """
         for b in self.bindings:
             b.sync(reverse)
+
+    def dump(self, indent=0, outfile=None):
+        """
+        Prints the source code of source and target expressions plus their
+        binding chains for every binding in this group to the standard output,
+        or `outfile` if one was provided.
+
+        """
+        outfile = outfile or sys.stdout
+        for i, b in enumerate(self.bindings):
+            print u'%sBinding #%d' % (u' ' * indent, i + 1)
+            b.dump(indent + 2, outfile)
