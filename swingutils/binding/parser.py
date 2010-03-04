@@ -5,14 +5,15 @@ from swingutils.binding.adapters import registry
 
 
 class BindingNode(object):
-    __slots__ = ('callback', 'globals_', 'parent')
     adapter = None
     next = None
+    lastParentRef = None
 
     def __init__(self, callback, globals_, options):
         self.callback = callback
         self.globals_ = globals_
         self.options = options
+        self.logger = options.get('logger')
 
     def getAdapter(self, parent):
         return None
@@ -21,25 +22,48 @@ class BindingNode(object):
         self.callback()
         if self.next:
             self.next.unbind()
-            parent = self.parent() if self.parent else None
-            if parent:
-                self.next.bind(parent)
+            if self.lastParentRef:
+                parent = self.lastParentRef()
+                if parent:
+                    self.next.bind(parent)
+                else:
+                    del self.lastParentRef
 
     def bind(self, parent):
-        self.parent = weakref.ref(parent)
+        self.lastParentRef = weakref.ref(parent)
         self.adapter = self.getAdapter(parent)
 
         if self.adapter:
-            self.adapter.addListeners(parent, self.handleEvent)
+            try:
+                self.adapter.addListeners(parent, self.handleEvent)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                if self.logger:
+                    self.logger.debug(u'%s: error adding event listener' %
+                                      self, exc_info=True)
+                if not self.options['ignoreErrors']:
+                    raise
 
         if self.next:
-            value = self.getValue(parent)
+            try:
+                value = self.getValue(parent)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                if self.logger:
+                    self.logger.debug(u'%s: error getting value',
+                                      self, exc_info=True)
+                if not self.options['ignoreErrors']:
+                    raise
+                return
+
             if value is not None:
                 self.next.bind(value)
 
     def unbind(self):
-        if hasattr(self, 'parent'):
-            del self.parent
+        if self.lastParentRef:
+            del self.lastParentRef
         if self.adapter:
             self.adapter.removeListeners()
             del self.adapter
@@ -48,6 +72,8 @@ class BindingNode(object):
 
 
 class AttributeNode(BindingNode):
+    __slots__ = 'attr'
+
     def __init__(self, attr, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
         self.attr = attr
@@ -67,6 +93,8 @@ class AttributeNode(BindingNode):
 
 
 class VariableNode(BindingNode):
+    __slots__ = 'name'
+
     def __init__(self, name, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
         self.name = name
@@ -79,6 +107,8 @@ class VariableNode(BindingNode):
 
 
 class SubscriptNode(BindingNode):
+    __slots__ = 'code'
+
     def __init__(self, node, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
         value = ast.Name(id='___binding_parent')
@@ -102,6 +132,8 @@ class SubscriptNode(BindingNode):
 
 
 class CallNode(BindingNode):
+    __slots__ = 'code'
+
     def __init__(self, node, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
         func = ast.Name(id='___binding_parent')
