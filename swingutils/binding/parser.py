@@ -14,7 +14,7 @@ class BindingNode(object):
         self.globals_ = globals_
         self.options = options
 
-    def getAdapter(self):
+    def getAdapter(self, parent):
         return None
 
     def handleEvent(self, event):
@@ -27,14 +27,13 @@ class BindingNode(object):
 
     def bind(self, parent):
         self.parent = weakref.ref(parent)
-        self.adapter = registry.getPropertyAdapter(parent, self.attr,
-                                                   self.options)
+        self.adapter = self.getAdapter(parent)
 
         if self.adapter:
             self.adapter.addListeners(parent, self.handleEvent)
 
         if self.next:
-            value = self.getValue(parent, self.globals_)
+            value = self.getValue(parent)
             if value is not None:
                 self.next.bind(value)
 
@@ -53,14 +52,30 @@ class AttributeNode(BindingNode):
         BindingNode.__init__(self, callback, globals_, options)
         self.attr = attr
 
-    def getValue(self, parent, globals_):
+    def getValue(self, parent):
         return getattr(parent, self.attr)
 
     def getAdapter(self, parent):
         return registry.getPropertyAdapter(parent, self.attr, self.options)
 
     def __unicode__(self):
-        return self.attr
+        if self.adapter and not self.adapter.isinstance(
+            registry.defaultPropertyAdapter):
+            adapterClassName = self.adapter.__class__.__name__
+            return u'Attribute(%s, %s)' % (self.attr, adapterClassName)
+        return u'Attribute(%s)' % self.attr
+
+
+class VariableNode(BindingNode):
+    def __init__(self, name, callback, globals_, options):
+        BindingNode.__init__(self, callback, globals_, options)
+        self.name = name
+
+    def getValue(self, parent):
+        return self.globals_.vars[self.name]
+
+    def __unicode__(self):
+        return u'Variable(%s)' % self.name
 
 
 class SubscriptNode(BindingNode):
@@ -79,7 +94,11 @@ class SubscriptNode(BindingNode):
         return registry.getListAdapter(parent, self.options)
 
     def __unicode__(self):
-        return u'subscript[]'
+        if self.adapter and not self.adapter.isinstance(
+            registry.defaultListAdapter):
+            adapterClassName = self.adapter.__class__.__name__
+            return u'Subscript(%s)' % adapterClassName
+        return u'Subscript'
 
 
 class CallNode(BindingNode):
@@ -95,7 +114,7 @@ class CallNode(BindingNode):
         return eval(self.code, self.globals_, dict(___binding_parent=parent))
 
     def __unicode__(self):
-        return u'call[]'
+        return u'Call'
 
 
 class ChainVisitor(ast.NodeVisitor):
@@ -112,8 +131,13 @@ class ChainVisitor(ast.NodeVisitor):
 
     def visit_Name(self, node):
         # Names are treated as attributes of the root object
-        self.addNode(AttributeNode(node.id, self.callback, self.globals_,
-                                   self.options))
+        if node.id in self.globals_.vars:
+            bindingNode = VariableNode(node.id, self.callback, self.globals_,
+                                       self.options)
+        else:
+            bindingNode = AttributeNode(node.id, self.callback, self.globals_,
+                                        self.options)
+        self.addNode(bindingNode)
         self.chains.append(self.lastNode)
         self.lastNode = None
 
