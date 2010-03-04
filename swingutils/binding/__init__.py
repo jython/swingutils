@@ -91,9 +91,11 @@ class BindingExpression(object):
 
         """
         outfile = outfile or sys.stdout
-        print u'%sSource code: %s' % (u' ' * indent, self.source)
+        indentspace = u' ' * indent
+        print u'%sSource code: %s' % (indentspace, self.source)
         if not self.chains:
-            print u'%sExpression not bound yet' % (u' ' * indent)
+            self.chains = createChains(self.source, None, self.globalsDict,
+                                       self.options)
 
         for i, chain in enumerate(self.chains):
             node = chain
@@ -101,7 +103,7 @@ class BindingExpression(object):
             while node:
                 txts.append(unicode(node))
                 node = node.next
-            print u'%sChain #%d: %s' % (u' ' * indent, i + 1, u'.'.join(txts))
+            print u'%sChain %d: %s' % (indentspace, i + 1, u' -> '.join(txts))
 
 
 class Binding(object):
@@ -223,9 +225,10 @@ class Binding(object):
 
         """
         outfile = outfile or sys.stdout
-        print u'%sSource:' % (u' ' * indent)
+        indentspace = u' ' * indent
+        print indentspace + u'Source:'
         self.sourceExpression.dumpChains(indent + 2)
-        print u'%sTarget:' % (u' ' * indent)
+        print indentspace + u'Target:'
         self.targetExpression.dumpChains(indent + 2)
 
 
@@ -286,6 +289,7 @@ class BindingGroup(object):
 
         """
         outfile = outfile or sys.stdout
+        indentspace = u' ' * indent
         for i, b in enumerate(self.bindings):
-            print u'%sBinding #%d' % (u' ' * indent, i + 1)
+            print u'%sBinding %d:' % (indentspace, i + 1)
             b.dump(indent + 2, outfile)
