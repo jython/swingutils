@@ -282,3 +282,23 @@ class TestBinding(object):
         progressBar.setValue(2)
         eq_(self.dummy.value, 2)
         eq_(percentCompleteDummy.value, 0.2)
+
+    def testListModel(self):
+        listModel = DelegateListModel()
+        self.group.bind(self.person, 'children', listModel, 'delegate')
+        self.group.bind(listModel, 'listModel[-1].firstName', self.dummy,
+                        'value', vars={'listModel': listModel})
+        self.person.children = []
+
+        mike = Person(u'Mike', u'Average', 1995)
+        listModel.append(mike)
+
+        eq_(self.person.children, [mike])
+        eq_(self.dummy.value, u'Mike')
+
+        sally = Person(u'Sally', u'Average', 1997)
+        listModel.append(sally)
+
+        eq_(self.person.children, [mike, sally])
+        eq_(self.dummy.value, u'Sally')
+        
