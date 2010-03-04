@@ -3,7 +3,7 @@ from jarray import array
 from java.lang import String, Integer
 from javax.swing import JTextField, JFormattedTextField, JList, JComboBox, \
     SpinnerNumberModel, JSpinner, JSlider, JProgressBar, JTable, \
-    DefaultListSelectionModel
+    DefaultListSelectionModel, JCheckBox
 from javax.swing.table import DefaultTableColumnModel, TableColumn
 
 from nose.tools import eq_
@@ -89,6 +89,22 @@ class TestBinding(object):
         self.dummy.value = 1978
         eq_(self.person.birthYear, 1978)
         eq_(self.dummy.value, 1978)
+
+    def testJCheckBox(self):
+        check = JCheckBox()
+        self.group.bind(self.person, u'firstName == u"Bob"', check,
+                        u'selected')
+        self.group.bind(check, u'selected', self.dummy, u'value')
+        eq_(check.selected, False)
+        eq_(self.dummy.value, False)
+
+        self.person.firstName = u'Bob'
+        eq_(check.selected, True)
+        eq_(self.dummy.value, True)
+
+        self.person.firstName = u'Mary'
+        eq_(check.selected, False)
+        eq_(self.dummy.value, False)
 
     def testJTextField(self):
         firstNameField = JTextField()
