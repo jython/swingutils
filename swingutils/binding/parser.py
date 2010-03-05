@@ -195,6 +195,15 @@ class ChainVisitor(ast.NodeVisitor):
         node.next = self.lastNode
         self.lastNode = node
 
+    def subnodeVisit(self, node, callback):
+        if isinstance(node, list):
+            for item in node:
+                self.subnodeVisit(item, callback)
+        elif isinstance(node, ast.AST):
+            visitor = ChainVisitor(callback, self.globals_, self.options)
+            visitor.visit(node)
+            self.chains.extend(visitor.chains)
+
     def visit_Name(self, node):
         # Names are treated as attributes of the root object
         if node.id in self.globals_.vars:
@@ -225,19 +234,20 @@ class ChainVisitor(ast.NodeVisitor):
         bindingNode = SubscriptNode(node, self.callback, self.globals_,
                                     self.options)
         self.addNode(bindingNode)
-        visitor = ChainVisitor(bindingNode.handleEvent, self.globals_,
-                               self.options)
-        visitor.visit(node.slice)
-        self.chains.extend(visitor.chains)
-
+        self.subnodeVisit(node.slice, bindingNode.handleEvent)
         for key, value in ast.iter_fields(node):
             if key != 'slice':
                 self.visit(value)
 
     def visit_Call(self, node):
-        self.addNode(CallNode(node, self.callback, self.globals_,
-                              self.options))
-        self.generic_visit(node)
+        bindingNode = CallNode(node, self.callback, self.globals_,
+                              self.options)
+        self.addNode(bindingNode)
+        for key, value in ast.iter_fields(node):
+            if key == 'func':
+                self.visit(value)
+            elif value:
+                self.subnodeVisit(value, bindingNode.handleEvent)
 
     def visit_GeneratorExp(self, node):
         for comprehension in node.generators:
