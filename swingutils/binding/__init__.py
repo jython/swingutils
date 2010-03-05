@@ -182,8 +182,8 @@ class Binding(object):
             value = self.errorValue
 
         if self.logger:
-            self.logger.debug(u'Writing target value (%s) to source',
-                              repr(value))
+            self.logger.debug(u'Writing %s value (%s) to %s', source,
+                              repr(value), target)
         self._syncing = True
         try:
             targetExpression.setValue(value)
