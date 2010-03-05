@@ -18,7 +18,7 @@ class BindingNode(object):
     def getAdapter(self, parent):
         return None
 
-    def handleEvent(self, event):
+    def handleEvent(self, event=None):
         self.callback()
         if self.next:
             self.next.unbind()
@@ -136,7 +136,7 @@ class CallNode(BindingNode):
 
     def __init__(self, node, callback, globals_, options):
         BindingNode.__init__(self, callback, globals_, options)
-        func = ast.Name(id='___binding_parent')
+        func = ast.Name(id='___binding_parent', ctx=ast.Load())
         call = ast.Call(func=func, args=node.args, keywords=node.keywords,
                         starargs=node.starargs, kwargs=node.kwargs)
         expr = ast.Expression(body=call)
@@ -149,12 +149,21 @@ class CallNode(BindingNode):
         return u'Call'
 
 
+class NameCollector(ast.NodeVisitor):
+    def __init__(self):
+        self.names = set()
+    
+    def visit_Name(self, node):
+        self.names.add(node.id)
+
+
 class ChainVisitor(ast.NodeVisitor):
-    def __init__(self, callback, globals_, options):
+    def __init__(self, callback, globals_, options, chains, excludedNames):
         self.callback = callback
         self.globals_ = globals_
         self.options = options
-        self.chains = []
+        self.chains = chains
+        self.excludedNames = excludedNames
         self.lastNode = None
 
     def addNode(self, node):
@@ -166,9 +175,12 @@ class ChainVisitor(ast.NodeVisitor):
         if node.id in self.globals_.vars:
             bindingNode = VariableNode(node.id, self.callback, self.globals_,
                                        self.options)
-        else:
+        elif node.id not in self.excludedNames:
             bindingNode = AttributeNode(node.id, self.callback, self.globals_,
                                         self.options)
+        else:
+            return
+
         self.addNode(bindingNode)
         self.chains.append(self.lastNode)
         self.lastNode = None
@@ -189,14 +201,20 @@ class ChainVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_comprehension(self, node):
+        # Collect variable declarations for exclusion in other fields
+        visitor = NameCollector()
+        visitor.visit(node.target)
+
+        visitor = ChainVisitor(self.callback, self.globals_, self.options,
+                               self.chains, visitor.names)
         for key, value in ast.iter_fields(node):
             if key != 'target':
-                # target can contain new variable declarations, so skip it
-                self.visit(value)
+                visitor.visit(value)
 
 
 def createChains(expr, callback, globals_, options):
     root = ast.parse(expr, '$$binding-expression$$', 'eval')
-    visitor = ChainVisitor(callback, globals_, options)
+    chains = []
+    visitor = ChainVisitor(callback, globals_, options, chains, set())
     visitor.visit(root)
-    return visitor.chains
+    return chains
