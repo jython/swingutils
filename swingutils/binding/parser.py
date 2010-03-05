@@ -85,7 +85,7 @@ class AttributeNode(BindingNode):
         return registry.getPropertyAdapter(parent, self.attr, self.options)
 
     def __unicode__(self):
-        if self.adapter and not self.adapter.isinstance(
+        if self.adapter and not isinstance(self.adapter,
             registry.defaultPropertyAdapter):
             adapterClassName = self.adapter.__class__.__name__
             return u'Attribute(%s, %s)' % (self.attr, adapterClassName)
@@ -124,7 +124,7 @@ class SubscriptNode(BindingNode):
         return registry.getListAdapter(parent, self.options)
 
     def __unicode__(self):
-        if self.adapter and not self.adapter.isinstance(
+        if self.adapter and not isinstance(self.adapter,
             registry.defaultListAdapter):
             adapterClassName = self.adapter.__class__.__name__
             return u'Subscript(%s)' % adapterClassName
