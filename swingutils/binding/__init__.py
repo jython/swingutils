@@ -19,7 +19,7 @@ MANUAL = 0
 ONEWAY = 1
 TWOWAY = 2
 
-class LocalsProxy(object):
+class _LocalsProxy(object):
     def __init__(self, obj, builtins, options, **kwargs):
         self.obj = obj
         self.vars = {}
@@ -54,8 +54,8 @@ class BindingExpression(object):
         self.root = root
         self.source = source
         self.options = options
-        self.globalsDict = LocalsProxy(root, True, self.options)
-        self.localsDict = LocalsProxy(root, False, self.options)
+        self.globalsDict = _LocalsProxy(root, True, self.options)
+        self.localsDict = _LocalsProxy(root, False, self.options)
 
     def getValue(self):
         if not self.reader:
