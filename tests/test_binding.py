@@ -13,6 +13,7 @@ from swingutils.beans import AutoChangeNotifier
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
 from swingutils.models.table import ObjectTableModel
+import logging
 
 
 class Person(AutoChangeNotifier):
@@ -20,6 +21,10 @@ class Person(AutoChangeNotifier):
         self.firstName = firstName
         self.lastName = lastName
         self.birthYear = birthYear
+        self.children = []
+    
+    def getChild(self, index):
+        return self.children[index]
 
 
 class DummyObject(AutoChangeNotifier):
@@ -49,12 +54,12 @@ class TestBinding(object):
     def setup(self):
         self.person = Person(u'Joe', u'Average', 1970)
         self.dummy = DummyObject()
-        self.group = BindingGroup()
+        self.group = BindingGroup(logger=logging.getLogger(__name__))
 
     def teardown(self):
         self.group.unbind()
 
-    def testReadOnce(self):
+    def testManualSync(self):
         self.group.bind(self.person,
                         u'"%s %s, %s" % (firstName, lastName, birthYear)',
                         self.dummy, u'value', mode=MANUAL)
@@ -89,6 +94,54 @@ class TestBinding(object):
         self.dummy.value = 1978
         eq_(self.person.birthYear, 1978)
         eq_(self.dummy.value, 1978)
+
+    def testGeneratorExpr(self):
+        self.group.bind(self.person, u'u" ".join(c for c in firstName)',
+                        self.dummy, u'value')
+        eq_(self.dummy.value, u'J o e')
+
+        self.dummy.value = None
+        self.person.c = 234
+        eq_(self.dummy.value, None)
+
+    def testListBinding(self):
+        mike = Person(u'Mike', u'Average', 1995)
+        sally = Person(u'Sally', u'Average', 1997)
+        self.person.children = [mike, sally]
+        self.group.bind(self.person, 'children[favorite].lastName',
+                        self.dummy, 'value')
+        eq_(self.dummy.value, None)
+
+        self.person.favorite = 1
+        eq_(self.dummy.value, u'Average')
+
+        sally.lastName = u'Mediocre'
+        eq_(self.dummy.value, u'Mediocre')
+
+    def testCallBinding(self):
+        mike = Person(u'Mike', u'Average', 1995)
+        sally = Person(u'Sally', u'Average', 1997)
+        self.person.children = [mike, sally]
+        self.group.bind(self.person, 'getChild(favorite).lastName',
+                        self.dummy, 'value')
+        self.group.dump()
+        eq_(self.dummy.value, None)
+
+        self.person.favorite = 1
+        eq_(self.dummy.value, u'Average')
+
+        sally.lastName = u'Mediocre'
+        eq_(self.dummy.value, u'Mediocre')
+
+
+class TestAdapters(object):
+    def setup(self):
+        self.person = Person(u'Joe', u'Average', 1970)
+        self.dummy = DummyObject()
+        self.group = BindingGroup()
+
+    def teardown(self):
+        self.group.unbind()
 
     def testJCheckBox(self):
         check = JCheckBox()
@@ -288,7 +341,6 @@ class TestBinding(object):
         self.group.bind(self.person, 'children', listModel, 'delegate')
         self.group.bind(listModel, 'listModel[-1].firstName', self.dummy,
                         'value', vars={'listModel': listModel})
-        self.person.children = []
 
         mike = Person(u'Mike', u'Average', 1995)
         listModel.append(mike)

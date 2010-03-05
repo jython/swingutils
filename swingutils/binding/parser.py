@@ -235,9 +235,7 @@ class ChainVisitor(ast.NodeVisitor):
                                     self.options)
         self.addNode(bindingNode)
         self.subnodeVisit(node.slice, bindingNode.handleEvent)
-        for key, value in ast.iter_fields(node):
-            if key != 'slice':
-                self.visit(value)
+        self.visit(node.value)
 
     def visit_Call(self, node):
         bindingNode = CallNode(node, self.callback, self.globals_,
@@ -249,6 +247,13 @@ class ChainVisitor(ast.NodeVisitor):
             elif value:
                 self.subnodeVisit(value, bindingNode.handleEvent)
 
+    def visit_Lambda(self, node):
+        collector = NameCollector()
+        collector.visit(node.args)
+        self.excludedNames.update(collector.names)
+        self.visit(node.body)
+        self.excludedNames.clear()
+
     def visit_GeneratorExp(self, node):
         for comprehension in node.generators:
             visitor = NameCollector()
@@ -258,10 +263,7 @@ class ChainVisitor(ast.NodeVisitor):
                 if key != 'target':
                     self.visit(value)
 
-        for key, value in ast.iter_fields(node):
-            if key != 'generators':
-                self.visit(value)
-
+        self.visit(node.elt)
         self.excludedNames.clear()
 
     visit_ListComp = visit_GeneratorExp

@@ -88,14 +88,16 @@ class BeanProperty(object):
     :class:`~JavaBeanSupport`.
 
     Example::
-    
+
         class Foo(JavaBeanSupport):
             myAttribute = BeanProperty('myAttribute')
-    
+
     :param name: Attribute name of the bean property. This MUST be the
                  same name as the created attribute, as it can't be
                  reliably obtained any other way.
     :param initval: Initial value for this property. Defaults to ``None``.
+
+    .. seealso:: `How-To Guide for Descriptors <http://users.rcn.com/python/download/Descriptor.htm>`_
 
     """
     def __init__(self, name, initval=None):
