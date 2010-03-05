@@ -228,9 +228,9 @@ class Binding(object):
         outfile = outfile or sys.stdout
         indentspace = u' ' * indent
         print >> outfile, indentspace + u'Source:'
-        self.sourceExpression.dumpChains(indent + 2)
+        self.sourceExpression.dump(indent + 2)
         print >> outfile, indentspace + u'Target:'
-        self.targetExpression.dumpChains(indent + 2)
+        self.targetExpression.dump(indent + 2)
 
 
 class BindingGroup(object):
