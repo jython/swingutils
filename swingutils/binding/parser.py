@@ -158,12 +158,12 @@ class NameCollector(ast.NodeVisitor):
 
 
 class ChainVisitor(ast.NodeVisitor):
-    def __init__(self, callback, globals_, options, chains, excludedNames):
+    def __init__(self, callback, globals_, options, chains):
         self.callback = callback
         self.globals_ = globals_
         self.options = options
         self.chains = chains
-        self.excludedNames = excludedNames
+        self.excludedNames = set()
         self.lastNode = None
 
     def addNode(self, node):
@@ -185,6 +185,10 @@ class ChainVisitor(ast.NodeVisitor):
         self.chains.append(self.lastNode)
         self.lastNode = None
 
+    def visit_Str(self, node):
+        self.lastNode = None
+        self.generic_visit(node)
+
     def visit_Attribute(self, node):
         self.addNode(AttributeNode(node.attr, self.callback, self.globals_,
                                    self.options))
@@ -200,21 +204,27 @@ class ChainVisitor(ast.NodeVisitor):
                               self.options))
         self.generic_visit(node)
 
-    def visit_comprehension(self, node):
-        # Collect variable declarations for exclusion in other fields
-        visitor = NameCollector()
-        visitor.visit(node.target)
+    def visit_GeneratorExp(self, node):
+        for comprehension in node.generators:
+            visitor = NameCollector()
+            visitor.visit(comprehension.target)
+            self.excludedNames.update(visitor.names)
+            for key, value in ast.iter_fields(comprehension):
+                if key != 'target':
+                    self.visit(value)
 
-        visitor = ChainVisitor(self.callback, self.globals_, self.options,
-                               self.chains, visitor.names)
         for key, value in ast.iter_fields(node):
-            if key != 'target':
-                visitor.visit(value)
+            if key != 'generators':
+                self.visit(value)
+
+        self.excludedNames.clear()
+    
+    visit_ListComp = visit_GeneratorExp
 
 
 def createChains(expr, callback, globals_, options):
     root = ast.parse(expr, '$$binding-expression$$', 'eval')
     chains = []
-    visitor = ChainVisitor(callback, globals_, options, chains, set())
+    visitor = ChainVisitor(callback, globals_, options, chains)
     visitor.visit(root)
     return chains
