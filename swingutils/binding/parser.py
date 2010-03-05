@@ -18,18 +18,54 @@ class BindingNode(object):
     def getAdapter(self, parent):
         return None
 
+    def checkedGetValue(self, parent):
+        """
+        Retrieves the current node's value from the parent using the
+        ``getValue`` implementation in a subclass. If an exception is raised,
+        the returned value will be ``None`` unless the `ignoreErrors` option
+        is ``False``, in which case the caught exception is re-raised.
+
+        """
+        try:
+            value = self.getValue(parent)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            if self.logger:
+                self.logger.debug(u'%s: error getting value',
+                                  self, exc_info=True)
+            if not self.options['ignoreErrors']:
+                raise
+            value = None
+
+        return value
+
     def handleEvent(self, event=None):
+        if self.logger:
+            self.logger.debug(u'%s: change event triggered' % self)
+
         self.callback()
+
         if self.next:
+            # Remove existing bindings from the next element onwards
             self.next.unbind()
+
+            # Get the new value for this node using the last bound parent,
+            # if it still exists
             if self.lastParentRef:
                 parent = self.lastParentRef()
                 if parent:
-                    self.next.bind(parent)
+                    value = self.checkedGetValue(parent)
+                    if value is not None:
+                        self.next.bind(value)
                 else:
                     del self.lastParentRef
 
     def bind(self, parent):
+        if self.logger:
+            self.logger.debug(u'%s: adding event listeners (parent=%s)', self,
+                              parent)
+
         self.lastParentRef = weakref.ref(parent)
         self.adapter = self.getAdapter(parent)
 
@@ -40,24 +76,13 @@ class BindingNode(object):
                 raise
             except:
                 if self.logger:
-                    self.logger.debug(u'%s: error adding event listener' %
+                    self.logger.debug(u'%s: error adding event listener',
                                       self, exc_info=True)
                 if not self.options['ignoreErrors']:
                     raise
 
         if self.next:
-            try:
-                value = self.getValue(parent)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
-                if self.logger:
-                    self.logger.debug(u'%s: error getting value',
-                                      self, exc_info=True)
-                if not self.options['ignoreErrors']:
-                    raise
-                return
-
+            value = self.checkedGetValue(parent)
             if value is not None:
                 self.next.bind(value)
 
@@ -152,17 +177,17 @@ class CallNode(BindingNode):
 class NameCollector(ast.NodeVisitor):
     def __init__(self):
         self.names = set()
-    
+
     def visit_Name(self, node):
         self.names.add(node.id)
 
 
 class ChainVisitor(ast.NodeVisitor):
-    def __init__(self, callback, globals_, options, chains):
+    def __init__(self, callback, globals_, options):
         self.callback = callback
         self.globals_ = globals_
         self.options = options
-        self.chains = chains
+        self.chains = []
         self.excludedNames = set()
         self.lastNode = None
 
@@ -182,6 +207,8 @@ class ChainVisitor(ast.NodeVisitor):
             return
 
         self.addNode(bindingNode)
+
+        # Finish this chain and start a new one
         self.chains.append(self.lastNode)
         self.lastNode = None
 
@@ -195,9 +222,17 @@ class ChainVisitor(ast.NodeVisitor):
         self.visit(node.value)
 
     def visit_Subscript(self, node):
-        self.addNode(SubscriptNode(node, self.callback, self.globals_,
-                                   self.options))
-        self.generic_visit(node)
+        bindingNode = SubscriptNode(node, self.callback, self.globals_,
+                                    self.options)
+        self.addNode(bindingNode)
+        visitor = ChainVisitor(bindingNode.handleEvent, self.globals_,
+                               self.options)
+        visitor.visit(node.slice)
+        self.chains.extend(visitor.chains)
+
+        for key, value in ast.iter_fields(node):
+            if key != 'slice':
+                self.visit(value)
 
     def visit_Call(self, node):
         self.addNode(CallNode(node, self.callback, self.globals_,
@@ -218,13 +253,12 @@ class ChainVisitor(ast.NodeVisitor):
                 self.visit(value)
 
         self.excludedNames.clear()
-    
+
     visit_ListComp = visit_GeneratorExp
 
 
 def createChains(expr, callback, globals_, options):
     root = ast.parse(expr, '$$binding-expression$$', 'eval')
-    chains = []
-    visitor = ChainVisitor(callback, globals_, options, chains)
+    visitor = ChainVisitor(callback, globals_, options)
     visitor.visit(root)
-    return chains
+    return visitor.chains
