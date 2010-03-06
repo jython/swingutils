@@ -1,7 +1,10 @@
 from java.lang import Object
+from java.beans import PropertyChangeListener
 from javax.swing.table import AbstractTableModel
+from javax.swing.event import ListSelectionListener
 
 from swingutils.models.list import AbstractDelegateList
+from swingutils.beans import JavaBeanSupport, BeanProperty
 
 
 class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
@@ -50,13 +53,13 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         return column
 
     def _fireItemsChanged(self, start, end):
-        self.fireTableRowsUpdated(self, start, end)
+        self.fireTableRowsUpdated(start, end)
 
     def _fireItemsAdded(self, start, end):
-        self.fireTableRowsInserted(self, start, end)
+        self.fireTableRowsInserted(start, end)
 
     def _fireItemsRemoved(self, start, end):
-        self.fireTableRowsDeleted(self, start, end)
+        self.fireTableRowsDeleted(start, end)
 
     #
     # TableModel methods
@@ -149,7 +152,7 @@ class ObjectTableModel(DelegateTableModel):
         for i, row in enumerate(self):
             if row == obj:
                 return i
-        return -1
+        return - 1
 
     def getSelectedObject(self, table):
         """
@@ -193,3 +196,47 @@ class ObjectTableModel(DelegateTableModel):
             modelRow = table.convertRowIndexToModel(viewRow)
             visible.append(self[modelRow])
         return visible
+
+
+class TableSelectionProxy(JavaBeanSupport, ListSelectionListener,
+                           PropertyChangeListener):
+    selectedValue = BeanProperty('selectedValue')
+    selectedModelRow = BeanProperty('selectedModelRow', -1)
+
+    def __init__(self, table):
+        assert isinstance(table.model, ObjectTableModel), \
+            'The table model must be an ObjectTableModel'
+        self.table = table
+        self.valueChanged(None)
+        table.selectionModel.addListSelectionListener(self)
+
+    def updateSelectedValue(self):
+        selectedRow = self.table.selectedRow
+        if selectedRow != -1:
+            modelRow = self.table.convertRowIndexToModel(selectedRow)
+            self.selectedValue = self.table.model[modelRow]
+        else:
+            self.selectedValue = None
+
+    def propertyChange(self, event):
+        """Invoked on a property change event in the selected object."""
+
+        viewRow = self.table.selectedRow
+        modelRow = self.table.convertRowIndexToModel(viewRow)        
+        self.table.model.fireTableRowsUpdated(modelRow, modelRow)
+
+    def valueChanged(self, event):
+        """Invoked on a table selection change."""
+
+        if self.selectedValue is not None:
+            self.selectedValue.removePropertyChangeListener(self)
+
+        selectedRow = self.table.selectedRow
+        if selectedRow >= 0:
+            self.selectedModelRow = self.table.convertRowIndexToModel(
+                selectedRow)
+            self.selectedValue = self.table.model[self.selectedModelRow]
+            self.selectedValue.addPropertyChangeListener(self)
+        else:
+            self.selectedModelRow = -1
+            self.selectedValue = None
