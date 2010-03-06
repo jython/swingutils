@@ -9,7 +9,7 @@ _TYPES_MAP = {int: Integer, long: Long, float: Double}
 class PyDecimalFormat(DecimalFormat):
     def __init__(self, pattern=None, integerDigits=None, fractionDigits=None,
                  **kwargs):
-        DecimalFormat.__init__(self)
+        DecimalFormat.__init__(self, **kwargs)
         if pattern is not None:
             self.applyPattern(pattern)
         if integerDigits is not None:
