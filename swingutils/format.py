@@ -9,17 +9,17 @@ _TYPES_MAP = {int: Integer, long: Long, float: Double}
 class PyDecimalFormat(DecimalFormat):
     def __init__(self, pattern=None, integerDigits=None, fractionDigits=None,
                  **kwargs):
-        DecimalFormat.__init__(self, **kwargs)
-        if pattern is not None:
-            self.applyPattern(pattern)
         if integerDigits is not None:
-            self.maximumIntegerDigits = integerDigits
-            self.minimumIntegerDigits = integerDigits
+            kwargs['maximumIntegerDigits'] = integerDigits
+            kwargs['minimumIntegerDigits'] = integerDigits
         if fractionDigits is not None:
-            self.maximumFractionDigits = fractionDigits
-            self.minimumFractionDigits = fractionDigits
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
+            kwargs['maximumFractionDigits'] = fractionDigits
+            kwargs['minimumFractionDigits'] = fractionDigits
+
+        if pattern is not None:
+            DecimalFormat.__init__(self, pattern, **kwargs)
+        else:
+            DecimalFormat.__init__(self, **kwargs)
 
 
 def installFormat(field, format):
