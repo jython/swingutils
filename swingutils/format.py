@@ -43,7 +43,7 @@ def installFormat(field, format):
     field.formatterFactory = DefaultFormatterFactory(formatter)
 
 
-def setNumberFormat(field, type=None, **kwargs):
+def installNumberFormat(field, type=None, **kwargs):
     """
     Installs a number formatter in a JFormattedTextField.
 
