@@ -1,10 +1,6 @@
 # coding: utf-8
+from distutils.core import setup
 import sys
-
-try:
-    from distribute.core import setup, find_packages
-except ImportError:
-    from setuptools import setup, find_packages
 
 if not 'java' in sys.platform.lower():
     raise Exception('This package can only be installed on Jython.')
@@ -48,5 +44,11 @@ There are no releases yet, but you can check out the code from
     ],
     keywords='jython swing',
     license='MIT',
-    packages=find_packages(),
+    packages=[
+        'swingutils',
+        'swingutils.binding',
+        'swingutils.binding.adapters',
+        'swingutils.models',
+        'swingutils.thirdparty'
+    ],
 )
