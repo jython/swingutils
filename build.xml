@@ -7,11 +7,12 @@
 
 	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
 
-	<target name="jycompile">
+	<target name="compile">
+		<javac srcdir="."/>
 		<jython.compile srcdir="." destdir="build" />
 	</target>
 
-	<target name="jar" depends="jycompile">
+	<target name="jar" depends="compile">
 		<delete file="${jarfile}" />
 		<jar destfile="${jarfile}">
 			<fileset dir="build" />

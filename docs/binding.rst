@@ -21,16 +21,10 @@ This means that whenever object1.property is assigned another property, it is
 automatically copied to object2.anotherproperty.
 
 The only requirement for this to work is that object1 has support for
-`JavaBean Properties <http://java.sun.com/docs/books/tutorial/javabeans/properties/bound.html>`_.
-This includes being able to add/remove property change listeners, and firing a
-property change event when the value of an attribute has changed. This can be
-easily achieved for Python classes by inheriting from the 
-:class:`~swingutils.beans.AutoChangeNotifier` mix-in class.
-
-.. warning:: If you inherit from :class:`~swingutils.beans.AutoChangeNotifier`
-             and your class already has a ``__setattr__`` method, make sure you
-             call the one in :class:`~swingutils.beans.AutoChangeNotifier` from
-             yours.
+`bound properties <http://java.sun.com/docs/books/tutorial/javabeans/properties/bound.html>`_.
+With two way binding, object2 also needs to support bound properties.
+See the :ref:`Beans section <beans>` for more information on how to accomplish
+that.
 
 How it works
 ------------

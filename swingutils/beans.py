@@ -5,14 +5,11 @@ compatible property change notifications.
 """
 from java.beans import PropertyChangeListener, PropertyChangeEvent
 
+from swingutils.javainterfaces import JavaBean
 
-class JavaBeanSupport(object):
+class JavaBeanSupport(JavaBean):
     """
     Class that provides support for listening to property change events.
-
-    .. note:: These added methods are **not** visible to Java, so classes
-              inheriting from this class **cannot** be used as regular
-              JavaBeans from Java code.
 
     """
     _listeners = None
