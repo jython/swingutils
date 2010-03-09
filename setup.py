@@ -1,5 +1,8 @@
 # coding: utf-8
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 import sys
 
 if not 'java' in sys.platform.lower():
