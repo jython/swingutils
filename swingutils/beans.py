@@ -7,6 +7,7 @@ from java.beans import PropertyChangeListener, PropertyChangeEvent
 
 from swingutils.javainterfaces import JavaBean
 
+
 class JavaBeanSupport(JavaBean):
     """
     Class that provides support for listening to property change events.
