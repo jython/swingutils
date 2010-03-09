@@ -12,21 +12,20 @@ setup(
     long_description="""\
 A collection of utility classes and helper functions to make it easier to build
 Swing user interfaces with Jython. The helpers provide "pythonic" alternatives
-to often clumsy Java interfaces.
+to often clumsy Java APIs.
 
 Included in this package:
- * enhanced table and list models
+ * enhanced table, list and combobox models
  * JavaBeans support and automatic property change notification
+ * an alternative API for adding/removing event listeners
  * property binding
  * enhanced file chooser
  * preferences access
  * text field formatters
  * shortcuts for common dialogs
  * wrappers for loading `JFormDesigner <http://www.jformdesigner.com/>`_ forms
- * decorators and functions for invoking Swing code from other threads
- * support for running background tasks
- 
-More will follow as the project progresses.
+ * decorators and functions for safely accessing the GUI from any thread
+ * support for running background tasks in separate threads
 
 There are no releases yet, but you can check out the code from
 `BitBucket <http://bitbucket.org/agronholm/jython-swingutils/>`_.
