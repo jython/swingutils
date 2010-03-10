@@ -1,6 +1,6 @@
 .. _beans:
 
-JavaBeans Support
+JavaBeans support
 =================
 
 This module contains classes that you can use to add support for `bound
