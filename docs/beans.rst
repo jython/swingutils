@@ -24,11 +24,12 @@ Both approaches have their pros and cons, which are detailed below.
 BeanProperty
 ------------
 
-This is a descriptor class that should be installed as a class attribute in a
-new-style object (one that inherits from ``object``). It handles getting
-and setting the value, and fires a property change event when the value is set.
-It requires that the containing class supports property change events (via the
-add/remove methods mentioned above).
+This is a `descriptor class <http://docs.python.org/reference/datamodel.html#descriptors>`_
+that should be installed as a class attribute in a new-style object (one that
+inherits from ``object``). It handles getting and setting the value, and fires
+a property change event when the value is set. It requires that the containing
+class supports property change events (via the add/remove methods mentioned
+above).
 
 Example::
 
