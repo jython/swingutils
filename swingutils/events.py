@@ -56,7 +56,7 @@ def addEventListener(target, eventInterface, event, listener,
     :param eventInterface: the interface that the listener wrapper has to
                            implement (e.g. :class:`java.awt.MouseListener`)
     :param event: name(s) of the event(s) to listen for (e.g. "mouseClicked")
-    :param listener: callable that is called with (event, *args, **kwargs)
+    :param listener: callable that is called with ``(event, *args, **kwargs)``
                      when the event is fired
     :type eventInterface: Java interface
     :type event: string or an iterable of strings
@@ -80,7 +80,7 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
     Adds a callback that is called when the given property has changed.
     A listener can either listen to changes in a specific property,
     or all properties (by supplying `None` as the property name).
-    The listener is called with (event, *args, **kwargs).
+    The listener is called with ``(event, *args, **kwargs)``.
 
     :param target: the object whose property will be listened to
     :param property: name of the property, or None to listen to all
