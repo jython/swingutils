@@ -1,16 +1,20 @@
-from threading import Event
-import traceback
+from functools import wraps
 
-from java.lang import Runnable, Throwable
+from java.lang import Runnable
 from java.util.concurrent import ThreadPoolExecutor, TimeUnit, \
-    LinkedBlockingDeque, Future, ExecutionException, \
-    CancellationException
+    LinkedBlockingDeque, Callable, FutureTask
 from javax.swing import SwingUtilities
 
-__all__ = ('TaskExecutor',)
+__all__ = ('RunnableWrapper', 'CallableWrapper', 'TaskExecutor', 'runSwing',
+           'swingTask', 'runAsyncSwing', 'asyncSwingTask')
 
 
 class RunnableWrapper(Runnable):
+    """
+    Wraps a callable and its arguments for use in Java code that requires a
+    :class:`~java.lang.Runnable`.
+
+    """
     def __init__(self, func, args, kwargs):
         self._func = func
         self._args = args
@@ -20,167 +24,122 @@ class RunnableWrapper(Runnable):
         self._func(*self._args, **self._kwargs)
 
 
-class AsyncResult(RunnableWrapper, Future):
+class CallableWrapper(Callable):
     """
-    Class that stores both the function reference, and the return value or
-    raised exception from an asynchronously invoked callable. Users should not
-    instantiate or run these directly.
+    Wraps a callable and its arguments for use in Java code that requires a
+    :class:`~java.util.concurrent.Callable`.
 
     """
-    def __init__(self, func, args, kwargs, name=None, beforeCallback=None,
-                 afterCallback=None):
-        RunnableWrapper.__init__(self, func, args, kwargs, name,
-                                 beforeCallback, afterCallback)
-        self._event = Event()
+    def __init__(self, func, args, kwargs):
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
 
-    def run(self):
-        if not self._func:
-            return
-
-        try:
-            self._retval = self._func(*self._args, **self._kwargs)
-        except BaseException, e:
-            self._exception = e
-            traceback.print_exc()
-
-        self._func = None        # Free any memory taken by possible closures
-        self._event.set()
-
-    def cancel(self, mayInterruptIfRunning):
-        if self.isDone():
-            return False
-        self._func = None
-        return True
-
-    def get(self, timeout=None, unit=None):
-        if timeout and unit:
-            timeout = unit.toMillis(timeout) / 1000.0
-        self._event.wait(timeout)
-        if hasattr(self, '_exception'):
-            if isinstance(self._exception, Throwable):
-                raise ExecutionException(self._exception)
-            raise ExecutionException(unicode(self._exception), None)
-        if not hasattr(self, '_retval'):
-            raise CancellationException
-        return self._retval
-
-    def isCancelled(self):
-        return self._func is None
-
-    def isDone(self):
-        return hasattr(self, '_retval') or hasattr(self, '_exception')
+    def call(self):
+        return self._func(*self._args, **self._kwargs)
 
 
 class TaskExecutor(ThreadPoolExecutor):
-    beforeCallback = None
-    afterCallback = None
+    """
+    This is a configurable thread pool for executing background tasks.
+    
+    :param coreThreads: Minimum number of threads
+    :param maxThreads: Maximum number of threads
+    :param keepalive: Time in seconds to keep idle non-core threads alive
+    :param queue: The queue implementation, defaults to a
+                  :class:`~java.util.concurrent.LinkedBlockingQueue`
 
-    def __init__(self, coreThreads=1, maxThreads=1, keepalive=5, queue=None,
-                 beforeCallback=None, afterCallback=None):
+    .. seealso:: :class:`java.util.concurrent.ThreadPoolExecutor`
+
+    """
+    def __init__(self, coreThreads=1, maxThreads=1, keepalive=5, queue=None):
         queue = queue or LinkedBlockingDeque()
         ThreadPoolExecutor.__init__(self, coreThreads, maxThreads, keepalive,
                                     TimeUnit.SECONDS, queue)
-        self.beforeCallback = beforeCallback
-        self.afterCallback = afterCallback
 
-    def beforeExecute(self, thread, runnable):
-        if self.beforeCallback:
-            self.beforeCallback(thread, runnable)
-        if runnable.beforeCallback:
-            runnable.beforeCallback(thread, runnable)
+    def runBackground(self, func, *args, **kwargs):
+        """
+        Queues a callable for background execution in this thread pool.
+        Any extra positional and keyword arguments will be passed to the
+        target function.
 
-    def afterExecute(self, runnable, throwable):
-        if self.afterCallback:
-            self.afterCallback(runnable, throwable)
-        if runnable.afterCallback:
-            runnable.afterCallback(runnable, throwable)
+        :rtype: :class:`~java.util.concurrent.Future`
 
-    def task(self, func):
+        """
+        callable = CallableWrapper(func, args, kwargs)
+        return self.submit(callable)
+
+    def backgroundTask(self, func):
+        """
+        This is a decorator wrapper for :meth:`~TaskExecutor.runBackground`.
+
+        """
+        @wraps(func)
         def wrapper(*args, **kwargs):
-            return self.runTask(func, *args, **kwargs)
+            return self.runBackground(func, *args, **kwargs)
         return wrapper
 
-    def namedTask(self, name, beforeCallback=None, afterCallback=None):
-        def outer(func):
-            def inner(*args, **kwargs):
-                kwargs['beforeCallback'] = beforeCallback
-                kwargs['afterCallback'] = afterCallback
-                return self.runNamedTask(func, name, *args, **kwargs)
-            return inner
-        return outer
+#
+# Functions for running code in the Event Dispatch Thread
+#
 
-    def runTask(self, func, *args, **kwargs):
-        result = AsyncResult(func, args, kwargs)
-        self.execute(result)
-        return result
-
-    def runNamedTask(self, func, name, *args, **kwargs):
-        beforeCallback = kwargs.pop('beforeCallback', None)
-        afterCallback = kwargs.pop('afterCallback', None)
-        result = AsyncResult(func, args, kwargs, name, beforeCallback,
-                             afterCallback)
-        self.execute(result)
-        return result
-
-
-def execInEDT(func, *args, **kwargs):
+def runSwing(func, *args, **kwargs):
     """
-    Run the given function in the Event Dispatch Thread.
+    Runs the given function in the Event Dispatch Thread.
     The calling thread will block until the function has been run.
-    Any exceptions will be propagated to the calling thread.
+    Any extra positional and keyword arguments will be passed to the
+    target function.
 
     """
     if SwingUtilities.isEventDispatchThread():
         return func(*args, **kwargs)
     else:
-        holder = AsyncResult(func, args, kwargs)
-        SwingUtilities.invokeAndWait(holder)
-        return holder.get()
+        callable = CallableWrapper(func, args, kwargs)
+        task = FutureTask(callable)
+        SwingUtilities.invokeAndWait(task)
+        return task.get()
 
 
-def invokeInEDT(func):
+def swingTask(func):
     """
-    Decorator that causes the wrapped function to be queued for execution
+    This is a decorator wrapper for :func:`runSwing`.
+
+    This causes the wrapped function to be executed
     in the event dispatch thread. The calling thread will block
-    until the function has executed in the event dispatch thread.
+    until the function has finished executing.
     If the target function is called from the event dispatch thread,
-    it will be executed directly The return value of the target function
-    is preserved and returned always.
+    it will be executed directly.
 
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
-        return execInEDT(func, *args, **kwargs)
+        return runSwing(func, *args, **kwargs)
     return wrapper
 
 
-def invokeLater(func):
+def runAsyncSwing(func, *args, **kwargs):
     """
-    Decorator that ensures that the given function is executed in the Event
-    Dispatch Thread. If the current thread is the EDT, the function is executed
-    normally. Otherwise, it is queued for execution in the EDT. The return
-    value and any raised exception are always discarded.
+    Queues the given callable to be executed in the Event Dispatch Thread.
+    Any extra positional and keyword arguments will be passed to the
+    target function. This function returns immediately.
+
+    :rtype: :class:`~java.util.concurrent.Future`
 
     """
-    def wrapper(*args, **kwargs):
-        if SwingUtilities.isEventDispatchThread():
-            func(*args, **kwargs)
-        else:
-            wrapper = RunnableWrapper(func, args, kwargs)
-            SwingUtilities.invokeLater(wrapper)
-    return wrapper
+    callable = CallableWrapper(func, args, kwargs)
+    task = FutureTask(callable)
+    SwingUtilities.invokeLater(task)
+    return task
 
 
 def asyncSwingTask(func):
     """
-    Decorator that causes the wrapped function to be queued for execution
-    in the Event Dispatch Thread. The call will return immediately.
+    This is a decorator wrapper for :func:`runAsyncSwing`.
 
-    :return: a result holder that will contain the return value
-    :rtype: :class:`~AsyncResult`
+    This causes the wrapped function to be queued for execution
+    in the Event Dispatch Thread. The call will return immediately.
 
     """
     def wrapper(*args, **kwargs):
-        holder = AsyncResult(func, args, kwargs)
-        SwingUtilities.invokeLater(holder)
-        return holder
+        return runAsyncSwing(func, *args, **kwargs)
     return wrapper
