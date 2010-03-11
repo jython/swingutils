@@ -11,7 +11,7 @@ except ImportError:
     raise ImportError('JFormDesigner runtime library not found. '
                       'Make sure you have jfd-loader.jar on your CLASSPATH.')
 
-__all__ = ('FormCreatorWrapper', 'PanelWrapper', 'WindowWrapper')
+__all__ = ('FormWrapper', 'PanelWrapper', 'WindowWrapper')
 
 
 class FormWrapper(object):
