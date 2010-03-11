@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="6.0+" codebase="http://www.company.com/sampleapp" href="sampleapp.jnlp">
+	<information>
+		<title>Sample Application</title>
+		<vendor>Company Inc.</vendor>
+		<shortcut online="false">
+			<desktop />
+		</shortcut>
+		<icon href="sampleapp-icon.jpg"/>
+		<icon kind="splash" href="sampleapp-splash.jpg"/>
+	</information>
+	<security>
+		<all-permissions />
+	</security>
+
+	<resources>
+		<java version="1.6+"/>
+		<jar href="SampleApp.jar" main="true" />
+
+		<!-- This disables creation of .cachedir directories -->
+		<property name="python.cachedir.skip" value="true"/>
+
+		<!-- Jython -->
+		<extension name="Jython"
+			href="http://pypi.python.org/pypi/jython-swingutils/jython-latest.jnlp"/>
+
+		<!-- Jython-swingutils -->
+		<extension name="Jython Swing Utilities"
+			href="http://pypi.python.org/pypi/jython-swingutils/jython-swingutils-latest.jnlp"/>
+
+	</resources>
+	<application-desc main-class="com.company.sampleapp.SampleApp" />
+</jnlp>
