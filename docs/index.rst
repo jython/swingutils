@@ -15,16 +15,17 @@ Table of Contents
 =================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    models
    beans
    events
-   threads
+   binding
    format
+   dialogs
    resources
    preferences
-   binding
+   threads
    thirdparty/jformdesigner
 
 Indices and tables
