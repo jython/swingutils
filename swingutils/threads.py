@@ -2,7 +2,7 @@ from functools import wraps
 
 from java.lang import Runnable
 from java.util.concurrent import ThreadPoolExecutor, TimeUnit, \
-    LinkedBlockingDeque, Callable, FutureTask
+    LinkedBlockingQueue, Callable, FutureTask
 from javax.swing import SwingUtilities
 
 __all__ = ('RunnableWrapper', 'CallableWrapper', 'TaskExecutor', 'runSwing',
@@ -53,7 +53,7 @@ class TaskExecutor(ThreadPoolExecutor):
 
     """
     def __init__(self, coreThreads=1, maxThreads=1, keepalive=5, queue=None):
-        queue = queue or LinkedBlockingDeque()
+        queue = queue or LinkedBlockingQueue()
         ThreadPoolExecutor.__init__(self, coreThreads, maxThreads, keepalive,
                                     TimeUnit.SECONDS, queue)
 
