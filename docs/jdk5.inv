@@ -1,8 +1,9 @@
 # Sphinx inventory version 1
-# Project: jython-swingutils
-# Version: 0.2
+# Project: Java Development Kit
+# Version: 5
 java.awt.MouseListener class java/event/MouseListener.html
 java.lang.Runnable class java/lang/Runnable.html
 java.util.concurrent.Callable class java/util/concurrent/Callable.html
 java.util.concurrent.Future class java/util/concurrent/Future.html
 java.util.concurrent.ThreadPoolExecutor class java/util/concurrent/ThreadPoolExecutor.html
+java.util.concurrent.LinkedBlockingQueue class java/util/concurrent/LinkedBlockingQueue.html
