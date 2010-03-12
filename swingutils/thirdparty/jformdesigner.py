@@ -44,12 +44,15 @@ class FormWrapper(object):
 
         """
         if formName is None or not '/' in formName:
-            modulepath = self.__class__.__module__.split('.')[:-1]
-            modulepath = '/'.join(modulepath)
-            filename = formName if formName else self.__class__.__name__
-            if not filename.lower().endswith('.jfd'):
-                filename += '.jfd'
-            formName = '%s/%s' % (modulepath, filename)
+            modulePath = self.__class__.__module__.split('.')[:-1]
+            modulePath = '/'.join(modulePath)
+            fileName = formName if formName else self.__class__.__name__
+            if not fileName.lower().endswith('.jfd'):
+                fileName += '.jfd'
+            if modulePath:
+                formName = '%s/%s' % (modulePath, fileName)
+            else:
+                formName = fileName
         formModel = FormLoader.load(formName)
         self._creator = FormCreator(formModel)
         self._creator.target = self
