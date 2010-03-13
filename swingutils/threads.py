@@ -1,6 +1,7 @@
 from functools import wraps
+from traceback import print_exc
 
-from java.lang import Runnable
+from java.lang import Runnable, Exception as JavaException
 from java.util.concurrent import ThreadPoolExecutor, TimeUnit, \
     LinkedBlockingQueue, Callable, FutureTask
 from javax.swing import SwingUtilities
@@ -21,7 +22,14 @@ class RunnableWrapper(Runnable):
         self._kwargs = kwargs
 
     def run(self):
-        self._func(*self._args, **self._kwargs)
+        try:
+            self._func(*self._args, **self._kwargs)
+        except JavaException, e:
+            e.printStackTrace()
+            raise
+        except:
+            print_exc()
+            raise
 
 
 class CallableWrapper(Callable):
@@ -36,7 +44,14 @@ class CallableWrapper(Callable):
         self._kwargs = kwargs
 
     def call(self):
-        return self._func(*self._args, **self._kwargs)
+        try:
+            return self._func(*self._args, **self._kwargs)
+        except JavaException, e:
+            e.printStackTrace()
+            raise
+        except:
+            print_exc()
+            raise
 
 
 class TaskExecutor(ThreadPoolExecutor):
