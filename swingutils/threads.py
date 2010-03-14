@@ -155,6 +155,7 @@ def asyncSwingTask(func):
     in the Event Dispatch Thread. The call will return immediately.
 
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         return runAsyncSwing(func, *args, **kwargs)
     return wrapper
