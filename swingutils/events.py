@@ -95,6 +95,7 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
     """
     wrapper = _createListenerWrapper(PropertyChangeListener, 'propertyChange',
         listener, args, kwargs, target.removePropertyChangeListener)
-    wrapper.removeMethodArgs = (property, wrapper)
-    target.addPropertyChangeListener(property, wrapper)
+    add_args = (wrapper,) if property is None else (property, wrapper)
+    wrapper.removeMethodArgs = add_args
+    target.addPropertyChangeListener(*add_args)
     return wrapper
