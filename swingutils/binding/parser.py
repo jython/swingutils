@@ -9,9 +9,9 @@ class BindingNode(object):
     next = None
     lastParentRef = None
 
-    def __init__(self, callback, globals_, options):
+    def __init__(self, callback, locals_, options):
         self.callback = callback
-        self.globals_ = globals_
+        self.locals_ = locals_
         self.options = options
         self.logger = options.get('logger')
 
@@ -99,8 +99,8 @@ class BindingNode(object):
 class AttributeNode(BindingNode):
     __slots__ = 'attr'
 
-    def __init__(self, attr, callback, globals_, options):
-        BindingNode.__init__(self, callback, globals_, options)
+    def __init__(self, attr, callback, locals_, options):
+        BindingNode.__init__(self, callback, locals_, options)
         self.attr = attr
 
     def getValue(self, parent):
@@ -120,12 +120,12 @@ class AttributeNode(BindingNode):
 class VariableNode(BindingNode):
     __slots__ = 'name'
 
-    def __init__(self, name, callback, globals_, options):
-        BindingNode.__init__(self, callback, globals_, options)
+    def __init__(self, name, callback, locals_, options):
+        BindingNode.__init__(self, callback, locals_, options)
         self.name = name
 
     def getValue(self, parent):
-        return self.globals_.vars[self.name]
+        return self.locals_.vars[self.name]
 
     def __unicode__(self):
         return u'Variable(%s)' % self.name
@@ -134,15 +134,15 @@ class VariableNode(BindingNode):
 class SubscriptNode(BindingNode):
     __slots__ = 'code'
 
-    def __init__(self, node, callback, globals_, options):
-        BindingNode.__init__(self, callback, globals_, options)
+    def __init__(self, node, callback, locals_, options):
+        BindingNode.__init__(self, callback, locals_, options)
         value = ast.Name(id='___binding_parent')
         subscript = ast.Subscript(value=value, slice=node.slice)
         expr = ast.Expression(body=subscript)
         self.code = compile(expr, '$$binding-subscript$$', 'eval')
 
     def getValue(self, parent):
-        slice = eval(self.code, self.globals_, dict(___binding_parent=parent))
+        slice = eval(self.code, self.locals_, dict(___binding_parent=parent))
         return parent[slice]
 
     def getAdapter(self, parent):
@@ -159,8 +159,8 @@ class SubscriptNode(BindingNode):
 class CallNode(BindingNode):
     __slots__ = 'code'
 
-    def __init__(self, node, callback, globals_, options):
-        BindingNode.__init__(self, callback, globals_, options)
+    def __init__(self, node, callback, locals_, options):
+        BindingNode.__init__(self, callback, locals_, options)
         func = ast.Name(id='___binding_parent', ctx=ast.Load())
         call = ast.Call(func=func, args=node.args, keywords=node.keywords,
                         starargs=node.starargs, kwargs=node.kwargs)
@@ -168,7 +168,7 @@ class CallNode(BindingNode):
         self.code = compile(expr, '$$binding-call$$', 'eval')
 
     def getValue(self, parent):
-        return eval(self.code, self.globals_, dict(___binding_parent=parent))
+        return eval(self.code, self.locals_, dict(___binding_parent=parent))
 
     def __unicode__(self):
         return u'Call'
@@ -183,9 +183,9 @@ class NameCollector(ast.NodeVisitor):
 
 
 class ChainVisitor(ast.NodeVisitor):
-    def __init__(self, callback, globals_, options):
+    def __init__(self, callback, locals_, options):
         self.callback = callback
-        self.globals_ = globals_
+        self.locals_ = locals_
         self.options = options
         self.chains = []
         self.excludedNames = set()
@@ -200,17 +200,17 @@ class ChainVisitor(ast.NodeVisitor):
             for item in node:
                 self.subnodeVisit(item, callback)
         elif isinstance(node, ast.AST):
-            visitor = ChainVisitor(callback, self.globals_, self.options)
+            visitor = ChainVisitor(callback, self.locals_, self.options)
             visitor.visit(node)
             self.chains.extend(visitor.chains)
 
     def visit_Name(self, node):
         # Names are treated as attributes of the root object
-        if node.id in self.globals_.vars:
-            bindingNode = VariableNode(node.id, self.callback, self.globals_,
+        if node.id in self.locals_.vars:
+            bindingNode = VariableNode(node.id, self.callback, self.locals_,
                                        self.options)
         elif node.id not in self.excludedNames:
-            bindingNode = AttributeNode(node.id, self.callback, self.globals_,
+            bindingNode = AttributeNode(node.id, self.callback, self.locals_,
                                         self.options)
         else:
             return
@@ -226,19 +226,19 @@ class ChainVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Attribute(self, node):
-        self.addNode(AttributeNode(node.attr, self.callback, self.globals_,
+        self.addNode(AttributeNode(node.attr, self.callback, self.locals_,
                                    self.options))
         self.visit(node.value)
 
     def visit_Subscript(self, node):
-        bindingNode = SubscriptNode(node, self.callback, self.globals_,
+        bindingNode = SubscriptNode(node, self.callback, self.locals_,
                                     self.options)
         self.addNode(bindingNode)
         self.subnodeVisit(node.slice, bindingNode.handleEvent)
         self.visit(node.value)
 
     def visit_Call(self, node):
-        bindingNode = CallNode(node, self.callback, self.globals_,
+        bindingNode = CallNode(node, self.callback, self.locals_,
                               self.options)
         self.addNode(bindingNode)
         for key, value in ast.iter_fields(node):
@@ -269,8 +269,8 @@ class ChainVisitor(ast.NodeVisitor):
     visit_ListComp = visit_GeneratorExp
 
 
-def createChains(expr, callback, globals_, options):
+def createChains(expr, callback, locals_, options):
     root = ast.parse(expr, '$$binding-expression$$', 'eval')
-    visitor = ChainVisitor(callback, globals_, options)
+    visitor = ChainVisitor(callback, locals_, options)
     visitor.visit(root)
     return visitor.chains

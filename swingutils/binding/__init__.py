@@ -20,14 +20,9 @@ ONEWAY = 1
 TWOWAY = 2
 
 class _LocalsProxy(object):
-    def __init__(self, obj, builtins, options, **kwargs):
+    def __init__(self, obj, options):
         self.obj = obj
-        self.vars = {}
-        if builtins:
-            self.vars['__builtins__'] = __builtin__
-        if 'vars' in options:
-            self.vars.update(options['vars'])
-        self.vars.update(kwargs)
+        self.vars = options['vars'].copy() if 'vars' in options else {}
 
     def __getitem__(self, key):
         if key in self.vars:
@@ -54,26 +49,29 @@ class BindingExpression(object):
         self.root = root
         self.source = source
         self.options = options
-        self.globalsDict = _LocalsProxy(root, True, self.options)
-        self.localsDict = _LocalsProxy(root, False, self.options)
+        self.globals = dict(__builtins__=__builtin__)
+        self.locals = _LocalsProxy(root, self.options)
 
     def getValue(self):
         if not self.reader:
             self.reader = compile(self.source, '$$binding-reader$$', 'eval')
 
-        return eval(self.reader, self.globalsDict)
+        return eval(self.reader, self.globals, self.locals)
 
     def setValue(self, value):
         if not self.writer:
             self.writer = compile('%s=___binding_value' % self.source,
                                   '$$binding-writer$$', 'exec')
 
-        globals_ = dict(__builtins__=__builtin__, ___binding_value=value)
-        exec(self.writer, globals_, self.localsDict)
+        self.locals.vars['___binding_value'] = value
+        try:
+            exec(self.writer, self.globals, self.locals)
+        finally:
+            del self.locals.vars['___binding_value']
 
     def bind(self, callback):
         if self.chains is None:
-            self.chains = createChains(self.source, callback, self.globalsDict,
+            self.chains = createChains(self.source, callback, self.locals,
                                        self.options)
 
         for chain in self.chains:
@@ -94,7 +92,7 @@ class BindingExpression(object):
         indentspace = u' ' * indent
         print >> outfile, u'%sSource code: %s' % (indentspace, self.source)
         if not self.chains:
-            self.chains = createChains(self.source, None, self.globalsDict,
+            self.chains = createChains(self.source, None, self.locals,
                                        self.options)
 
         for i, chain in enumerate(self.chains):
