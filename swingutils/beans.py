@@ -3,73 +3,60 @@ This module contains support classes to make your own classes support JavaBeans
 compatible property change notifications.
 
 """
-from java.beans import PropertyChangeListener, PropertyChangeEvent
-
-from swingutils.javainterfaces import JavaBean
+from java.beans import PropertyChangeSupport
 
 
-class JavaBeanSupport(JavaBean):
+class JavaBeanSupport(object):
     """
     Class that provides support for listening to property change events.
 
+    This class does not provide a Java-compatible interface, so if you need
+    that, inherit directly from :class:`java.beans.PropertyChangeSupport`
+    instead.
+
     """
-    _listeners = None
+    _changeSupport = None
 
     def addPropertyChangeListener(self, *args):
-        if len(args) == 2:
-            property, listener = args
-        elif len(args) == 1:
-            property, listener = None, args[0]
-        else:
-            raise TypeError('addPropertyChangeListener expected 1-2 '
-                            'arguments, got %d' % len(args))
-        assert isinstance(listener, PropertyChangeListener)
-
-        if self._listeners is None:
-            self._listeners = {}
-
-        if not property in self._listeners:
-            self._listeners[property] = [listener]
-        else:
-            self._listeners[property].append(listener)
+        if not self._changeSupport:
+            self._changeSupport = PropertyChangeSupport(self)
+        self._changeSupport.addPropertyChangeListener(*args)
 
     def removePropertyChangeListener(self, *args):
-        if len(args) == 2:
-            property, listener = args
-        elif len(args) == 1:
-            property, listener = None, args[0]
-        else:
-            raise TypeError('removePropertyChangeListener expected 1-2 '
-                            'arguments, got %d' % len(args))
-        assert isinstance(listener, PropertyChangeListener)
+        if self._changeSupport:
+            self._changeSupport.removePropertyChangeListener(*args)
 
-        if (self._listeners and property in self._listeners and
-            listener in self._listeners[property]):
-            self._listeners[property].remove(listener)
+    def firePropertyChange(self, *args):
+        if self._changeSupport:
+            self._changeSupport.firePropertyChange(*args)
 
-    def firePropertyChange(self, property, oldValue, newValue):
-        event = PropertyChangeEvent(self, property, oldValue, newValue)
-        if self._listeners and oldValue != newValue:
-            if property in self._listeners:
-                for listener in self._listeners[property]:
-                    listener.propertyChange(event)
-            if None in self._listeners:
-                for listener in self._listeners[None]:
-                    listener.propertyChange(event)
+    def fireIndexedPropertyChange(self, *args):
+        if self._changeSupport:
+            self._changeSupport.fireIndexedPropertyChange(*args)
+
+    def getPropertyChangeListeners(self, *args):
+        if self._changeSupport:
+            return self._changeSupport.getPropertyChangeListeners(*args)
+        return []
+
+    def hasListeners(self, *args):
+        if self._changeSupport:
+            return self._changeSupport.hasListeners(*args)
+        return False
 
 
-class AutoChangeNotifier(JavaBeanSupport):
+class AutoChangeNotifier(object):
     """
     Mix-in class that automatically fires property change events for
     public properties (those whose names don't start with an underscore).
-    
+
     .. note:: If you inherit from this class, make sure that its
               ``__setattr__`` method is not shadowed by another
               ``__setattr__``!
 
     """
     def __setattr__(self, name, value):
-        if not self._listeners or name.startswith('_'):
+        if name.startswith('_'):
             object.__setattr__(self, name, value)
         else:
             oldValue = getattr(self, name, None)
@@ -109,3 +96,47 @@ class BeanProperty(object):
         oldValue = self.value
         self.value = value
         obj.firePropertyChange(self.name, oldValue, value)
+
+
+class MirrorObject(JavaBeanSupport):
+    """
+    This is a proxy class that provides bound properties support for objects
+    that have no such support of their own.
+
+    """
+    __delegate = None
+
+    def __init__(self, delegate=None):
+        self.__delegate = delegate
+
+    def __getDelegate(self):
+        return self.__delegate
+
+    def __setDelegate(self, newDelegate):
+        oldDelegate = self.__delegate
+        self.__delegate = newDelegate
+
+        # Collect public property names from both old and new
+        propertyNames = set()
+        for attr in (dir(oldDelegate) + dir(newDelegate)):
+            if not attr.startswith('_'):
+                propertyNames.add(attr)
+
+        # Fire a property change event for each attribute
+        for attr in propertyNames:
+            oldValue = getattr(oldDelegate, attr, None)
+            newValue = getattr(newDelegate, attr, None)
+            self.firePropertyChange(attr, oldValue, newValue)
+
+    _delegate = property(__getDelegate, __setDelegate)
+
+    def __getattr__(self, name):
+        return getattr(self._delegate, name, None)
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            object.__setattr__(self, name, value)
+        else:
+            oldValue = getattr(self._delegate, name, None)
+            setattr(self._delegate, name, value)
+            self.firePropertyChange(name, oldValue, value)

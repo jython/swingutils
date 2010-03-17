@@ -1,4 +1,5 @@
 from jarray import array
+import logging
 
 from java.lang import String, Integer
 from javax.swing import JTextField, JFormattedTextField, JList, JComboBox, \
@@ -9,14 +10,13 @@ from javax.swing.table import DefaultTableColumnModel, TableColumn
 from nose.tools import eq_
 
 from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, MANUAL 
-from swingutils.beans import AutoChangeNotifier
+from swingutils.beans import AutoChangeNotifier, JavaBeanSupport
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
 from swingutils.models.table import ObjectTableModel
-import logging
 
 
-class Person(AutoChangeNotifier):
+class Person(JavaBeanSupport, AutoChangeNotifier):
     def __init__(self, firstName=None, lastName=None, birthYear=None):
         self.firstName = firstName
         self.lastName = lastName
@@ -27,7 +27,7 @@ class Person(AutoChangeNotifier):
         return self.children[index]
 
 
-class DummyObject(AutoChangeNotifier):
+class DummyObject(JavaBeanSupport, AutoChangeNotifier):
     value = None
 
 

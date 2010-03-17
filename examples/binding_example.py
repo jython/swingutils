@@ -7,14 +7,14 @@ from javax.swing import JLabel, JFrame, JFormattedTextField, JTextField, \
 from javax.swing.ListSelectionModel import SINGLE_SELECTION
 
 from swingutils.threads import asyncSwingTask
-from swingutils.beans import AutoChangeNotifier
+from swingutils.beans import AutoChangeNotifier, JavaBeanSupport
 from swingutils.binding import BindingGroup, TWOWAY, ONEWAY
 from swingutils.models.table import ObjectTableModel, TableSelectionProxy
 from swingutils.events import addEventListener
 from swingutils.format import installNumberFormat
 
 
-class Person(AutoChangeNotifier):
+class Person(JavaBeanSupport, AutoChangeNotifier):
     def __init__(self, firstName=None, lastName=None, birthYear=None):
         self.firstName = firstName
         self.lastName = lastName
