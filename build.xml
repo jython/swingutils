@@ -8,7 +8,6 @@
 	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
 
 	<target name="compile">
-		<javac srcdir="." destdir="build" />
 		<jython.compile srcdir="." destdir="build" />
 	</target>
 
