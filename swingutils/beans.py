@@ -140,3 +140,6 @@ class MirrorObject(JavaBeanSupport):
             oldValue = getattr(self._delegate, name, None)
             setattr(self._delegate, name, value)
             self.firePropertyChange(name, oldValue, value)
+
+    def __nonzero__(self):
+        return self._delegate is not None
