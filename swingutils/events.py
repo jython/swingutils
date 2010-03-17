@@ -14,8 +14,11 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
         assert hasattr(eventInterface, event), \
             '%s has no method named "%s"' % (eventInterface.__name__, event)
 
-    # Create a wrapper class for this event class if one doesn't exist already
     className = eventInterface.__name__
+    if eventInterface.__module__:
+        className = eventInterface.__module__ + '.' + className
+
+    # Create a wrapper class for this event class if one doesn't exist already
     if not className in _wrapperClassMap:
         wrapperClass = type('%sWrapper' % eventInterface.__name__,
                             (EventListenerWrapper, eventInterface), {})
@@ -40,7 +43,7 @@ class EventListenerWrapper(object):
 
     def handleEvent(self, event):
         self.listener(event, *self.args, **self.kwargs)
-    
+
     def unlisten(self):
         self.removeMethod(*self.removeMethodArgs)
 
