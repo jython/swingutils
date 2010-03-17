@@ -1,5 +1,4 @@
 from java.util import EventListener
-from java.beans import PropertyChangeListener
 
 
 _wrapperClassMap = {}       # event interface name -> wrapper class
@@ -93,9 +92,137 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
              events (with obj.removePropertyChangeListener())
 
     """
+    from java.beans import PropertyChangeListener
     wrapper = _createListenerWrapper(PropertyChangeListener, 'propertyChange',
         listener, args, kwargs, target.removePropertyChangeListener)
     add_args = (wrapper,) if property is None else (property, wrapper)
     wrapper.removeMethodArgs = add_args
     target.addPropertyChangeListener(*add_args)
     return wrapper
+
+#
+# Shortcuts for java.awt.event
+#
+
+def addActionListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, ActionListener, 'actionPerformed',
+    listener).
+
+    """
+    from java.awt.event import ActionListener
+    return addEventListener(target, ActionListener, 'actionPerformed',
+                            listener, *args, **kwargs)
+
+
+def addItemListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, ItemListener, 'itemStateChanged',
+    listener).
+
+    """
+    from java.awt.event import ItemListener
+    return addEventListener(target, ItemListener, 'itemStateChanged', listener,
+                            *args, **kwargs)
+
+
+def addFocusLostListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, FocusListener, 'focusLost',
+    listener).
+
+    """
+    from java.awt.event import FocusListener
+    return addEventListener(target, FocusListener, 'focusLost', listener,
+                            *args, **kwargs)
+
+
+def addMouseClickListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, MouseListener, 'mouseClicked',
+    listener).
+
+    """
+    from java.awt.event import MouseListener
+    return addEventListener(target, MouseListener, 'mouseClicked', listener,
+                            *args, **kwargs)
+
+#
+# Shortcuts for javax.swing.events
+#
+
+def addCaretListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, CaretListener, 'caretUpdate',
+    listener).
+
+    """
+    from javax.swing.event import CaretListener
+    return addEventListener(target, CaretListener, 'caretUpdate', listener,
+                            *args, **kwargs)
+
+
+def addChangeListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, ChangeListener, 'stateChanged',
+    listener).
+
+    """
+    from javax.swing.event import ChangeListener
+    return addEventListener(target, ChangeListener, 'stateChanged', listener,
+                            *args, **kwargs)
+
+
+def addListSelectionListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, ListSelectionListener,
+    'valueChanged', listener).
+
+    """
+    from javax.swing.event import ListSelectionListener
+    return addEventListener(target, ListSelectionListener, 'valueChanged',
+                            listener, *args, **kwargs)
+
+
+def addRowSorterListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, addTreeSelectionListener,
+    'sorterChanged', listener).
+
+    """
+    from javax.swing.event import RowSorterListener
+    return addEventListener(target, RowSorterListener, 'sorterChanged',
+                            listener, *args, **kwargs)
+
+
+def addTableModelListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, TableModelListener,
+    'tableChanged', listener).
+
+    """
+    from javax.swing.event import TableModelListener
+    return addEventListener(target, TableModelListener, 'tableChanged',
+                            listener, *args, **kwargs)
+
+
+def addTreeSelectionListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, TreeSelectionListener,
+    'valueChanged', listener).
+
+    """
+    from javax.swing.event import TreeSelectionListener
+    return addEventListener(target, TreeSelectionListener, 'valueChanged',
+                            listener, *args, **kwargs)
+
+
+def addUndoableEditListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for addEventListener(target, UndoableEditListener,
+    'undoableEditHappened', listener).
+
+    """
+    from javax.swing.event import UndoableEditListener
+    return addEventListener(target, UndoableEditListener,
+                            'undoableEditHappened', listener, *args, **kwargs)
