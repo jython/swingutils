@@ -12,3 +12,7 @@ syntax: regexp
 
 syntax: regexp
 ^build\.properties$
+syntax: regexp
+^\.project$
+syntax: regexp
+^\.pydevproject$
