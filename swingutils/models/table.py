@@ -1,10 +1,9 @@
 from java.lang import Object
-from java.beans import PropertyChangeListener
 from javax.swing.table import AbstractTableModel
-from javax.swing.event import ListSelectionListener
 
 from swingutils.models.list import AbstractDelegateList
-from swingutils.beans import JavaBeanSupport, BeanProperty
+from swingutils.beans import MirrorObject
+from swingutils.events import addListSelectionListener, addPropertyListener
 
 
 class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
@@ -37,9 +36,7 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         AbstractTableModel.__init__(self)
         AbstractDelegateList.__init__(self, delegate)
 
-        if args:
-            self.__columns__ = list(args)
-
+        self.__columns__ = list(args if args else self.__columns__)
         for index, column in enumerate(self.__columns__):
             self.__columns__[index] = self._validateColumn(column, index)
 
@@ -198,45 +195,44 @@ class ObjectTableModel(DelegateTableModel):
         return visible
 
 
-class TableSelectionProxy(JavaBeanSupport, ListSelectionListener,
-                           PropertyChangeListener):
-    selectedValue = BeanProperty('selectedValue')
-    selectedModelRow = BeanProperty('selectedModelRow', -1)
+class TableSelectionMirror(MirrorObject):
+    """
+    This class provides a "mirror" for the given table's currently selected
+    object, with support for bound properties regardless of whether the
+    target object itself supports bound properties or not.
+
+    This is only useful for use with list-like table models, such as
+    :class:`~ObjectTableModel`.
+
+    """
+    __slots__ = ('_table', '_selectionListener')
 
     def __init__(self, table):
-        assert isinstance(table.model, ObjectTableModel), \
-            'The table model must be an ObjectTableModel'
-        self.table = table
-        self.valueChanged(None)
-        table.selectionModel.addListSelectionListener(self)
+        if not hasattr(table.model, '__getitem__'):
+            raise TypeError('Table model must support indexed access')
+        self._table = table
+        self._selectionListener = addListSelectionListener(
+            table.selectionModel, self._tableSelectionChanged)
+        addPropertyListener(self, None, self._propertyChanged)
 
-    def updateSelectedValue(self):
-        selectedRow = self.table.selectedRow
-        if selectedRow != -1:
-            modelRow = self.table.convertRowIndexToModel(selectedRow)
-            self.selectedValue = self.table.model[modelRow]
-        else:
-            self.selectedValue = None
+    def _propertyChanged(self, event):
+        """Invoked on a property change event in this object."""
 
-    def propertyChange(self, event):
-        """Invoked on a property change event in the selected object."""
+        self._table.repaint()
 
-        viewRow = self.table.selectedRow
-        modelRow = self.table.convertRowIndexToModel(viewRow)        
-        self.table.model.fireTableRowsUpdated(modelRow, modelRow)
-
-    def valueChanged(self, event):
+    def _tableSelectionChanged(self, event):
         """Invoked on a table selection change."""
 
-        if self.selectedValue is not None:
-            self.selectedValue.removePropertyChangeListener(self)
-
-        selectedRow = self.table.selectedRow
+        selectedRow = self._table.selectedRow
         if selectedRow >= 0:
-            self.selectedModelRow = self.table.convertRowIndexToModel(
-                selectedRow)
-            self.selectedValue = self.table.model[self.selectedModelRow]
-            self.selectedValue.addPropertyChangeListener(self)
+            modelRow = self._table.convertRowIndexToModel(selectedRow)
+            self._delegate = self._table.model[modelRow]
         else:
-            self.selectedModelRow = -1
-            self.selectedValue = None
+            self._delegate = None
+
+    def _detach(self):
+        """Remove all event listeners."""
+
+        if self._selectionListener:
+            self._selectionListener.unlisten()
+            self._selectionListener = None
