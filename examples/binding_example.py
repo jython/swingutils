@@ -1,4 +1,6 @@
 # encoding: utf-8
+import logging
+
 from java.lang import String, Integer
 from java.awt import GridLayout
 from java.awt.event import ActionListener
@@ -7,14 +9,13 @@ from javax.swing import JLabel, JFrame, JFormattedTextField, JTextField, \
 from javax.swing.ListSelectionModel import SINGLE_SELECTION
 
 from swingutils.threads import asyncSwingTask
-from swingutils.beans import AutoChangeNotifier, JavaBeanSupport
-from swingutils.binding import BindingGroup, TWOWAY, ONEWAY
-from swingutils.models.table import ObjectTableModel, TableSelectionProxy
+from swingutils.binding import BindingGroup, TWOWAY
+from swingutils.models.table import ObjectTableModel, TableSelectionMirror
 from swingutils.events import addEventListener
 from swingutils.format import installNumberFormat
 
 
-class Person(JavaBeanSupport, AutoChangeNotifier):
+class Person(object):
     def __init__(self, firstName=None, lastName=None, birthYear=None):
         self.firstName = firstName
         self.lastName = lastName
@@ -49,7 +50,7 @@ class MainFrame(JFrame):
 
         # Create a selection holder that tracks the row selection and
         # notifies the table model of any changes made to the object
-        self.selectionHolder = TableSelectionProxy(self.peopleTable)
+        self.selection = TableSelectionMirror(self.peopleTable)
 
         self.firstNameField = JTextField()
         self.lastNameField = JTextField()
@@ -66,26 +67,23 @@ class MainFrame(JFrame):
                          self.removePerson)
 
     def initBinding(self):
-        group = BindingGroup(mode=TWOWAY)
-        group.bind(self.selectionHolder, 'selectedValue.firstName',
-                   self.firstNameField, 'text')
-        group.bind(self.selectionHolder, 'selectedValue is not None',
-                   self.firstNameField, 'enabled')
-        group.bind(self.selectionHolder, 'selectedValue.lastName',
-                   self.lastNameField, 'text')
-        group.bind(self.selectionHolder, 'selectedValue is not None',
-                   self.lastNameField, 'enabled')
-        group.bind(self.selectionHolder, 'selectedValue.birthYear',
-                   self.birthYearField, 'value')
-        group.bind(self.selectionHolder, 'selectedValue is not None',
-                   self.birthYearField, 'enabled')
-        group.bind(self.selectionHolder,
-            'u"%s %s, %s" % (selectedValue.firstName or u"", '
-            'selectedValue.lastName or u"", '
-            'selectedValue.birthYear or u"????")',
-            self.summaryField, 'text', mode=ONEWAY)
-        group.bind(self.selectionHolder, 'selectedValue is not None',
-                   self.removeButton, 'enabled')
+        group = BindingGroup()
+        group.bind(self.peopleTable, 'model[selectedRow]',
+                   self, 'selectedPerson')
+        group.bind(self.selection, 'firstName', self.firstNameField, 'text',
+                   mode=TWOWAY)
+        group.bind(self.selection, 'lastName', self.lastNameField, 'text',
+                   mode=TWOWAY)
+        group.bind(self.selection, 'birthYear', self.birthYearField, 'value',
+                   mode=TWOWAY)
+        group.bind(self.selection,
+            'u"%s %s, %s" % (firstName or u"?", lastName or u"?", '
+            'birthYear or u"????")', self.summaryField, 'text')
+
+        # Disable input fields and the remove button if nothing is selected
+        for field in (self.firstNameField, self.lastNameField,
+                      self.birthYearField, self.removeButton):
+            group.bind(self.peopleTable, 'selectedRow >= 0', field, 'enabled')
 
     def initLayout(self):
         # Create a horizontal layout and a 10 pixel border
@@ -146,4 +144,8 @@ def createGUI():
 
 
 if __name__ == '__main__':
+    # Just in case you want to see binding debug messages (make sure you
+    # give the BindingGroup a Logger object in the "logger" keyword argument)
+    logging.basicConfig(level=logging.DEBUG)
+
     createGUI()
