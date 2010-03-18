@@ -1,4 +1,6 @@
 from javax.swing import AbstractListModel
+from swingutils.beans import MirrorObject
+from swingutils.events import addPropertyListener, addListSelectionListener
 
 
 class AbstractDelegateList(object):
@@ -17,7 +19,7 @@ class AbstractDelegateList(object):
 
     def getDelegate(self):
         return self._delegate
-    
+
     def setDelegate(self, value):
         oldLength = len(self._delegate) if self._delegate else 0
         self._delegate = value
@@ -33,7 +35,7 @@ class AbstractDelegateList(object):
             self._fireItemsChanged(0, maxLength - 1)
 
     delegate = property(getDelegate, setDelegate)
-    
+
     #
     # 
     #
@@ -140,3 +142,36 @@ class DelegateListModel(AbstractListModel, AbstractDelegateList):
 
     def getElementAt(self, index):
         return self[index]
+
+
+class ListSelectionMirror(MirrorObject):
+    """
+    This class provides a "mirror" for the given list component's currently
+    selected object, with support for bound properties regardless of whether
+    the target object itself supports bound properties or not.
+
+    """
+    __slots__ = ('_list', '_selectionListener')
+
+    def __init__(self, list_):
+        self._list = list_
+        self._selectionListener = addListSelectionListener(
+            list.selectionModel, self._selectionChanged)
+        addPropertyListener(self, None, self._propertyChanged)
+
+    def _propertyChanged(self, event):
+        """Invoked on a property change event in this object."""
+
+        self._list.repaint()
+
+    def _selectionChanged(self, event):
+        """Invoked on a list selection change."""
+
+        self._delegate = self._list.selectedValue
+
+    def _detach(self):
+        """Remove all event listeners."""
+
+        if self._selectionListener:
+            self._selectionListener.unlisten()
+            self._selectionListener = None
