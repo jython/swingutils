@@ -27,17 +27,18 @@ class AbstractDelegateList(object):
 
         minLength = min(oldLength, newLength)
         maxLength = max(oldLength, newLength)
-        if maxLength:
-            if maxLength > oldLength:
-                self._fireItemsAdded(minLength, maxLength - 1)
-            elif maxLength < oldLength:
-                self._fireItemsRemoved(minLength, maxLength - 1)
-            self._fireItemsChanged(0, maxLength - 1)
+
+        if newLength > oldLength:
+            self._fireItemsAdded(minLength, maxLength - 1)
+        elif newLength < oldLength:
+            self._fireItemsRemoved(minLength, maxLength - 1)
+        if minLength > 0:
+            self._fireItemsChanged(0, minLength - 1)
 
     delegate = property(getDelegate, setDelegate)
 
     #
-    # 
+    # Abstract methods to fire event changes
     #
 
     def _fireItemsChanged(self, start, end):
