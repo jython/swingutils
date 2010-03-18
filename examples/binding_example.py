@@ -81,9 +81,11 @@ class MainFrame(JFrame):
             'birthYear or u"????")', self.summaryField, 'text')
 
         # Disable input fields and the remove button if nothing is selected
-        for field in (self.firstNameField, self.lastNameField,
-                      self.birthYearField, self.removeButton):
-            group.bind(self.peopleTable, 'selectedRow >= 0', field, 'enabled')
+        for b in list(group.bindings):
+            if b.mode == TWOWAY:
+                field = b.targetExpression.root
+                group.bind(self.peopleTable, 'selectedRow >= 0', field,
+                           'enabled')
 
     def initLayout(self):
         # Create a horizontal layout and a 10 pixel border
