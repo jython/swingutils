@@ -101,7 +101,8 @@ class BeanProperty(object):
 class MirrorObject(JavaBeanSupport):
     """
     This is a proxy class that provides bound properties support for objects
-    that have no such support of their own.
+    that have no such support of their own. Only public properties (ones
+    not starting with ``_``) are mirrored.
 
     """
     __delegate = None
@@ -131,6 +132,8 @@ class MirrorObject(JavaBeanSupport):
     _delegate = property(__getDelegate, __setDelegate)
 
     def __getattr__(self, name):
+        if name.startswith('_'):
+            return object.__getattr__(self, name)
         return getattr(self._delegate, name, None)
 
     def __setattr__(self, name, value):
