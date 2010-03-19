@@ -124,9 +124,8 @@ def runAsyncSwing(func, *args, **kwargs):
     :rtype: :class:`~java.util.concurrent.Future`
 
     """
-    callable = CallableWrapper(func, args, kwargs)
-    task = FutureTask(callable)
-    SwingUtilities.invokeLater(task)
+    runnable = RunnableWrapper(func, args, kwargs)
+    SwingUtilities.invokeLater(runnable)
 
 
 def asyncSwingTask(func):
