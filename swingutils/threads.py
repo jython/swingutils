@@ -1,7 +1,6 @@
 from functools import wraps
-from traceback import print_exc
 
-from java.lang import Runnable, Exception as JavaException
+from java.lang import Runnable
 from java.util.concurrent import ThreadPoolExecutor, TimeUnit, \
     LinkedBlockingQueue, Callable, FutureTask
 from javax.swing import SwingUtilities
@@ -22,14 +21,7 @@ class RunnableWrapper(Runnable):
         self._kwargs = kwargs
 
     def run(self):
-        try:
-            self._func(*self._args, **self._kwargs)
-        except JavaException, e:
-            e.printStackTrace()
-            raise
-        except:
-            print_exc()
-            raise
+        self._func(*self._args, **self._kwargs)
 
 
 class CallableWrapper(Callable):
@@ -44,14 +36,7 @@ class CallableWrapper(Callable):
         self._kwargs = kwargs
 
     def call(self):
-        try:
-            return self._func(*self._args, **self._kwargs)
-        except JavaException, e:
-            e.printStackTrace()
-            raise
-        except:
-            print_exc()
-            raise
+        return self._func(*self._args, **self._kwargs)
 
 
 class TaskExecutor(ThreadPoolExecutor):
@@ -74,15 +59,13 @@ class TaskExecutor(ThreadPoolExecutor):
 
     def runBackground(self, func, *args, **kwargs):
         """
-        Queues a callable for background execution in this thread pool.
-        Any extra positional and keyword arguments will be passed to the
-        target function.
-
-        :rtype: :class:`~java.util.concurrent.Future`
+        Queues a (Python) callable for background execution in this thread
+        pool. Any extra positional and keyword arguments will be passed to the
+        target callable.
 
         """
-        callable = CallableWrapper(func, args, kwargs)
-        return self.submit(callable)
+        runnable = RunnableWrapper(func, args, kwargs)
+        self.execute(runnable)
 
     def backgroundTask(self, func):
         """
@@ -91,7 +74,7 @@ class TaskExecutor(ThreadPoolExecutor):
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            return self.runBackground(func, *args, **kwargs)
+            self.runBackground(func, *args, **kwargs)
         return wrapper
 
 #
@@ -136,7 +119,7 @@ def runAsyncSwing(func, *args, **kwargs):
     """
     Queues the given callable to be executed in the Event Dispatch Thread.
     Any extra positional and keyword arguments will be passed to the
-    target function. This function returns immediately.
+    target function. This function returns immediately with no return value.
 
     :rtype: :class:`~java.util.concurrent.Future`
 
@@ -144,7 +127,6 @@ def runAsyncSwing(func, *args, **kwargs):
     callable = CallableWrapper(func, args, kwargs)
     task = FutureTask(callable)
     SwingUtilities.invokeLater(task)
-    return task
 
 
 def asyncSwingTask(func):
@@ -152,10 +134,11 @@ def asyncSwingTask(func):
     This is a decorator wrapper for :func:`runAsyncSwing`.
 
     This causes the wrapped function to be queued for execution
-    in the Event Dispatch Thread. The call will return immediately.
+    in the Event Dispatch Thread. The call will return immediately with no
+    return value.
 
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        return runAsyncSwing(func, *args, **kwargs)
+        runAsyncSwing(func, *args, **kwargs)
     return wrapper
