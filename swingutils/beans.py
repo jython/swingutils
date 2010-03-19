@@ -125,9 +125,14 @@ class MirrorObject(JavaBeanSupport):
 
         # Fire a property change event for each attribute
         for attr in propertyNames:
-            oldValue = getattr(oldDelegate, attr, None)
-            newValue = getattr(newDelegate, attr, None)
-            self.firePropertyChange(attr, oldValue, newValue)
+            try:
+                oldValue = getattr(oldDelegate, attr, None)
+                newValue = getattr(newDelegate, attr, None)
+                self.firePropertyChange(attr, oldValue, newValue)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                pass
 
     _delegate = property(__getDelegate, __setDelegate)
 
