@@ -168,7 +168,8 @@ class ListSelectionMirror(MirrorObject):
     def _selectionChanged(self, event):
         """Invoked on a list selection change."""
 
-        self._delegate = self._list.selectedValue
+        if not event.valueIsAdjusting:
+            self._delegate = self._list.selectedValue
 
     def _detach(self):
         """Remove all event listeners."""

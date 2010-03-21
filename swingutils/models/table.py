@@ -223,12 +223,13 @@ class TableSelectionMirror(MirrorObject):
     def _tableSelectionChanged(self, event):
         """Invoked on a table selection change."""
 
-        selectedRow = self._table.selectedRow
-        if selectedRow >= 0:
-            modelRow = self._table.convertRowIndexToModel(selectedRow)
-            self._delegate = self._table.model[modelRow]
-        else:
-            self._delegate = None
+        if not event.valueIsAdjusting:
+            selectedRow = self._table.selectedRow
+            if selectedRow >= 0:
+                modelRow = self._table.convertRowIndexToModel(selectedRow)
+                self._delegate = self._table.model[modelRow]
+            else:
+                self._delegate = None
 
     def _detach(self):
         """Remove all event listeners."""
