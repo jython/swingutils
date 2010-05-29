@@ -8,7 +8,7 @@ from javax.swing import JLabel, JFrame, JFormattedTextField, JTextField, \
     JScrollPane, JTable, BoxLayout, JPanel, Box, BorderFactory, JButton
 from javax.swing.ListSelectionModel import SINGLE_SELECTION
 
-from swingutils.threads import asyncSwingTask
+from swingutils.threads.swing import swingRun
 from swingutils.binding import BindingGroup, TWOWAY
 from swingutils.models.table import ObjectTableModel, TableSelectionMirror
 from swingutils.events import addEventListener
@@ -139,7 +139,7 @@ class MainFrame(JFrame):
         del self.peopleTable.model[modelRow]
 
 
-@asyncSwingTask
+@swingRun
 def createGUI():
     # All Swing operations should be executed in the Event Dispatch Thread
     MainFrame().visible = True

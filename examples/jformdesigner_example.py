@@ -1,7 +1,7 @@
 from java.awt.event import MouseListener
 
 from swingutils.thirdparty.jformdesigner import WindowWrapper
-from swingutils.threads import asyncSwingTask
+from swingutils.threads.swing import swingRun
 from swingutils.events import addEventListener
 
 
@@ -16,7 +16,7 @@ class JFormDesignerDemoFrame(WindowWrapper):
                          lambda event: self.window.dispose())
 
 
-@asyncSwingTask
+@swingRun
 def createGUI():
     # All Swing operations should be executed in the Event Dispatch Thread
     JFormDesignerDemoFrame().visible = True
