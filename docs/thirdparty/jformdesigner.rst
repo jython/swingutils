@@ -44,9 +44,7 @@ Java resource loading API, so it can be included in a .jar file.
 Accessing form components
 -------------------------
 
-All form components are accessible as attributes of the form wrapper.
-This was implemented by defining a ``__getattr__`` method that looks up the
-component name in case an actual attribute is not found by that name.
+All form components are accessible as attributes of the "c" instance variable.
 
 The top level component can be accessed as ``window`` in
 class:`~swingutils.thirdparty.jformdesigner.WindowWrapper`, and ``panel``

@@ -9,10 +9,10 @@ class JFormDesignerDemoFrame(WindowWrapper):
     def __init__(self):
         # The form name will be automatically determined from the class name
         WindowWrapper.__init__(self)
-        self.firstField.text = u"Some text"
-        self.readOnlyField.text = u"Can't change this"
-        self.editorPane.text = u'Sample text'
-        addEventListener(self.exitButton, MouseListener, 'mouseClicked',
+        self.c.firstField.text = u"Some text"
+        self.c.readOnlyField.text = u"Can't change this"
+        self.c.editorPane.text = u'Sample text'
+        addEventListener(self.c.exitButton, MouseListener, 'mouseClicked',
                          lambda event: self.window.dispose())
 
 
