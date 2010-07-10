@@ -1,10 +1,16 @@
-from java.lang import Number, Integer, Long, Double
+from decimal import Decimal
+
+from java.lang import Number, Long, Double
+from java.math import BigDecimal, BigInteger
 from java.text import DecimalFormat, DateFormat, NumberFormat, Format
 from javax.swing.text import DefaultFormatterFactory, InternationalFormatter, \
     DateFormatter, NumberFormatter
 
 
-_TYPES_MAP = {int: Integer, long: Long, float: Double}
+_TYPES_MAP = {int: Long,
+              long: BigInteger,
+              float: Double,
+              Decimal: BigDecimal}
 
 class PyDecimalFormat(DecimalFormat):
     def __init__(self, pattern=None, integerDigits=None, fractionDigits=None,
@@ -53,13 +59,11 @@ def installNumberFormat(field, type=None, **kwargs):
     :param kwargs: attribute values to set on the PyDecimalFormat
     
     """
-    format = PyDecimalFormat(valueClass=type, **kwargs)
-    formatter = NumberFormatter(format)
-
     type = _TYPES_MAP.get(type, type)
     if type:
         if not issubclass(type, Number):
             raise TypeError('type must be a numeric type')
-        formatter.valueClass = type
 
+    format = PyDecimalFormat(valueClass=type, **kwargs)
+    formatter = NumberFormatter(format)
     field.formatterFactory = DefaultFormatterFactory(formatter)
