@@ -6,7 +6,7 @@ from functools import wraps
 from collections import deque
 import sys
 
-from swingutils.threads.swing import swingRun
+from swingutils.threads.swing import swingCall
 
 __all__ = ('Failure', 'AsyncToken', 'returnValue', 'inlineCallbacks')
 
@@ -83,7 +83,7 @@ def returnValue(result):
     raise _ReturnValue(result)
 
 
-@swingRun
+@swingCall
 def _inlineCallbacks(result, g, token):
     while True:
         try:
@@ -97,29 +97,29 @@ def _inlineCallbacks(result, g, token):
         except _ReturnValue, e:
             token.callback(e.result)
             return
-        except Exception, e:
+        except:
             token.errback()
             return
-        else:
-            if isinstance(result, AsyncToken):
-                result.addCallback(_inlineCallbacks, g, token)
-                return
+
+        if isinstance(result, AsyncToken):
+            result.addCallback(_inlineCallbacks, g, token)
+            return
 
 
 def inlineCallbacks(func):
     """
     Enables the wrapped function to execute code running in other threads in
     a synchronous manner by creative use of the coroutine system.
-    Any function that returns an :class:`~AsyncToken` should be called with the
-    yield statement::
-    
+    Any function that returns an :class:`~AsyncToken` (including other
+    inlineCallbacks) should be called with the ``yield`` statement::
+
         @inlineCallbacks
         def myfunc(val):
             val = doSomething(val)
             val = yield somebackgroundTask()
             val = doSomethingElse(val)
             returnValue(val)
-    
+
     :rtype: :class:`~AsyncToken`
 
     """
