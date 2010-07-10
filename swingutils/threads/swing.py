@@ -79,29 +79,11 @@ def swingRun(func):
     return wrapper
 
 
-#def runAsyncSwing(func, *args, **kwargs):
-#    """
-#    Queues the given callable to be executed in the Event Dispatch Thread.
-#    Any extra positional and keyword arguments will be passed to the
-#    target function. This function returns immediately with no return value.
-#
-#    :rtype: :class:`~java.util.concurrent.Future`
-#
-#    """
-#    runnable = RunnableWrapper(func, args, kwargs)
-#    SwingUtilities.invokeLater(runnable)
-#
-#
-#def asyncSwingTask(func):
-#    """
-#    This is a decorator wrapper for :func:`runAsyncSwing`.
-#
-#    This causes the wrapped function to be queued for execution
-#    in the Event Dispatch Thread. The call will return immediately with no
-#    return value.
-#
-#    """
-#    @wraps(func)
-#    def wrapper(*args, **kwargs):
-#        runAsyncSwing(func, *args, **kwargs)
-#    return wrapper
+def runSwingLater(func, *args, **kwargs):
+    """
+    Queues the given task to be run in the Event Dispatch Thread, regardless
+    of whether the calling thread is the EDT itself.
+
+    """
+    runnable = RunnableWrapper(func, args, kwargs)
+    SwingUtilities.invokeLater(runnable)
