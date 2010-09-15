@@ -19,9 +19,15 @@ class Failure(object):
 
     def throw(self, g):
         return g.throw(self.type, self.value, self.traceback)
+    
+    def raiseException(self):
+        raise self.type, self.value, self.traceback
 
     def __repr__(self):
-        return '<%s, exception=%s>' % (self.__class__.__name__, str(self.value))
+        valuestr = self.value
+        if isinstance(valuestr, unicode):
+            valuestr = valuestr.decode('ascii', 'replace') 
+        return '<%s, exception=%s>' % (self.__class__.__name__, valuestr)
 
 
 class AlreadyCalledError(Exception):
@@ -58,6 +64,10 @@ class AsyncToken(object):
                 self._result = callback(self._result, *args, **kwargs)
             except:
                 self._result = Failure(*sys.exc_info())
+
+        # Raise any unhandled exceptions
+        if isinstance(self._result, Failure):
+            self._result.raiseException()
 
     def addCallback(self, func, *args, **kwargs):
         if not hasattr(func, '__call__'):
