@@ -41,11 +41,20 @@ Java resource loading API, so it can be included in a .jar file.
 .. note:: Don't define event handlers in your forms, as they will not work with
           the current Jython version.
 
+
 Accessing form components
 -------------------------
 
-All form components are accessible as attributes of the "c" instance variable.
+All form components are accessible as attributes of the form wrapper.
+This was implemented by defining a ``__getattr__`` method that looks up the
+component name in case an actual attribute is not found by that name.
 
-The top level component can be accessed as ``window`` in
-class:`~swingutils.thirdparty.jformdesigner.WindowWrapper`, and ``panel``
-in :class:`~swingutils.thirdparty.jformdesigner.PanelWrapper`.
+Getting attribute values from the top level component (Window or Panel)
+works the same way. If you need to alter the top level component's attribute
+values, you can just set them in the hosting instance. If the attribute exists
+in the top level component, it will be changed there. Otherwise, the hosting
+class instance will have its attribute set by that name.
+
+If you need a reference to the top level component, you can use the ``window``
+or ``panel`` attributes respectively, depending on which wrapper class is in
+question.
