@@ -119,7 +119,10 @@ class AbstractDelegateList(object):
 
 
 class DelegateListModel(AbstractListModel, AbstractDelegateList):
-    """A delegate list model that provides a ListModel interface."""
+    """
+    A delegate list model that provides a :class:`~javax.swing.ListModel`
+    interface.
+    """
 
     def __init__(self, delegate=None):
         AbstractListModel.__init__(self)
