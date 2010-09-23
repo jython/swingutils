@@ -37,7 +37,9 @@ def getResourceAsStream(path, classloader=None):
 def loadImage(path, classloader=None):
     """Loads an image resource as java.awt.Image from anywhere on the
     class path. Supported image types are JPEG, PNG and GIF, and possibly
-    others if 
+    others if you have installed any extensions to the ImageIO system (such as
+    `Java Advanced Imaging
+    <http://java.sun.com/javase/technologies/desktop/media/jai/>`_).
     
     :param path: path to the resource (separate elements with '/')
     :param classloader: class loader to use for loading the resource
