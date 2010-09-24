@@ -33,7 +33,9 @@ setup(
         'swingutils',
         'swingutils.binding',
         'swingutils.binding.adapters',
+        'swingutils.dialogs',
         'swingutils.models',
-        'swingutils.thirdparty'
+        'swingutils.thirdparty',
+        'swingutils.threads'
     ],
 )
