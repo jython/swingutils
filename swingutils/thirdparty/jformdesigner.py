@@ -20,7 +20,7 @@ class FormLoadException(Exception):
 
     def __init__(self, formname):
         self.formname = formname
-    
+
     def __str__(self):
         return 'Unable to load form %s' % self.formname
 
@@ -76,6 +76,7 @@ class FormWrapper(object):
             
         self._creator = FormCreator(formModel)
         self._creator.target = self
+        self._creator.createAll()
 
 
 class _DelegateWrapper(FormWrapper):
