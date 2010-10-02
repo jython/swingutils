@@ -110,10 +110,10 @@ class MirrorObject(JavaBeanSupport):
     def __init__(self, delegate=None):
         self.__delegate = delegate
 
-    def __getDelegate(self):
+    def _getDelegate(self):
         return self.__delegate
 
-    def __setDelegate(self, newDelegate):
+    def _setDelegate(self, newDelegate):
         oldDelegate = self.__delegate
         self.__delegate = newDelegate
 
@@ -134,11 +134,11 @@ class MirrorObject(JavaBeanSupport):
             except:
                 pass
 
-    _delegate = property(__getDelegate, __setDelegate)
+    _delegate = property(_getDelegate, _setDelegate)
 
     def __getattr__(self, name):
         if name.startswith('_'):
-            return object.__getattr__(self, name)
+            return object.__getattribute__(self, name)
         return getattr(self._delegate, name, None)
 
     def __setattr__(self, name, value):
