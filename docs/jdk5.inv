@@ -3,8 +3,11 @@
 # Version: 5
 java.awt.MouseListener class java/event/MouseListener.html
 java.lang.Runnable class java/lang/Runnable.html
+java.lang.Number class java/lang/Number.html
+java.text.Format class java/text/Format.html
 java.util.concurrent.Callable class java/util/concurrent/Callable.html
 java.util.concurrent.Future class java/util/concurrent/Future.html
 java.util.concurrent.ThreadPoolExecutor class java/util/concurrent/ThreadPoolExecutor.html
 java.util.concurrent.LinkedBlockingQueue class java/util/concurrent/LinkedBlockingQueue.html
 javax.swing.ListModel class javax/swing/ListModel.html
+javax.swing.JFormattedTextField class javax/swing/JFormattedTextField.html
