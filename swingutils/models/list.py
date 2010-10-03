@@ -96,10 +96,14 @@ class AbstractDelegateList(object):
             self._fireItemsRemoved(indices[0], indices[1])
 
     def __iter__(self):
+        if self._delegate is None:
+            return tuple().__iter__()
         return self._delegate.__iter__()
 
     def __len__(self):
-        return self._delegate.__len__() if self._delegate else 0
+        if self._delegate is None:
+            return 0
+        return self._delegate.__len__()
 
     def append(self, obj):
         self._delegate.append(obj)
