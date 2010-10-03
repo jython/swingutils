@@ -1,14 +1,22 @@
 """
-This module provides dict-like access to user and system preferences.
+This module provides helper classes and functions for accessing Java's
+Preferences system.
 
 """
-from java.util.prefs import Preferences as JavaPreferences
-from java.lang import Integer, Long, Float, Double, Boolean
-
+from types import NoneType
 from array import array
+
+from java.util.prefs import Preferences as JavaPreferences
+from java.lang import Integer, Long, Float, Double, Boolean, String
 
 
 class PreferencesNode(object):
+    """
+    Provides a pythonic interface (including dict-like access) to the
+    preferences node at the given path. The preferred method of obtaining these
+    is via :func:`getUserPrefs` or :func:`getSystemPrefs`.
+
+    """
     def __init__(self, path, userMode):
         path = path.replace(u'.', u'/')
         if not path.startswith(u'/'):
@@ -20,7 +28,7 @@ class PreferencesNode(object):
             self._delegate = JavaPreferences.systemRoot().node(path)
 
     def __getitem__(self, key):
-        return self._delegate.get(key, None)
+        return self.get(key, None)
 
     def __setitem__(self, key, value):
         self.put(key, value)
@@ -29,20 +37,23 @@ class PreferencesNode(object):
         self._delegate.remove(key)
 
     def get(self, key, default):
-        return self._delegate.get(key, default)
+        if isinstance(default, (bool, Boolean)):
+            return self._delegate.getBoolean(key, default)
+        elif isinstance(default, array) and default.typecode == 'b':
+            return self._delegate.getByteArray(key, default)
+        elif isinstance(default, Float):
+            return self._delegate.getFloat(key, default)
+        elif isinstance(default, (float, Double)):
+            return self._delegate.getDouble(key, default)
+        elif isinstance(default, Integer):
+            return self._delegate.getInt(key, default)
+        elif isinstance(default, (int, long, Long)):
+            return self._delegate.getLong(key, default)
+        elif isinstance(default, (str, unicode, String, NoneType)):
+            return self._delegate.get(key, default)
+        else:
+            raise ValueError('Unsupported default type %s' % type(default))
 
-    def getBoolean(self, key, default):
-        return self._delegate.getDouble(key, default)
-
-    def getFloat(self, key, default):
-        return self._delegate.getDouble(key, default)
-
-    def getInt(self, key, default):
-        return self._delegate.getInt(key, default)
-
-    def getLong(self, key, default):
-        return self._delegate.getLong(key, default)
-    
     def put(self, key, value):
         if isinstance(value, (bool, Boolean)):
             self._delegate.putBoolean(key, value)
@@ -56,8 +67,10 @@ class PreferencesNode(object):
             self._delegate.putInt(key, value)
         elif isinstance(value, (int, long, Long)):
             self._delegate.putLong(key, value)
+        elif isinstance(value, (str, unicode, String)):
+            self._delegate.put(key, value)
         else:
-            self._delegate.put(key, unicode(value))
+            raise ValueError('Unsupported value type %s' % type(value))
 
     def keys(self):
         return tuple(self._delegate.keys())
@@ -65,8 +78,47 @@ class PreferencesNode(object):
     def removeNode(self):
         return self._delegate.removeNode()
 
+    def remove(self, key):
+        self._delegate.remove(key)
+
     def __unicode__(self):
         return self._delegate.toString()
+
+
+class PreferencesAdapter(object):
+    """
+    Represents the value of the given key in the given preferences node.
+    The ``value`` attribute can be read, written to and deleted, which causes
+    the appropriate action to be taken with the associated preferences node.
+
+    :param node: a preferences node, obtained through :func:`getUserPrefs` or
+                 :func:`getSystemPrefs`
+    :type node: :class:`PreferencesNode`
+    :param key: name of the preference within the node
+    :type key: str
+    :param default: Default value to return when the key does not exist
+
+    """
+    def __init__(self, node, key, default):
+        if node is None:
+            raise ValueError('The node must not be None')
+        if key is None:
+            raise ValueError('The key must not be None')
+
+        self.node = node
+        self.key = key
+        self.default = default
+
+    def _getValue(self):
+        return self.node.get(self.key, self.default)
+
+    def _putValue(self, value):
+        self.node.put(self.key, value)
+
+    def _removeValue(self):
+        self.node.remove(self.key)
+
+    value = property(_getValue, _putValue, _removeValue)
 
 
 def getUserPrefs(path):
