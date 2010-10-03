@@ -116,6 +116,7 @@ class MirrorObject(JavaBeanSupport):
     def _setDelegate(self, newDelegate):
         oldDelegate = self.__delegate
         self.__delegate = newDelegate
+        self.firePropertyChange('_delegate', oldDelegate, newDelegate)
 
         # Collect public property names from both old and new
         propertyNames = set()
