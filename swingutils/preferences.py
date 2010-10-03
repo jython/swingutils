@@ -3,6 +3,7 @@ This module provides dict-like access to user and system preferences.
 
 """
 from java.util.prefs import Preferences as JavaPreferences
+from java.lang import Integer, Long, Float, Double, Boolean
 
 from array import array
 
@@ -43,15 +44,17 @@ class PreferencesNode(object):
         return self._delegate.getLong(key, default)
     
     def put(self, key, value):
-        if isinstance(value, bool):
+        if isinstance(value, (bool, Boolean)):
             self._delegate.putBoolean(key, value)
         elif isinstance(value, array) and value.typecode == 'b':
             self._delegate.putByteArray(key, value)
-        elif isinstance(value, float):
+        elif isinstance(value, Float):
+            self._delegate.putFloat(key, value)
+        elif isinstance(value, (float, Double)):
             self._delegate.putDouble(key, value)
-        elif isinstance(value, int):
-            self._delegate.putInteger(key, value)
-        elif isinstance(value, long):
+        elif isinstance(value, Integer):
+            self._delegate.putInt(key, value)
+        elif isinstance(value, (int, long, Long)):
             self._delegate.putLong(key, value)
         else:
             self._delegate.put(key, unicode(value))
