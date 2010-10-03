@@ -36,6 +36,9 @@ class PreferencesNode(object):
     def __delitem__(self, key):
         self._delegate.remove(key)
 
+    def __contains__(self, key):
+        return key in self._delegate.keys()
+
     def get(self, key, default):
         if isinstance(default, (bool, Boolean)):
             return self._delegate.getBoolean(key, default)
