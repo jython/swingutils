@@ -1,3 +1,7 @@
+"""
+Contains convenience functions for working with formatters.
+
+"""
 from decimal import Decimal
 
 from java.lang import Number, Long, Double
@@ -32,8 +36,10 @@ def installFormat(field, format):
     """
     Installs a Format in a JFormattedTextField.
 
-    :type field: :class:`javax.swing.JFormattedTextField`
-    :type format: :class:`java.text.Format`
+    :param field: the field to install the format to
+    :type field: :class:`~javax.swing.JFormattedTextField`
+    :param format: the format to install
+    :type format: :class:`~java.text.Format`
 
     """
     formatter = None
@@ -53,8 +59,9 @@ def installNumberFormat(field, type=None, **kwargs):
     """
     Installs a number formatter in a JFormattedTextField.
 
-    :type field: :class:`javax.swing.JFormattedTextField`
-    :param type: a subclass of :class:`java.lang.Number` or a python numeric
+    :param field: the field to install the format to
+    :type field: :class:`~javax.swing.JFormattedTextField`
+    :param type: a subclass of :class:`~java.lang.Number` or a python numeric
                  type
     :param kwargs: attribute values to set on the PyDecimalFormat
     
