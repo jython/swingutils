@@ -3,7 +3,8 @@ Provides a property adapter for JavaBeans binding and adapters for most
 built-in Swing components.
 
 """
-from swingutils.events import addPropertyListener, addEventListener
+from swingutils.events import addPropertyListener, addEventListener,\
+    addRowSorterListener
 from swingutils.binding.adapters import BindingAdapter, registry
 
 
@@ -17,7 +18,7 @@ class JavaBeansPropertyAdapter(BindingAdapter):
     """
     __slots__ = 'property'
 
-    def __init__(self, property, options):
+    def __init__(self, options, property=None):
         BindingAdapter.__init__(self, options)
         self.property = property
 
@@ -53,7 +54,7 @@ class JTextComponentAdapter(JavaBeansPropertyAdapter):
     __targetclass__ = 'javax.swing.text.JTextComponent'
     __targetproperty__ = 'text'
 
-    def __init__(self, property, options):
+    def __init__(self, options, property):
         JavaBeansPropertyAdapter.__init__(self, options, property)
         self.onFocusLost = options.get('onFocusLost', False)
 
@@ -141,8 +142,8 @@ class JListAdapter(JTreeAdapter):
                           'leadSelectionIndex', 'anchorSelectionIndex',
                           'maxSelectionIndex', 'minSelectionIndex')
 
-    def __init__(self, property, options):
-        JavaBeansPropertyAdapter.__init__(self, property, options)
+    def __init__(self, options, property):
+        JavaBeansPropertyAdapter.__init__(self, options, property)
         self.ignoreAdjusting = options.get('ignoreAdjusting', True)
 
     def addSelectionListener(self, parent, callback, *args, **kwargs):
@@ -184,8 +185,8 @@ class JTableColumnSelectionAdapter(JavaBeansPropertyAdapter):
     __targetproperty__ = ('selectedColumn', 'selectedColumns',
                           'selectedColumnCount')
 
-    def __init__(self, property, options):
-        JavaBeansPropertyAdapter.__init__(self, property, options)
+    def __init__(self, options, property):
+        JavaBeansPropertyAdapter.__init__(self, options, property)
         self.ignoreAdjusting = options.get('ignoreAdjusting', True)
 
     def addListeners(self, parent, callback, *args, **kwargs):
@@ -215,6 +216,16 @@ class JTableColumnSelectionAdapter(JavaBeansPropertyAdapter):
         if not event or not event.valueIsAdjusting or not self.ignoreAdjusting:
             callback(event, *args, **kwargs)
 
+
+class RowSorterAdapter(JavaBeansPropertyAdapter):
+    __slots__ = ()
+    __targetclass__ = 'javax.swing.RowSorter'
+    __targetproperty__ = 'viewRowCount'
+
+    def addListeners(self, parent, callback, *args, **kwargs):
+        self.listeners['rowsorter'] = addRowSorterListener(parent, callback,
+                                                           *args, **kwargs)
+        
 
 @registry.registerPropertyAdapter
 class JComboBoxAdapter(JavaBeansPropertyAdapter):
@@ -255,12 +266,27 @@ class JProgressBarAdapter(JSpinnerAdapter):
 
 
 @registry.registerListAdapter
-class ListModelAdapter(BindingAdapter):
+@registry.registerPropertyAdapter
+class ListModelAdapter(JavaBeansPropertyAdapter):
     __slots__ = ()
     __targetclass__ = 'javax.swing.ListModel'
+    __targetproperty__ = 'size'
 
     def addListeners(self, parent, callback, *args, **kwargs):
         from javax.swing.event import ListDataListener
         events = ('contentsChanged', 'intervalAdded', 'intervalRemoved')
         self.listeners['list'] = addEventListener(parent, ListDataListener,
             events, callback, *args, **kwargs)
+
+
+@registry.registerListAdapter
+@registry.registerPropertyAdapter
+class TableModelAdapter(JavaBeansPropertyAdapter):
+    __slots__ = ()
+    __targetclass__ = 'javax.swing.table.TableModel'
+    __targetproperty__ = 'rowCount'
+
+    def addListeners(self, parent, callback, *args, **kwargs):
+        from javax.swing.event import TableModelListener
+        self.listeners['table'] = addEventListener(parent,
+            TableModelListener, 'tableChanged', callback, *args, **kwargs)

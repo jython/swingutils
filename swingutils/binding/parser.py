@@ -107,7 +107,7 @@ class AttributeNode(BindingNode):
         return getattr(parent, self.attr)
 
     def getAdapter(self, parent):
-        return registry.getPropertyAdapter(parent, self.attr, self.options)
+        return registry.getPropertyAdapter(parent, self.options, self.attr)
 
     def __unicode__(self):
         if self.adapter and not isinstance(self.adapter,

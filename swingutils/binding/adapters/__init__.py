@@ -57,7 +57,7 @@ class AdapterRegistry(object):
         self.listAdapters[key] = cls
         return cls
 
-    def getPropertyAdapter(self, obj, property, options):
+    def getPropertyAdapter(self, obj, options, property):
         # Gather a list of class names from the inheritance chain
         targetClassNames = self._getClassNames(obj.__class__)
         targetClassNames.sort()
@@ -71,7 +71,7 @@ class AdapterRegistry(object):
                 break
 
         if adapterClass:
-            return adapterClass(property, options)
+            return adapterClass(options, property)
 
     def getListAdapter(self, obj, options):
         # Gather a list of class names from the inheritance chain
