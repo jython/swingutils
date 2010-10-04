@@ -27,6 +27,7 @@ Table of Contents
    preferences
    threads
    thirdparty/jformdesigner
+   deployment
 
 Indices and tables
 ==================
