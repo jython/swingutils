@@ -30,7 +30,7 @@ If your application depends on third party Python distributions (installed in
 the "site-packages" directory), you need to include them in one or more .jar
 files distributed with your application. You have to package them so that the
 top level package directory (and not its contents!) is at the root of the jar
-structure.
+structure. Remember to add the jar file(s) to your .jnlp file.
 
 The `Jump <http://gitorious.org/jump/>`_ tool by Olli Wang was specifically
 designed for packaging Jython applications, but as of this writing, the
