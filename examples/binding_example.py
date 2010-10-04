@@ -3,15 +3,14 @@ import logging
 
 from java.lang import String, Integer
 from java.awt import GridLayout
-from java.awt.event import ActionListener
 from javax.swing import JLabel, JFrame, JFormattedTextField, JTextField, \
     JScrollPane, JTable, BoxLayout, JPanel, Box, BorderFactory, JButton
 from javax.swing.ListSelectionModel import SINGLE_SELECTION
 
 from swingutils.threads.swing import swingRun
-from swingutils.binding import BindingGroup, TWOWAY
+from swingutils.binding import BindingGroup, TWOWAY, ONEWAY
 from swingutils.models.table import ObjectTableModel, TableSelectionMirror
-from swingutils.events import addEventListener
+from swingutils.events import addActionListener
 from swingutils.format import installNumberFormat
 
 
@@ -61,37 +60,33 @@ class MainFrame(JFrame):
         self.removeButton = JButton(u'Remove person')
 
     def initEvents(self):
-        addEventListener(self.addButton, ActionListener, 'actionPerformed',
-                         self.addPerson)
-        addEventListener(self.removeButton, ActionListener, 'actionPerformed',
-                         self.removePerson)
+        addActionListener(self.addButton, self.addPerson)
+        addActionListener(self.removeButton, self.removePerson)
 
     def initBinding(self):
-        group = BindingGroup()
+        group = BindingGroup(mode=TWOWAY)
         group.bind(self.peopleTable, 'model[selectedRow]',
-                   self, 'selectedPerson')
-        group.bind(self.selection, 'firstName', self.firstNameField, 'text',
-                   mode=TWOWAY)
-        group.bind(self.selection, 'lastName', self.lastNameField, 'text',
-                   mode=TWOWAY)
-        group.bind(self.selection, 'birthYear', self.birthYearField, 'value',
-                   mode=TWOWAY)
+                   self, 'selectedPerson', mode=ONEWAY)
+        group.bind(self.selection, 'firstName', self.firstNameField, 'text')
+        group.bind(self.selection, 'lastName', self.lastNameField, 'text')
+        group.bind(self.selection, 'birthYear', self.birthYearField, 'value')
         group.bind(self.selection,
             'u"%s %s, %s" % (firstName or u"?", lastName or u"?", '
-            'birthYear or u"????")', self.summaryField, 'text')
+            'birthYear or u"????")', self.summaryField, 'text', mode=ONEWAY)
 
         # Disable input fields and the remove button if nothing is selected
-        for b in list(group.bindings):
-            if b.mode == TWOWAY:
-                field = b.targetExpression.root
-                group.bind(self.peopleTable, 'selectedRow >= 0', field,
-                           'enabled')
+        components = [b.targetExpression.root for b in group.bindings if
+                      b.mode == TWOWAY]
+        components.append(self.removeButton)
+        for c in components:
+            group.bind(self.peopleTable, 'selectedRow >= 0', c, 'enabled',
+                       mode=ONEWAY)
 
     def initLayout(self):
         # Create a horizontal layout and a 10 pixel border
         self.layout = BoxLayout(self.contentPane, BoxLayout.X_AXIS)
-        self.contentPane.border = BorderFactory.createEmptyBorder(10, 10, 10,
-                                                                  10)
+        self.contentPane.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+
         # Add the table
         self.add(JScrollPane(self.peopleTable))
 
