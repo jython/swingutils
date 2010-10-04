@@ -1,25 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project default="jar">
+<project default="binjar">
 
-	<property name="jarfile" location="dist/jython-swingutils.jar" />
-	<property name="jnlpfile" value="jython-swingutils.jnlp" />
+	<!-- You need to create a build.properties file and provide the "signer",
+	     "storepass" and "version" properties to build this -->
 	<property file="build.properties"/>
+	<property name="srcjarfile" location="dist/jython-swingutils-${version}.jar" />
+	<property name="binjarfile" location="dist/jython-swingutils-${version}-bin.jar" />
 
 	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
 
 	<target name="compile">
+		<mkdir dir="build"/>
 		<jython.compile srcdir="." destdir="build" />
 	</target>
+	
+	<target name="srcjar">
+		<mkdir dir="dist"/>
+		<delete file="${srcjarfile}" />
+		<jar destfile="${srcjarfile}">
+			<fileset dir=".">
+				<include name="swingutils/**"/>
+				<exclude name="**/*.class"/>
+				<exclude name="**/*.pyc" />
+			</fileset>
+		</jar>
+	</target>
 
-	<target name="jar" depends="compile">
-		<delete file="${jarfile}" />
-		<jar destfile="${jarfile}">
+	<target name="binjar" depends="compile">
+		<mkdir dir="dist"/>
+		<delete file="${binjarfile}" />
+		<jar destfile="${binjarfile}">
 			<fileset dir="build" />
 		</jar>
 	</target>
 
-	<target name="signjar" depends="jar">
-		<signjar jar="${jarfile}" alias="${signer}" storepass="${storepass}" />
+	<target name="signbinjar" depends="binjar">
+		<signjar jar="${binjarfile}" alias="${signer}" storepass="${storepass}" />
+	</target>
+
+	<target name="signsrcjar" depends="srcjar">
+		<signjar jar="${srcjarfile}" alias="${signer}" storepass="${storepass}" />
 	</target>
 
 </project>
