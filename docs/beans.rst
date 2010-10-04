@@ -13,7 +13,7 @@ There are two ways to do this:
 * Inherit from a class that has the necessary ``addPropertyChangeListener`` and
   ``removePropertyChangeListener`` methods (like a Swing component, or
   :class:`~swingutils.beans.JavaBeanSupport`) and add the properties you want
-  to fire change events as :class:`swingutils.beans.BeanProperty` attributes
+  to fire change events as :class:`~swingutils.beans.BeanProperty` attributes
 
   OR
 
