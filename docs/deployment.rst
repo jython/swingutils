@@ -26,6 +26,12 @@ application. You can automate building and signing using
 build.xml file should provide a good starting point for this. It just needs a
 build.properties file to supply the necessary variables.
 
+If your application depends on third party Python distributions (installed in
+the "site-packages" directory), you need to include them in one or more .jar
+files distributed with your application. You have to package them so that the
+top level package directory (and not its contents!) is at the root of the jar
+structure.
+
 The `Jump <http://gitorious.org/jump/>`_ tool by Olli Wang was specifically
 designed for packaging Jython applications, but as of this writing, the
 documentation is nowhere to be seen and the future of that project seems
@@ -33,3 +39,4 @@ uncertain. It might be worth a look anyway since it is loaded with useful
 features.
 
 .. seealso:: `Java Web Start tutorial <http://download.oracle.com/javase/tutorial/deployment/webstart/>`_
+.. seealso:: `Deploying a Single JAR, the Jython Book <http://www.jython.org/jythonbook/en/1.0/DeploymentTargets.html#deploying-a-single-jar>`_
