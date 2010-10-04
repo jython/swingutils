@@ -11,3 +11,4 @@ java.util.concurrent.ThreadPoolExecutor class java/util/concurrent/ThreadPoolExe
 java.util.concurrent.LinkedBlockingQueue class java/util/concurrent/LinkedBlockingQueue.html
 javax.swing.ListModel class javax/swing/ListModel.html
 javax.swing.JFormattedTextField class javax/swing/JFormattedTextField.html
+javax.swing.SwingWorker class javax/swing/SwingWorker.html
