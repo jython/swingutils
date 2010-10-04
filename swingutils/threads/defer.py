@@ -39,6 +39,14 @@ def _passthru(arg):
 
 
 class AsyncToken(object):
+    """
+    Handle for an asynchronously executed task. This is similar to
+    (but incompatible with) Twisted's deferred class. These are produced by
+    the :class:`~swingutils.threads.threadpool.TaskExecutor` class and
+    functions decorated with @inlineCallbacks. Users should not normally
+    instantiate these manually.
+
+    """
     _called = False
     _result = None
 
@@ -119,16 +127,7 @@ def _inlineCallbacks(result, g, token):
 def inlineCallbacks(func):
     """
     Enables the wrapped function to execute code running in other threads in
-    a synchronous manner by creative use of the coroutine system.
-    Any function that returns an :class:`~AsyncToken` (including other
-    inlineCallbacks) should be called with the ``yield`` statement::
-
-        @inlineCallbacks
-        def myfunc(val):
-            val = doSomething(val)
-            val = yield somebackgroundTask()
-            val = doSomethingElse(val)
-            returnValue(val)
+    a synchronous manner by creative use of the generators system.
 
     :rtype: :class:`~AsyncToken`
 
