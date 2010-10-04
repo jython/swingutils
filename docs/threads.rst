@@ -117,10 +117,10 @@ Technically this was implemented using Python's generator mechanism, which
 unfortunately adds a few restrictions:
 
 * You must use the ``yield`` statement when executing other functions that
-  return an :class:`~swingutils.defer.AsyncToken` (such as those decorated by
-  @inlineCallbacks)
+  return an :class:`~swingutils.threads.defer.AsyncToken` (such as those
+  decorated by @inlineCallbacks)
 * The "return" statement can't be used -- use
-  :func:`~swingutils.defer.returnValue` instead
+  :func:`~swingutils.threads.defer.returnValue` instead
 * Don't catch BaseException in a block that calls returnValue() since it is
   implemented as an exception behind the scenes
 
