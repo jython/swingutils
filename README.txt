@@ -22,5 +22,8 @@ Included in this package:
 
 Requires Jython 2.5.1 or later.
 
+Documentation can be found at the Jython-Swingutils
+`documentation repository <http://packages.python.org/jython-swingutils/>`
+
 The source code and the issue tracker can be found at
 `Bitbucket <http://bitbucket.org/agronholm/jython-swingutils/>`_.
