@@ -11,7 +11,7 @@
 
 	<target name="compile">
 		<mkdir dir="build"/>
-		<jython.compile srcdir="." destdir="build" />
+		<jython.compile srcdir="." destdir="build" includes="swingutils/**"/>
 	</target>
 	
 	<target name="srcjar">
