@@ -22,7 +22,7 @@ Steps required to publish your application with Java Web Start:
 To install the application, just point a web browser to the JNLP file and Java
 should do the rest. You only need to repeat the last step when you update your
 application. You can automate building and signing using
-`ant <http://ant.apache.org/>`_ or similar tools. The Jython-SwingUtils
+`ant <http://ant.apache.org/>`_ or similar tools. The Jython-Swingutils
 build.xml file should provide a good starting point for this. It just needs a
 build.properties file to supply the necessary variables.
 

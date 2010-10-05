@@ -12,7 +12,7 @@ unresponsive. This, on the other hand, creates new challenges because often,
 the code in the background thread needs to access the GUI. Java 6 incorporated
 the :class:`~javax.swing.SwingWorker` class to help with this, but even this
 solution is quite clumsy when compared to what the flexible Python
-language can accomplish. Jython-SwingUtils has a mechanism, inspired by the
+language can accomplish. Jython-Swingutils has a mechanism, inspired by the
 `Twisted <http://twistedmatrix.com/>`_ framework, that makes switching between
 threads almost seamless.
 

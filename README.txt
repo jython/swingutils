@@ -22,5 +22,5 @@ Included in this package:
 Requires Jython 2.5.1 or later.
 
 The source code and the issue tracker can be found at
-`BitBucket <http://bitbucket.org/agronholm/jython-swingutils/>`_.
+`Bitbucket <http://bitbucket.org/agronholm/jython-swingutils/>`_.
 http://bitbucket.org/agronholm/jython-swingutils/
