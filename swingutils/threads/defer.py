@@ -7,6 +7,7 @@ from collections import deque
 import sys
 
 from swingutils.threads.swing import swingCall
+from types import GeneratorType
 
 __all__ = ('Failure', 'AsyncToken', 'returnValue', 'inlineCallbacks')
 
@@ -134,7 +135,15 @@ def inlineCallbacks(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
+        g = func(*args, **kwargs)
+
+        # If func was a regular function and not a generator, simply return
+        # its return value
+        if not isinstance(g, GeneratorType):
+            return g
+
+        # Otherwise start executing the code and return an AsyncToken
         token = AsyncToken()
-        _inlineCallbacks(None, func(*args, **kwargs), token)
+        _inlineCallbacks(None, g, token)
         return token
     return wrapper
