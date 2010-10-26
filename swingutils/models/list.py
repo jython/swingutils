@@ -62,8 +62,8 @@ class AbstractDelegateList(object):
         self._delegate.__setitem__(index, value)
         newLength = len(self._delegate)
         slice_ = index if isinstance(index, slice) else slice(index, index)
-        start = slice_.start or 0
-        end = slice_.stop or newLength
+        start = slice_.start
+        end = slice_.stop
 
         if slice_.step:
             # Stepping can't remove or add items
