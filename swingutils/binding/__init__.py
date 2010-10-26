@@ -173,14 +173,14 @@ class Binding(object):
             raise
         except:
             if self.logger:
-                self.logger.debug(u'Error reading from %s', source,
+                self.logger.debug('Error reading from %s', source,
                                   exc_info=True)
             if not self.ignoreErrors:
                 raise
             value = self.errorValue
 
         if self.logger:
-            self.logger.debug(u'Writing %s value (%s) to %s', source,
+            self.logger.debug('Writing %s value (%s) to %s', source,
                               repr(value), target)
         self._syncing = True
         try:
@@ -189,7 +189,7 @@ class Binding(object):
             raise
         except:
             if self.logger:
-                self.logger.debug(u'Error writing to %s', target,
+                self.logger.debug('Error writing to %s', target,
                                   exc_info=True)
             if not self.ignoreErrors:
                 raise
