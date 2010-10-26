@@ -106,6 +106,16 @@ class TestListModel(object):
         eq_(self.model[3], 345)
         eq_(self.model[4], 7.0)
 
+    def testSetSingle(self):
+#        from nose.tools import set_trace; set_trace()
+        self.model.append('abc')
+        self.model[0] = '123'
+
+        eq_(self.changeEvent.index0, 0)
+        eq_(self.changeEvent.index1, 0)
+        eq_(len(self.model), 1)
+        eq_(self.model[0], '123')
+
     def testSetSlice(self):
         self.model.extend([u'Test', 'Test2', 678])
         self.model[2:4] = ['abc', 'xyz', 'foo']
