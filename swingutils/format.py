@@ -32,6 +32,19 @@ class PyDecimalFormat(DecimalFormat):
             DecimalFormat.__init__(self, **kwargs)
 
 
+class EmptyNumberFormatter(NumberFormatter):
+    def stringToValue(self, text):
+        if not text:
+            return None
+
+        value = NumberFormatter.stringToValue(self, text)
+        if not isinstance(value, self.format.valueClass):
+            # Counteract Jython's automatic numeric type conversion
+            return self.format.valueClass(value)
+
+        return value
+
+
 def installFormat(field, format):
     """
     Installs a Format in a JFormattedTextField.
@@ -55,7 +68,7 @@ def installFormat(field, format):
     field.formatterFactory = DefaultFormatterFactory(formatter)
 
 
-def installNumberFormat(field, type=None, **kwargs):
+def installNumberFormat(field, type=None, nullable=False, **kwargs):
     """
     Installs a number formatter in a JFormattedTextField.
 
@@ -72,5 +85,8 @@ def installNumberFormat(field, type=None, **kwargs):
             raise TypeError('type must be a numeric type')
 
     format = PyDecimalFormat(valueClass=type, **kwargs)
-    formatter = NumberFormatter(format)
+    if nullable:
+        formatter = EmptyNumberFormatter(format)
+    else:
+        formatter = NumberFormatter(format)
     field.formatterFactory = DefaultFormatterFactory(formatter)
