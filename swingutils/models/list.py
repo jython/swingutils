@@ -1,4 +1,5 @@
 from javax.swing import AbstractListModel
+
 from swingutils.beans import MirrorObject
 from swingutils.events import addPropertyListener, addListSelectionListener
 
@@ -120,6 +121,19 @@ class AbstractDelegateList(object):
         end = len(self._delegate)
         if end > start:
             self._fireItemsAdded(start, end - 1)
+
+    def count(self, obj):
+        if self._delegate is None:
+            return 0
+        return self._delegate.count(obj)
+
+    def index(self, obj, *args):
+        if self._delegate is None:
+            raise ValueError('x not in list')
+        return self._delegate.index(obj, *args)
+
+    def remove(self, obj):
+        del self[self.index(obj)]
 
 
 class DelegateListModel(AbstractListModel, AbstractDelegateList):

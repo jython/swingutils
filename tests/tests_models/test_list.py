@@ -106,8 +106,23 @@ class TestListModel(object):
         eq_(self.model[3], 345)
         eq_(self.model[4], 7.0)
 
+    def testCount(self):
+        self.model.extend(['a', 'bb', 'ccc', 'bb'])
+
+        eq_(self.model.count('bb'), 2)
+
+    def testIndex(self):
+        self.model.extend(['a', 'bb', 'ccc', 'bb'])
+
+        eq_(self.model.index('ccc'), 2)
+
+    def testRemove(self):
+        self.model.extend(['a', 'bb', 'ccc', 'bb'])
+
+        self.model.remove('bb')
+        eq_(self.model._delegate, ['a', 'ccc', 'bb'])
+
     def testSetSingle(self):
-#        from nose.tools import set_trace; set_trace()
         self.model.append('abc')
         self.model[0] = '123'
 
