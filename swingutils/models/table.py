@@ -224,7 +224,9 @@ class TableSelectionMirror(MirrorObject):
         """Invoked on a table selection change."""
 
         if not event.valueIsAdjusting:
-            selectedRow = self._table.selectedRow
+            selectedRows = self._table.selectedRows
+            selectedRow = selectedRows[0] if len(selectedRows) == 1 else -1
+
             if selectedRow >= 0:
                 modelRow = self._table.convertRowIndexToModel(selectedRow)
                 self._delegate = self._table.model[modelRow]
