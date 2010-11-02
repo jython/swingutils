@@ -47,6 +47,15 @@ class EventListenerWrapper(object):
         self.removeMethod(*self.removeMethodArgs)
 
 
+class MultiListenerWrapper(object):
+    def __init__(self, *listeners):
+        self.listeners = listeners
+
+    def unlisten(self):
+        for listener in self.listeners:
+            listener.unlisten()
+
+
 def addEventListener(target, eventInterface, event, listener,
                              *args, **kwargs):
     """
@@ -204,6 +213,22 @@ def addTableModelListener(target, listener, *args, **kwargs):
     from javax.swing.event import TableModelListener
     return addEventListener(target, TableModelListener, 'tableChanged',
                             listener, *args, **kwargs)
+
+
+def addListDataListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for adding event listeners for all list data events (change,
+    add, remove). The unlisten() method in the return value will unlisten
+    all three listeners.
+    """
+    from javax.swing.event import ListDataListener
+    listener1 = addEventListener(target, ListDataListener, 'contentsChanged',
+                                 listener, *args, **kwargs)
+    listener2 = addEventListener(target, ListDataListener, 'intervalAdded',
+                                 listener, *args, **kwargs)
+    listener3 = addEventListener(target, ListDataListener, 'intervalRemoved',
+                                 listener, *args, **kwargs)
+    return MultiListenerWrapper(listener1, listener2, listener3)
 
 
 def addTreeSelectionListener(target, listener, *args, **kwargs):
