@@ -11,7 +11,7 @@ class AbstractDelegateList(object):
     must be implemented in a subclass.
     
     """
-    def __init__(self, delegate):
+    def __init__(self, delegate=None):
         self._delegate = delegate
 
     #
