@@ -57,6 +57,12 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
 
     def _fireItemsRemoved(self, start, end):
         self.fireTableRowsDeleted(start, end)
+    
+    def setDelegate(self, value):
+        self._delegate = value
+        self.fireTableDataChanged()
+
+    delegate = property(AbstractDelegateList.getDelegate, setDelegate)
 
     #
     # TableModel methods
