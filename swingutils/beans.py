@@ -3,7 +3,8 @@ This module contains support classes to make your own classes support JavaBeans
 compatible property change notifications.
 
 """
-from java.beans import PropertyChangeSupport
+from java.beans import PropertyChangeSupport, PropertyChangeEvent,\
+    IndexedPropertyChangeEvent
 
 
 class JavaBeanSupport(object):
@@ -26,13 +27,17 @@ class JavaBeanSupport(object):
         if self._changeSupport:
             self._changeSupport.removePropertyChangeListener(*args)
 
-    def firePropertyChange(self, *args):
+    def firePropertyChange(self, propertyName, oldValue, newValue):
         if self._changeSupport:
-            self._changeSupport.firePropertyChange(*args)
+            event = PropertyChangeEvent(self, propertyName, oldValue, newValue)
+            self._changeSupport.firePropertyChange(event)
 
-    def fireIndexedPropertyChange(self, *args):
+    def fireIndexedPropertyChange(self, propertyName, index, oldValue,
+                                  newValue):
         if self._changeSupport:
-            self._changeSupport.fireIndexedPropertyChange(*args)
+            event = IndexedPropertyChangeEvent(self, propertyName, oldValue,
+                                               newValue, index)
+            self._changeSupport.firePropertyChange(event)
 
     def getPropertyChangeListeners(self, *args):
         if self._changeSupport:
