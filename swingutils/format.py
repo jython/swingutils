@@ -77,16 +77,16 @@ def installNumberFormat(field, type=None, nullable=False, **kwargs):
     :param type: a subclass of :class:`~java.lang.Number` or a python numeric
                  type
     :param kwargs: attribute values to set on the PyDecimalFormat
-    
+
     """
     type = _TYPES_MAP.get(type, type)
     if type:
         if not issubclass(type, Number):
             raise TypeError('type must be a numeric type')
 
-    format = PyDecimalFormat(valueClass=type, **kwargs)
+    format = PyDecimalFormat(**kwargs)
     if nullable:
-        formatter = EmptyNumberFormatter(format)
+        formatter = EmptyNumberFormatter(format, valueClass=type)
     else:
-        formatter = NumberFormatter(format)
+        formatter = NumberFormatter(format, valueClass=type)
     field.formatterFactory = DefaultFormatterFactory(formatter)
