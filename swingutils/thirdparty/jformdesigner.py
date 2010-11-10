@@ -42,7 +42,7 @@ class FormWrapper(object):
     def __getattr__(self, key):
         if self._creator:
             try:
-                return self._creator.getComponent(key)
+                return self._creator.getBean(key)
             except NoSuchComponentException:
                 pass
         raise AttributeError("'%s' object has no attribute '%s'" %
