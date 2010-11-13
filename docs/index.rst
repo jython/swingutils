@@ -1,5 +1,5 @@
-Jython-Swingutils
-=================
+Introduction
+============
 
 Jython-Swingutils is a collection of utility classes and functions that are
 designed to make creating `Swing <http://en.wikipedia.org/wiki/Swing_%28Java%29>`_
