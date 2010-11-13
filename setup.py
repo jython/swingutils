@@ -9,7 +9,7 @@ except ImportError:
 if not 'java' in sys.platform.lower():
     raise Exception('This package can only be installed on Jython.')
 
-long_description = open('README.txt').read()
+long_description = open('README.rst').read()
 
 setup(
     name='jython-swingutils',
