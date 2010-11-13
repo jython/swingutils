@@ -1,4 +1,4 @@
--*- restructuredtext -*-
+.. -*- restructuredtext -*-
 
 v1.0b2
 ======

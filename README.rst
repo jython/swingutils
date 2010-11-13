@@ -1,4 +1,4 @@
--*- restructuredtext -*-
+.. -*- restructuredtext -*-
 
 Jython Swing Utilities
 ======================
