@@ -26,6 +26,7 @@ setup(
       'Programming Language :: Python',
       'Programming Language :: Python :: 2.5',
       'Programming Language :: Java',
+      'Topic :: Software Development :: User Interfaces'
     ],
     keywords='jython swing',
     license='MIT',
