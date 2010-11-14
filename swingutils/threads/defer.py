@@ -4,10 +4,10 @@ A simplified version of Twisted's deferred execution mechanism.
 """
 from functools import wraps
 from collections import deque
+from types import GeneratorType
 import sys
 
-from swingutils.threads.swing import swingCall
-from types import GeneratorType
+from swingutils.threads.swing import swingRun
 
 __all__ = ('Failure', 'AsyncToken', 'returnValue', 'inlineCallbacks')
 
@@ -102,7 +102,7 @@ def returnValue(result):
     raise _ReturnValue(result)
 
 
-@swingCall
+@swingRun
 def _inlineCallbacks(result, g, token):
     while True:
         try:
@@ -136,14 +136,15 @@ def inlineCallbacks(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         g = func(*args, **kwargs)
+        token = AsyncToken()
 
         # If func was a regular function and not a generator, simply return
-        # its return value
+        # its return value. Otherwise start executing the code and return an
+        # AsyncToken.
         if not isinstance(g, GeneratorType):
-            return g
-
-        # Otherwise start executing the code and return an AsyncToken
-        token = AsyncToken()
-        _inlineCallbacks(None, g, token)
+            token._result = g
+            token._called = True
+        else:
+            _inlineCallbacks(None, g, token)
         return token
     return wrapper

@@ -1,3 +1,12 @@
+v1.0b3
+======
+
+* CHANGED: @inlineCallbacks now always returns an AsyncToken for consistency
+* CHANGED: @inlineCallbacks now uses @swingRun instead of @swingCall to avoid
+  certain undesirable side effects (the calling thread would get stuck waiting
+  for the generator to exit)
+
+
 v1.0b2
 ======
 
