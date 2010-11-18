@@ -182,6 +182,38 @@ def addChangeListener(target, listener, *args, **kwargs):
                             *args, **kwargs)
 
 
+def addDocumentListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for adding event listeners for all document events (insert,
+    remove, update). The unlisten() method in the return value will unlisten
+    all three listeners.
+    """
+    from javax.swing.event import DocumentListener
+    listener1 = addEventListener(target, DocumentListener, 'insertUpdate',
+                                 listener, *args, **kwargs)
+    listener2 = addEventListener(target, DocumentListener, 'removeUpdate',
+                                 listener, *args, **kwargs)
+    listener3 = addEventListener(target, DocumentListener, 'changedUpdate',
+                                 listener, *args, **kwargs)
+    return MultiListenerWrapper(listener1, listener2, listener3)
+
+
+def addListDataListener(target, listener, *args, **kwargs):
+    """
+    Shortcut for adding event listeners for all list data events (change,
+    add, remove). The unlisten() method in the return value will unlisten
+    all three listeners.
+    """
+    from javax.swing.event import ListDataListener
+    listener1 = addEventListener(target, ListDataListener, 'contentsChanged',
+                                 listener, *args, **kwargs)
+    listener2 = addEventListener(target, ListDataListener, 'intervalAdded',
+                                 listener, *args, **kwargs)
+    listener3 = addEventListener(target, ListDataListener, 'intervalRemoved',
+                                 listener, *args, **kwargs)
+    return MultiListenerWrapper(listener1, listener2, listener3)
+
+
 def addListSelectionListener(target, listener, *args, **kwargs):
     """
     Shortcut for addEventListener(target, ListSelectionListener,
@@ -213,22 +245,6 @@ def addTableModelListener(target, listener, *args, **kwargs):
     from javax.swing.event import TableModelListener
     return addEventListener(target, TableModelListener, 'tableChanged',
                             listener, *args, **kwargs)
-
-
-def addListDataListener(target, listener, *args, **kwargs):
-    """
-    Shortcut for adding event listeners for all list data events (change,
-    add, remove). The unlisten() method in the return value will unlisten
-    all three listeners.
-    """
-    from javax.swing.event import ListDataListener
-    listener1 = addEventListener(target, ListDataListener, 'contentsChanged',
-                                 listener, *args, **kwargs)
-    listener2 = addEventListener(target, ListDataListener, 'intervalAdded',
-                                 listener, *args, **kwargs)
-    listener3 = addEventListener(target, ListDataListener, 'intervalRemoved',
-                                 listener, *args, **kwargs)
-    return MultiListenerWrapper(listener1, listener2, listener3)
 
 
 def addTreeSelectionListener(target, listener, *args, **kwargs):
