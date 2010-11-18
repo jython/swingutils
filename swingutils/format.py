@@ -38,9 +38,9 @@ class EmptyNumberFormatter(NumberFormatter):
             return None
 
         value = NumberFormatter.stringToValue(self, text)
-        if not isinstance(value, self.format.valueClass):
+        if not isinstance(value, self.valueClass):
             # Counteract Jython's automatic numeric type conversion
-            return self.format.valueClass(value)
+            return self.valueClass(value)
 
         return value
 
