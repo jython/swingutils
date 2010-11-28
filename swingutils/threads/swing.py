@@ -87,3 +87,18 @@ def runSwingLater(func, *args, **kwargs):
     """
     runnable = RunnableWrapper(func, args, kwargs)
     SwingUtilities.invokeLater(runnable)
+
+
+def swingRunLater(func):
+    """
+    This is a decorator wrapper for :func:`runSwingLater`.
+
+    This causes the wrapped function to be queued for execution in the
+    Event Dispatch Thread. The call returns immediately, regardless of which
+    thread it was made from.
+
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        runSwingLater(func, *args, **kwargs)
+    return wrapper

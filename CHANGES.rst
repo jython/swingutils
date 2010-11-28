@@ -1,6 +1,7 @@
 v1.0b3
 ======
 
+* ADDED: Decorator wrapper for swingutils.threads.swing.runSwingLater
 * ADDED: DocumentListener shortcuts in swingutils.events
 * FIXED: EmptyNumberFormatter raised an AttributeException
 * CHANGED: @inlineCallbacks now always returns an AsyncToken for consistency
