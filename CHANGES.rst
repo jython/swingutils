@@ -4,6 +4,8 @@ v1.0b3
 * ADDED: Decorator wrapper for swingutils.threads.swing.runSwingLater
 * ADDED: DocumentListener shortcuts in swingutils.events
 * FIXED: EmptyNumberFormatter raised an AttributeException
+* FIXED: Window owner was not getting set in
+  swingutils.thirdparty.jformdesigner.WindowWrapper
 * CHANGED: @inlineCallbacks now always returns an AsyncToken for consistency
 * CHANGED: @inlineCallbacks now uses @swingRun instead of @swingCall to avoid
   certain undesirable side effects (the calling thread would get stuck waiting

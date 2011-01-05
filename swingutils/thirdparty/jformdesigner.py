@@ -6,7 +6,7 @@ JFormDesigner form loader library (jfd-loader.jar) in your class path.
 """
 
 try:
-    from com.jformdesigner.runtime import FormLoader, FormCreator,\
+    from com.jformdesigner.runtime import FormLoader, FormCreator, \
         NoSuchComponentException
 except ImportError:
     raise ImportError('JFormDesigner runtime library not found. '
@@ -48,7 +48,7 @@ class FormWrapper(object):
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (type(self), key))
 
-    def loadform(self, formName=None):
+    def loadform(self, formName=None, createAll=True):
         """
         Loads a .jfd form with the given name.
         If the full path is not given explicitly, then it is derived from the
@@ -56,6 +56,8 @@ class FormWrapper(object):
 
         :param formName: a complete file path, or just the form filename,
                          or just the form name without the .jfd suffix
+        :param createAll: True to create all components so that they are
+                          immediately accessible after this call returns
 
         """
         if formName is None or not '/' in formName:
@@ -73,10 +75,11 @@ class FormWrapper(object):
             formModel = FormLoader.load(formName)
         except:
             raise FormLoadException(formName)
-            
+
         self._creator = FormCreator(formModel)
         self._creator.target = self
-        self._creator.createAll()
+        if createAll:
+            self._creator.createAll()
 
 
 class _DelegateWrapper(FormWrapper):
@@ -128,8 +131,9 @@ class WindowWrapper(_DelegateWrapper):
         :param owner: owner (parent) of the created window
 
         """
-        self.loadform(formName)
+        self.loadform(formName, False)
         self._delegate = self._creator.createWindow(owner)
+        self._creator.createAll()
 
     @property
     def window(self):
