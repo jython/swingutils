@@ -125,8 +125,8 @@ class MirrorObject(JavaBeanSupport):
 
         # Collect public property names from both old and new
         propertyNames = set()
-        for attr in (dir(oldDelegate) + dir(newDelegate)):
-            if not attr.startswith('_'):
+        for attr in set(dir(oldDelegate) + dir(newDelegate)):
+            if not attr.startswith('_') and self.hasListeners(attr):
                 propertyNames.add(attr)
 
         # Fire a property change event for each attribute

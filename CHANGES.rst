@@ -10,6 +10,8 @@ v1.0b3
 * CHANGED: @inlineCallbacks now uses @swingRun instead of @swingCall to avoid
   certain undesirable side effects (the calling thread would get stuck waiting
   for the generator to exit)
+* CHANGED: MirrorObject only fires events for properties for which there are
+  registered listeners (if no global event listeners are registered)
 
 
 v1.0b2
