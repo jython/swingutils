@@ -40,13 +40,13 @@ Example::
     executor.runBackground(hello, 'world')
 
 This will print "Hello, world" from a background thread. The functionally
-equivalent version using the decorator form is this:
+equivalent version using the decorator form is this::
 
     from swingutils.threads.threadpool import TaskExecutor
 
     executor = TaskExecutor()
 
-	@executor.backgroundTask
+    @executor.backgroundTask
     def hello(name):
        print 'Hello, %s' % name
 
@@ -75,13 +75,13 @@ The easiest way to deal with GUI calls is to use
 The following table lists the differences between the various different
 GUI call mechanisms:
 
-===================  =====================  ================================
-Function             Blocks calling thread  Blocks EDT if called from within
-===================  =====================  ================================
-callSwing/swingCall  Yes                    Yes
-runSwing/swingRun    No                     Yes
-runSwingLater        No                     No
-===================  =====================  ================================
+===========================  =====================  ================================
+Function                     Blocks calling thread  Blocks EDT if called from within
+===========================  =====================  ================================
+callSwing/swingCall          Yes                    Yes
+runSwing/swingRun            No                     Yes
+runSwingLater/swingRunLater  No                     No
+===========================  =====================  ================================
 
 Using @inlineCallbacks
 ----------------------
