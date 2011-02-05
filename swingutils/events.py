@@ -47,15 +47,6 @@ class EventListenerWrapper(object):
         self.removeMethod(*self.removeMethodArgs)
 
 
-class MultiListenerWrapper(object):
-    def __init__(self, *listeners):
-        self.listeners = listeners
-
-    def unlisten(self):
-        for listener in self.listeners:
-            listener.unlisten()
-
-
 def addEventListener(target, eventInterface, event, listener,
                              *args, **kwargs):
     """
@@ -184,34 +175,26 @@ def addChangeListener(target, listener, *args, **kwargs):
 
 def addDocumentListener(target, listener, *args, **kwargs):
     """
-    Shortcut for adding event listeners for all document events (insert,
-    remove, update). The unlisten() method in the return value will unlisten
-    all three listeners.
+    Shortcut for addEventListener(target, DocumentListener,
+    ('insertUpdate', 'removeUpdate', 'changedUpdate'), listener).
     """
     from javax.swing.event import DocumentListener
-    listener1 = addEventListener(target, DocumentListener, 'insertUpdate',
-                                 listener, *args, **kwargs)
-    listener2 = addEventListener(target, DocumentListener, 'removeUpdate',
-                                 listener, *args, **kwargs)
-    listener3 = addEventListener(target, DocumentListener, 'changedUpdate',
-                                 listener, *args, **kwargs)
-    return MultiListenerWrapper(listener1, listener2, listener3)
+
+    events = ('insertUpdate', 'removeUpdate', 'changedUpdate')
+    return addEventListener(target, DocumentListener, events, listener, *args,
+                            **kwargs)
 
 
 def addListDataListener(target, listener, *args, **kwargs):
     """
-    Shortcut for adding event listeners for all list data events (change,
-    add, remove). The unlisten() method in the return value will unlisten
-    all three listeners.
+    Shortcut for addEventListener(target, ListDataListener,
+    ('contentsChanged', 'intervalAdded', 'intervalRemoved'), listener).
     """
     from javax.swing.event import ListDataListener
-    listener1 = addEventListener(target, ListDataListener, 'contentsChanged',
-                                 listener, *args, **kwargs)
-    listener2 = addEventListener(target, ListDataListener, 'intervalAdded',
-                                 listener, *args, **kwargs)
-    listener3 = addEventListener(target, ListDataListener, 'intervalRemoved',
-                                 listener, *args, **kwargs)
-    return MultiListenerWrapper(listener1, listener2, listener3)
+
+    events = ('contentsChanged', 'intervalAdded', 'intervalRemoved')
+    return addEventListener(target, ListDataListener, events, listener, *args,
+                            **kwargs)
 
 
 def addListSelectionListener(target, listener, *args, **kwargs):

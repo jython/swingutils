@@ -12,6 +12,7 @@ v1.0b3
   for the generator to exit)
 * CHANGED: MirrorObject only fires events for properties for which there are
   registered listeners (if no global event listeners are registered)
+* CHANGED: Removed MultiListenerWrapper which was redundant to begin with
 
 
 v1.0b2
