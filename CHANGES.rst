@@ -1,5 +1,5 @@
-v1.0b3
-======
+v1.0 final
+==========
 
 * ADDED: Decorator wrapper for swingutils.threads.swing.runSwingLater
 * ADDED: DocumentListener shortcuts in swingutils.events

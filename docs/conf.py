@@ -38,7 +38,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'jython-swingutils'
-copyright = u'2009-2010, Alex Grönholm'
+copyright = u'2009-2011, Alex Grönholm'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -47,7 +47,7 @@ copyright = u'2009-2010, Alex Grönholm'
 # The short X.Y version.
 version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '1.0b3'
+release = '1.0'
 
 intersphinx_mapping = {'http://download.oracle.com/javase/1.5.0/docs/api': 'jdk5.inv'}
 
