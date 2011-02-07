@@ -1,3 +1,10 @@
+v1.0.1
+======
+
+* FIXED: The released distribution was missing README.rst, which prevented
+  installation
+
+
 v1.0 final
 ==========
 
