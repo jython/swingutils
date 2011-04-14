@@ -121,19 +121,32 @@ class ObjectTableModel(DelegateTableModel):
     # Overridden DelegateTableModel methods
     #
 
+    def __init__(self, delegate, *args):
+        AbstractTableModel.__init__(self)
+        AbstractDelegateList.__init__(self, delegate)
+
+        self.__columns__ = list(args if args else self.__columns__)
+        self._getters = [None] * len(self.__columns__)
+        for index, column in enumerate(self.__columns__):
+            self.__columns__[index] = self._validateColumn(column, index)
+
     def _validateColumn(self, column, index):
         column = DelegateTableModel._validateColumn(self, column, index)
         if len(column) < 3:
             raise ValueError('Column %d: missing object attribute name' %
                              index)
-        if not isinstance(column[2], basestring):
-            raise ValueError('Column %d: object attribute name must be a '
-                             'string' % index)
+        if isinstance(column[2], basestring):
+            self._getters[index] = lambda row: getattr(row, column[2])
+        elif hasattr(column[2], '__call__'):
+            self._getters[index] = column[2]
+        else:
+            raise ValueError('Column %d: object attribute name must either be '
+                             'a string or a callable' % index)
         return column
 
     def getValueAt(self, rowIndex, columnIndex):
-        attrname = self.__columns__[columnIndex][2]
-        return getattr(self[rowIndex], attrname)
+        line = self[rowIndex]
+        return self._getters[columnIndex](line)
 
     def setValueAt(self, aValue, rowIndex, columnIndex):
         attrname = self.__columns__[columnIndex][2]
