@@ -4,6 +4,7 @@ This module facilitates using forms created with
 JFormDesigner form loader library (jfd-loader.jar) in your class path.
 
 """
+from java.lang import Exception as JavaException
 
 try:
     from com.jformdesigner.runtime import FormLoader, FormCreator, \
@@ -18,11 +19,12 @@ __all__ = ('FormWrapper', 'PanelWrapper', 'WindowWrapper')
 class FormLoadException(Exception):
     """Raised when the specified form could not be loaded."""
 
-    def __init__(self, formname):
+    def __init__(self, formname, e):
         self.formname = formname
+        self.parent = e
 
     def __str__(self):
-        return 'Unable to load form %s' % self.formname
+        return 'Unable to load form %s: %s' % (self.formname, self.parent)
 
 
 class FormWrapper(object):
@@ -73,8 +75,8 @@ class FormWrapper(object):
 
         try:
             formModel = FormLoader.load(formName)
-        except:
-            raise FormLoadException(formName)
+        except JavaException, e:
+            raise FormLoadException(formName, e)
 
         self._creator = FormCreator(formModel)
         self._creator.target = self
