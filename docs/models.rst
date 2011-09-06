@@ -46,6 +46,9 @@ list object are expected to be objects, and columns are mapped to their
 attributes. Therefore the constructor expects an series of 3-tuples
 (name, type, attribute name). You can no longer use the name-only shortcut of
 only providing the name as a string -- you have to give all three values.
+You can also supply a callable in place of the attribute name, in which case
+the callable is called with each object in the list as the argument. The return
+value of this callable is then used to draw the table cell.
 
 TableSelectionProxy
 """""""""""""""""""
