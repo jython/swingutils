@@ -45,9 +45,9 @@ copyright = u'2009-2011, Alex Grönholm'
 # built documents.
 #
 # The short X.Y version.
-version = '1.0.1'
+version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '1.0.1'
+release = '1.0.2'
 
 intersphinx_mapping = {'http://download.oracle.com/javase/1.5.0/docs/api': 'jdk5.inv'}
 

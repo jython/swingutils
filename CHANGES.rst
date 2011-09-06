@@ -1,3 +1,12 @@
+v1.0.2
+======
+
+* FIXED: BeanProperty was sharing the value across instances of host class
+* CHANGED: ObjectTableModel now accepts a callable in place of an attribute name
+* CHANGED: FormLoadException now contains the parent exception and displays it
+  in the message
+
+
 v1.0.1
 ======
 
