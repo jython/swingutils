@@ -85,21 +85,22 @@ class BeanProperty(object):
     :param name: Attribute name of the bean property. This MUST be the
                  same name as the created attribute, as it can't be
                  reliably obtained any other way.
-    :param initval: Initial value for this property. Defaults to ``None``.
+    :param initval: Default value for this property. Defaults to ``None``.
 
     .. seealso:: `How-To Guide for Descriptors <http://users.rcn.com/python/download/Descriptor.htm>`_
 
     """
     def __init__(self, name, initval=None):
         self.name = name
-        self.value = initval
+        self.mangled_name = '__beanproperty_%s' % name
+        self.defaultValue = initval
 
     def __get__(self, obj, type_=None):
-        return self.value
+        return getattr(obj, self.mangled_name, self.defaultValue)
 
     def __set__(self, obj, value):
-        oldValue = self.value
-        self.value = value
+        oldValue = self.__get__(obj)
+        setattr(obj, self.mangled_name, value)
         obj.firePropertyChange(self.name, oldValue, value)
 
 
