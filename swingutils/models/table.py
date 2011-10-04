@@ -176,7 +176,6 @@ class ObjectTableModel(DelegateTableModel):
         multi-row selection enabled.
 
         """
-        assert table.model is self
         if table.selectedRow >= 0:
             modelRow = table.convertRowIndexToModel(table.selectedRow)
             return self[modelRow]
@@ -190,7 +189,6 @@ class ObjectTableModel(DelegateTableModel):
         :rtype: list
 
         """
-        assert table.model is self
         selected = []
         for viewRow in table.selectedRows:
             modelRow = table.convertRowIndexToModel(viewRow)
@@ -206,7 +204,6 @@ class ObjectTableModel(DelegateTableModel):
         :rtype: list
 
         """
-        assert table.model is self
         visible = []
         for viewRow in xrange(table.rowCount):
             modelRow = table.convertRowIndexToModel(viewRow)
