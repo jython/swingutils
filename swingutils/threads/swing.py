@@ -51,7 +51,8 @@ def runSwing(func, *args, **kwargs):
     Runs the given function in the Event Dispatch Thread.
     If this is invoked inside the EDT, the given function will be run normally.
     Otherwise, it'll be queued to be run later.
-    
+    The return value from the target function will not be available.
+
     :return: None
 
     """
@@ -66,11 +67,10 @@ def swingRun(func):
     """
     This is a decorator wrapper for :func:`runSwing`.
 
-    This causes the wrapped function to be executed
-    in the event dispatch thread. The calling thread will block
-    until the function has finished executing.
-    If the target function is called from the event dispatch thread,
-    it will be executed directly.
+    This causes the wrapped function to be executed in the
+    Event Dispatch Thread. If the target function is called from the EDT,
+    it will be executed directly. Otherwise, it'll be queued to be run later.
+    The return value from the wrapped function will not be available.
 
     """
     @wraps(func)
