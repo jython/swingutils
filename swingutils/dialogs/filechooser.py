@@ -41,7 +41,7 @@ class SimpleFileFilter(FileFilter):
         if not self.preferred.startswith(u'.'):
             self.preferred = u'.%s' % self.preferred
 
-        self._description = description or u'%s files' % preferred[1:].upper()
+        self._description = description or u'%s files' % self.preferred[1:].upper()
 
     #
     # FileFilter methods
