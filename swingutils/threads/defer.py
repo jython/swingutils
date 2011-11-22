@@ -58,8 +58,11 @@ class AsyncToken(object):
         self._result = result
         self._runCallbacks()
 
-    def errback(self):
-        self._result = Failure(*sys.exc_info())
+    def errback(self, exception=None, traceback=None):
+        if exception:
+            self._result = Failure(type(exception), exception, traceback)
+        else:
+            self._result = Failure(*sys.exc_info())
         self._runCallbacks()
 
     def _runCallbacks(self):
