@@ -5,6 +5,7 @@ JFormDesigner form loader library (jfd-loader.jar) in your class path.
 
 """
 from java.lang import Exception as JavaException
+from java.lang.reflect import InvocationHandler
 
 try:
     from com.jformdesigner.runtime import FormLoader, FormCreator, \
@@ -13,7 +14,7 @@ except ImportError:
     raise ImportError('JFormDesigner runtime library not found. '
                       'Make sure you have jfd-loader.jar on your CLASSPATH.')
 
-__all__ = ('FormWrapper', 'PanelWrapper', 'WindowWrapper')
+__all__ = ('FormLoadException', 'FormWrapper', 'PanelWrapper', 'WindowWrapper')
 
 
 class FormLoadException(Exception):
@@ -27,13 +28,29 @@ class FormLoadException(Exception):
         return 'Unable to load form %s: %s' % (self.formname, self.parent)
 
 
+class JythonInvocationHandler(InvocationHandler):
+    def __init__(self, method):
+        self.method = method
+
+    def invoke(self, proxy, method, args):
+        return self.method(*args)
+
+
+class JythonFormCreator(FormCreator):
+    def newEventInvocationHandler(self, listenerMethod, handlerMethod, paramTypes):
+        method = self.target
+        for part in handlerMethod.split('.'):
+            method = getattr(method, part, None)
+        return JythonInvocationHandler(method)
+
+
 class FormWrapper(object):
     """
     Acts as a proxy to a JFormDesigner form.
     When you load a form into it, you can access any named component as an
     attribute of this class (provided that said class does not have any
     attributes of its own that would shadow the component names).
-    
+
     It is recommended that users don't use this class directly, but rather
     subclass one of its descendants (PanelWrapper, WindowWrapper etc).
 
@@ -78,7 +95,7 @@ class FormWrapper(object):
         except JavaException, e:
             raise FormLoadException(formName, e)
 
-        self._creator = FormCreator(formModel)
+        self._creator = JythonFormCreator(formModel)
         self._creator.target = self
         if createAll:
             self._creator.createAll()

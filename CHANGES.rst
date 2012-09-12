@@ -1,3 +1,14 @@
+v1.0.3
+======
+
+* ADDED: Ability to errback() on AsyncTokens directly with an exception object 
+* FIXED: Event listeners added in JFormDesigner work now
+         (requires the customized jfd-loader.jar for now)
+* FIXED: Incorrect information in a few docstrings
+* CHANGED: Removed assertions from ObjectTableModel because they interfered
+           with some table model proxying schemes
+
+
 v1.0.2
 ======
 

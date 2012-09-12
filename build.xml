@@ -9,6 +9,10 @@
 
 	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
 
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+	
 	<target name="compile">
 		<mkdir dir="build"/>
 		<jython.compile srcdir="." destdir="build" includes="swingutils/**"/>
@@ -26,7 +30,7 @@
 		</jar>
 	</target>
 
-	<target name="binjar" depends="compile">
+	<target name="binjar" depends="clean, compile">
 		<mkdir dir="dist"/>
 		<delete file="${binjarfile}" />
 		<jar destfile="${binjarfile}">
