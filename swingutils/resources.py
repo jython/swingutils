@@ -11,7 +11,7 @@ __all__ = ('getResource', 'getResourceAsStream', 'loadImage', 'loadImageIcon')
 def getResource(path, classloader=None):
     """
     Loads a resource from anywhere on the classpath.
-    
+
     :param path: path to the resource (separate elements with '/')
     :param classloader: class loader to use for loading the resource
     :rtype: :class:`java.lang.Object`
@@ -24,7 +24,7 @@ def getResource(path, classloader=None):
 def getResourceAsStream(path, classloader=None):
     """
     Opens a stream to a resource anywhere on the classpath.
-    
+
     :param path: path to the resource (separate elements with '/')
     :param classloader: class loader to use for loading the resource
     :rtype: :class:`java.io.InputStream`
@@ -40,11 +40,11 @@ def loadImage(path, classloader=None):
     others if you have installed any extensions to the ImageIO system (such as
     `Java Advanced Imaging
     <http://java.sun.com/javase/technologies/desktop/media/jai/>`_).
-    
+
     :param path: path to the resource (separate elements with '/')
     :param classloader: class loader to use for loading the resource
     :rtype: :class:`java.awt.Image`
-    
+
     """
     from javax.imageio import ImageIO
 
@@ -55,7 +55,7 @@ def loadImage(path, classloader=None):
 def loadImageIcon(path, classloader=None):
     """Loads an image resource as an ImageIcon from anywhere on the
     class path.
-    
+
     :param path: Path to the resource (separate elements with '/')
     :param classloader: class loader to use for loading the resource
     :rtype: :class:`javax.swing.ImageIcon`

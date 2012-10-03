@@ -14,7 +14,7 @@ class SimpleFileFilter(FileFilter):
     """
     A simple FileFilter class, suitable for use with the :func:`showSaveDialog`
     function, and of course Java's :class:`JFileChooser` class.
-    
+
     """
     def __init__(self, suffixes, preferred=None, description=None):
         """
@@ -23,7 +23,7 @@ class SimpleFileFilter(FileFilter):
                           a missing extension from a file name and building
                           the description string if none was defined
         :param description: textual description of the file filter
-        
+
         """
         if isinstance(suffixes, basestring):
             self.suffixes = [suffixes]
@@ -41,7 +41,8 @@ class SimpleFileFilter(FileFilter):
         if not self.preferred.startswith(u'.'):
             self.preferred = u'.%s' % self.preferred
 
-        self._description = description or u'%s files' % self.preferred[1:].upper()
+        self._description = (description or u'%s files' %
+                             self.preferred[1:].upper())
 
     #
     # FileFilter methods
@@ -63,7 +64,7 @@ class SimpleFileFilter(FileFilter):
 def createFileChooserDialog(filters, filename, prefs, prefkey, multiselect):
     """
     Creates a file chooser dialog that remembers its last directory.
-    
+
     """
     fileChooser = JFileChooser()
 
@@ -166,7 +167,7 @@ def showSaveDialog(filters, filename=None, parent=None, prefs=None,
     selectedFile = fileChooser.selectedFile
     filter = fileChooser.fileFilter
     if selectedFile and hasattr(filter, 'preferred') and not \
-        selectedFile.name.lower().endswith(filter.preferred):
-            selectedFile = File(selectedFile.path + filter.preferred)
+            selectedFile.name.lower().endswith(filter.preferred):
+        selectedFile = File(selectedFile.path + filter.preferred)
 
     return selectedFile

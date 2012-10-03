@@ -16,7 +16,7 @@ def callSwing(func, *args, **kwargs):
     If this is invoked inside the EDT, the given function will be run normally.
     Otherwise, it'll be queued to be run and the calling thread will block
     until the function has been executed.
-    
+
     :return: func's return value
 
     """

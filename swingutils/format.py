@@ -7,14 +7,14 @@ from decimal import Decimal
 from java.lang import Number, Long, Double
 from java.math import BigDecimal, BigInteger
 from java.text import DecimalFormat, DateFormat, NumberFormat, Format
-from javax.swing.text import DefaultFormatterFactory, InternationalFormatter, \
-    DateFormatter, NumberFormatter
-
+from javax.swing.text import (DefaultFormatterFactory, InternationalFormatter,
+                              DateFormatter, NumberFormatter)
 
 _TYPES_MAP = {int: Long,
               long: BigInteger,
               float: Double,
               Decimal: BigDecimal}
+
 
 class PyDecimalFormat(DecimalFormat):
     def __init__(self, pattern=None, integerDigits=None, fractionDigits=None,

@@ -17,7 +17,7 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
     (usually for the purpose of choosing an appropriate cell renderer).
     You can either override :attr:`__columns__` in a subclass, or supply it via
     the constructor.
-    
+
     List data is assumed to be a two-dimensional table (list of lists).
 
     """
@@ -57,7 +57,7 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
 
     def _fireItemsRemoved(self, start, end):
         self.fireTableRowsDeleted(start, end)
-    
+
     def setDelegate(self, value):
         self._delegate = value
         self.fireTableDataChanged()
@@ -168,7 +168,7 @@ class ObjectTableModel(DelegateTableModel):
         for i, row in enumerate(self):
             if row == obj:
                 return i
-        return - 1
+        return -1
 
     def getSelectedObject(self, table):
         """

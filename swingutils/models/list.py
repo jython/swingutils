@@ -9,7 +9,7 @@ class AbstractDelegateList(object):
     An abstract class that acts as a proxy to an actual list object.
     Supports firing events for additions/removals/changes, but these methods
     must be implemented in a subclass.
-    
+
     """
     def __init__(self, delegate=None):
         self._delegate = delegate

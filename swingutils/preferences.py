@@ -128,10 +128,10 @@ def getUserPrefs(path):
     """
     Returns a preferences node from current user's preferences for the given
     path.
-    
+
     :param path: path to a preferences node (existing or not)
     :return: a dict-like preferences node
-    :rtype: :class:`PreferencesNode` 
+    :rtype: :class:`PreferencesNode`
 
     """
     return PreferencesNode(path, True)
@@ -143,7 +143,7 @@ def getSystemPrefs(path):
 
     :param path: path to a preferences node (existing or not)
     :return: a dict-like preferences node
-    :rtype: :class:`PreferencesNode` 
+    :rtype: :class:`PreferencesNode`
 
     """
     return PreferencesNode(path, False)

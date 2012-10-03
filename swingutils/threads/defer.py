@@ -20,14 +20,14 @@ class Failure(object):
 
     def throw(self, g):
         return g.throw(self.type, self.value, self.traceback)
-    
+
     def raiseException(self):
         raise self.type, self.value, self.traceback
 
     def __repr__(self):
         valuestr = self.value
         if isinstance(valuestr, unicode):
-            valuestr = valuestr.decode('ascii', 'replace') 
+            valuestr = valuestr.decode('ascii', 'replace')
         return '<%s, exception=%s>' % (self.__class__.__name__, valuestr)
 
 

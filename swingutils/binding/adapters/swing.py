@@ -3,8 +3,8 @@ Provides a property adapter for JavaBeans binding and adapters for most
 built-in Swing components.
 
 """
-from swingutils.events import addPropertyListener, addEventListener,\
-    addRowSorterListener
+from swingutils.events import (addPropertyListener, addEventListener,
+                               addRowSorterListener)
 from swingutils.binding.adapters import BindingAdapter, registry
 
 
@@ -23,8 +23,8 @@ class JavaBeansPropertyAdapter(BindingAdapter):
         self.property = property
 
     def addListeners(self, parent, callback, *args, **kwargs):
-        self.listeners['property'] = addPropertyListener(parent, self.property,
-            callback, *args, **kwargs)
+        self.listeners['property'] = addPropertyListener(
+            parent, self.property, callback, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -35,8 +35,9 @@ class ItemSelectableAdapter(JavaBeansPropertyAdapter):
 
     def addListeners(self, parent, callback, *args, **kwargs):
         from java.awt.event import ItemListener
-        self.listeners['item'] = addEventListener(parent, ItemListener,
-            'itemStateChanged', callback, *args, **kwargs)
+        self.listeners['item'] = addEventListener(
+            parent, ItemListener, 'itemStateChanged', callback, *args,
+            **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -69,20 +70,21 @@ class JTextComponentAdapter(JavaBeansPropertyAdapter):
 
     def addFocusListener(self, parent, callback, *args, **kwargs):
         from java.awt.event import FocusListener
-        self.listeners['focus'] = addEventListener(parent, FocusListener,
-            'focusLost', callback, *args, **kwargs)
+        self.listeners['focus'] = addEventListener(
+            parent, FocusListener, 'focusLost', callback, *args, **kwargs)
 
     def addDocumentPropertyListener(self, parent, callback, *args, **kwargs):
-        self.listeners['documentProperty'] = addPropertyListener(parent,
-            'document', self.documentPropertyChanged, parent, callback, *args,
-            **kwargs)
+        self.listeners['documentProperty'] = addPropertyListener(
+            parent, 'document', self.documentPropertyChanged, parent, callback,
+            *args, **kwargs)
 
     def addDocumentListener(self, parent, callback, *args, **kwargs):
         if parent.document is not None:
             from javax.swing.event import DocumentListener
             events = (u'changedUpdate', u'insertUpdate', u'removeUpdate')
-            self.listeners['document'] = addEventListener(parent.document,
-                DocumentListener, events, callback, *args, **kwargs)
+            self.listeners['document'] = addEventListener(
+                parent.document, DocumentListener, events, callback, *args,
+                **kwargs)
 
     def documentPropertyChanged(self, event, parent, callback, *args,
                                 **kwargs):
@@ -104,17 +106,17 @@ class JTreeAdapter(JavaBeansPropertyAdapter):
         self.addSelectionListener(parent, callback, *args, **kwargs)
 
     def addSelectionModelListener(self, parent, callback, *args, **kwargs):
-        self.listeners['selectionModel'] = addPropertyListener(parent,
-            'selectionModel', self.selectionModelChanged, parent, callback,
-            *args, **kwargs)
+        self.listeners['selectionModel'] = addPropertyListener(
+            parent, 'selectionModel', self.selectionModelChanged, parent,
+            callback, *args, **kwargs)
 
     def addSelectionListener(self, parent, callback, *args, **kwargs):
         selectionModel = parent.selectionModel
         if selectionModel is not None:
             from javax.swing.event import TreeSelectionListener
-            self.listeners['selection'] = addEventListener(selectionModel,
-                TreeSelectionListener, 'valueChanged', self.selectionChanged,
-                callback, *args, **kwargs)
+            self.listeners['selection'] = addEventListener(
+                selectionModel, TreeSelectionListener, 'valueChanged',
+                self.selectionChanged, callback, *args, **kwargs)
 
     def selectionModelChanged(self, event, parent, callback, *args, **kwargs):
         self.removeListeners('selection')
@@ -150,9 +152,9 @@ class JListAdapter(JTreeAdapter):
         selectionModel = parent.selectionModel
         if selectionModel is not None:
             from javax.swing.event import ListSelectionListener
-            self.listeners['selection'] = addEventListener(selectionModel,
-                ListSelectionListener, 'valueChanged', self.selectionChanged,
-                callback, *args, **kwargs)
+            self.listeners['selection'] = addEventListener(
+                selectionModel, ListSelectionListener, 'valueChanged',
+                self.selectionChanged, callback, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -194,9 +196,9 @@ class JTableColumnSelectionAdapter(JavaBeansPropertyAdapter):
         self.addSelectionListener(parent, callback, *args, **kwargs)
 
     def addColumnModelListener(self, parent, callback, *args, **kwargs):
-        self.listeners['columnModel'] = addPropertyListener(parent,
-            'columnModel', self.columnModelChanged, parent, callback, *args,
-            **kwargs)
+        self.listeners['columnModel'] = addPropertyListener(
+            parent, 'columnModel', self.columnModelChanged, parent, callback,
+            *args, **kwargs)
 
     def addSelectionListener(self, parent, callback, *args, **kwargs):
         columnModel = parent.columnModel
@@ -223,9 +225,9 @@ class RowSorterAdapter(JavaBeansPropertyAdapter):
     __targetproperty__ = 'viewRowCount'
 
     def addListeners(self, parent, callback, *args, **kwargs):
-        self.listeners['rowsorter'] = addRowSorterListener(parent, callback,
-                                                           *args, **kwargs)
-        
+        self.listeners['rowsorter'] = addRowSorterListener(
+            parent, callback, *args, **kwargs)
+
 
 @registry.registerPropertyAdapter
 class JComboBoxAdapter(JavaBeansPropertyAdapter):
@@ -235,8 +237,9 @@ class JComboBoxAdapter(JavaBeansPropertyAdapter):
 
     def addListeners(self, parent, callback, *args, **kwargs):
         from java.awt.event import ItemListener
-        self.listeners['itemState'] = addEventListener(parent, ItemListener,
-            'itemStateChanged', callback, *args, **kwargs)
+        self.listeners['itemState'] = addEventListener(
+            parent, ItemListener, 'itemStateChanged', callback, *args,
+            **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -247,8 +250,8 @@ class JSpinnerAdapter(JComboBoxAdapter):
 
     def addListeners(self, parent, callback, *args, **kwargs):
         from javax.swing.event import ChangeListener
-        self.listeners['state'] = addEventListener(parent, ChangeListener,
-            'stateChanged', callback, *args, **kwargs)
+        self.listeners['state'] = addEventListener(
+            parent, ChangeListener, 'stateChanged', callback, *args, **kwargs)
 
 
 @registry.registerPropertyAdapter
@@ -275,8 +278,8 @@ class ListModelAdapter(JavaBeansPropertyAdapter):
     def addListeners(self, parent, callback, *args, **kwargs):
         from javax.swing.event import ListDataListener
         events = ('contentsChanged', 'intervalAdded', 'intervalRemoved')
-        self.listeners['list'] = addEventListener(parent, ListDataListener,
-            events, callback, *args, **kwargs)
+        self.listeners['list'] = addEventListener(
+            parent, ListDataListener, events, callback, *args, **kwargs)
 
 
 @registry.registerListAdapter
@@ -288,5 +291,6 @@ class TableModelAdapter(JavaBeansPropertyAdapter):
 
     def addListeners(self, parent, callback, *args, **kwargs):
         from javax.swing.event import TableModelListener
-        self.listeners['table'] = addEventListener(parent,
-            TableModelListener, 'tableChanged', callback, *args, **kwargs)
+        self.listeners['table'] = addEventListener(
+            parent, TableModelListener, 'tableChanged', callback, *args,
+            **kwargs)

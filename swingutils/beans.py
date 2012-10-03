@@ -3,8 +3,8 @@ This module contains support classes to make your own classes support JavaBeans
 compatible property change notifications.
 
 """
-from java.beans import PropertyChangeSupport, PropertyChangeEvent,\
-    IndexedPropertyChangeEvent
+from java.beans import (PropertyChangeSupport, PropertyChangeEvent,
+                        IndexedPropertyChangeEvent)
 
 
 class JavaBeanSupport(object):
@@ -87,7 +87,8 @@ class BeanProperty(object):
                  reliably obtained any other way.
     :param initval: Default value for this property. Defaults to ``None``.
 
-    .. seealso:: `How-To Guide for Descriptors <http://users.rcn.com/python/download/Descriptor.htm>`_
+    .. seealso:: `How-To Guide for Descriptors
+                 <http://users.rcn.com/python/download/Descriptor.htm>`_
 
     """
     def __init__(self, name, initval=None):

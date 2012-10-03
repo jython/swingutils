@@ -3,8 +3,9 @@ import logging
 
 from java.lang import String, Integer
 from java.awt import GridLayout
-from javax.swing import JLabel, JFrame, JFormattedTextField, JTextField, \
-    JScrollPane, JTable, BoxLayout, JPanel, Box, BorderFactory, JButton
+from javax.swing import (JLabel, JFrame, JFormattedTextField, JTextField,
+                         JScrollPane, JTable, BoxLayout, JPanel, Box,
+                         BorderFactory, JButton)
 from javax.swing.ListSelectionModel import SINGLE_SELECTION
 
 from swingutils.threads.swing import swingRun
@@ -40,7 +41,8 @@ class MainFrame(JFrame):
         self.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
 
     def initComponents(self):
-        peopleTableModel = ObjectTableModel([],
+        peopleTableModel = ObjectTableModel(
+            [],
             (u'First name', String, 'firstName'),
             (u'Last name', String, 'lastName'),
             (u'Birth year', Integer, 'birthYear'))
@@ -70,7 +72,8 @@ class MainFrame(JFrame):
         group.bind(self.selection, 'firstName', self.firstNameField, 'text')
         group.bind(self.selection, 'lastName', self.lastNameField, 'text')
         group.bind(self.selection, 'birthYear', self.birthYearField, 'value')
-        group.bind(self.selection,
+        group.bind(
+            self.selection,
             'u"%s %s, %s" % (firstName or u"?", lastName or u"?", '
             'birthYear or u"????")', self.summaryField, 'text', mode=ONEWAY)
 
@@ -85,7 +88,8 @@ class MainFrame(JFrame):
     def initLayout(self):
         # Create a horizontal layout and a 10 pixel border
         self.layout = BoxLayout(self.contentPane, BoxLayout.X_AXIS)
-        self.contentPane.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        self.contentPane.border = BorderFactory.createEmptyBorder(10, 10, 10,
+                                                                  10)
 
         # Add the table
         self.add(JScrollPane(self.peopleTable))

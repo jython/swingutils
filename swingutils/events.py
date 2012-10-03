@@ -2,8 +2,8 @@ from java.util import EventListener
 from inspect import getargspec
 from types import MethodType
 
-
 _wrapperClassMap = {}       # event interface name -> wrapper class
+
 
 def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
                            removeMethod):
@@ -56,8 +56,7 @@ class EventListenerWrapper(object):
         self.removeMethod(*self.removeMethodArgs)
 
 
-def addEventListener(target, eventInterface, event, listener,
-                             *args, **kwargs):
+def addEventListener(target, eventInterface, event, listener, *args, **kwargs):
     """
     Adds an event listener to `target`.
 
@@ -102,12 +101,14 @@ def addPropertyListener(target, property, listener, *args, **kwargs):
 
     """
     from java.beans import PropertyChangeListener
-    wrapper = _createListenerWrapper(PropertyChangeListener, 'propertyChange',
-        listener, args, kwargs, target.removePropertyChangeListener)
+    wrapper = _createListenerWrapper(
+        PropertyChangeListener, 'propertyChange', listener, args, kwargs,
+        target.removePropertyChangeListener)
     add_args = (wrapper,) if property is None else (property, wrapper)
     wrapper.removeMethodArgs = add_args
     target.addPropertyChangeListener(*add_args)
     return wrapper
+
 
 #
 # Shortcuts for java.awt.event
@@ -155,6 +156,7 @@ def addMouseClickListener(target, listener, *args, **kwargs):
     from java.awt.event import MouseListener
     return addEventListener(target, MouseListener, 'mouseClicked', listener,
                             *args, **kwargs)
+
 
 #
 # Shortcuts for javax.swing.events

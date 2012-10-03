@@ -9,7 +9,7 @@ from javax.swing.table import DefaultTableColumnModel, TableColumn
 
 from nose.tools import eq_
 
-from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, MANUAL 
+from swingutils.binding import BindingGroup, BindingExpression, TWOWAY, MANUAL
 from swingutils.beans import AutoChangeNotifier, JavaBeanSupport
 from swingutils.models.list import DelegateListModel
 from swingutils.models.combobox import DelegateComboBoxModel
@@ -22,7 +22,7 @@ class Person(JavaBeanSupport, AutoChangeNotifier):
         self.lastName = lastName
         self.birthYear = birthYear
         self.children = []
-    
+
     def getChild(self, index):
         return self.children[index]
 
@@ -40,8 +40,8 @@ class TestExpressions(object):
         eq_(expr.getValue(), 1970)
 
     def testReadCompoundProperty(self):
-        expr = BindingExpression(self.person,
-            u'"%s %s, %s" % (firstName, lastName, birthYear)')
+        expr = BindingExpression(
+            self.person, u'"%s %s, %s" % (firstName, lastName, birthYear)')
         eq_(expr.getValue(), u'Joe Average, 1970')
 
     def testWriteSimpleProperty(self):
@@ -353,4 +353,3 @@ class TestAdapters(object):
 
         eq_(self.person.children, [mike, sally])
         eq_(self.dummy.value, u'Sally')
-        

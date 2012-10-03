@@ -6,6 +6,7 @@ instances when given a target object.
 
 """
 
+
 class AdapterRegistry(object):
     defaultPropertyAdapter = None
     defaultListAdapter = None

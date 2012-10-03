@@ -110,8 +110,8 @@ class AttributeNode(BindingNode):
         return registry.getPropertyAdapter(parent, self.options, self.attr)
 
     def __unicode__(self):
-        if self.adapter and not isinstance(self.adapter,
-            registry.defaultPropertyAdapter):
+        if self.adapter and not isinstance(
+                self.adapter, registry.defaultPropertyAdapter):
             adapterClassName = self.adapter.__class__.__name__
             return u'Attribute(%s, %s)' % (self.attr, adapterClassName)
         return u'Attribute(%s)' % self.attr
@@ -149,8 +149,8 @@ class SubscriptNode(BindingNode):
         return registry.getListAdapter(parent, self.options)
 
     def __unicode__(self):
-        if self.adapter and not isinstance(self.adapter,
-            registry.defaultListAdapter):
+        if self.adapter and not isinstance(
+                self.adapter, registry.defaultListAdapter):
             adapterClassName = self.adapter.__class__.__name__
             return u'Subscript(%s)' % adapterClassName
         return u'Subscript'
@@ -239,7 +239,7 @@ class ChainVisitor(ast.NodeVisitor):
 
     def visit_Call(self, node):
         bindingNode = CallNode(node, self.callback, self.locals_,
-                              self.options)
+                               self.options)
         self.addNode(bindingNode)
         for key, value in ast.iter_fields(node):
             if key == 'func':

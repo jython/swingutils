@@ -1,7 +1,7 @@
 from functools import wraps
 
-from java.util.concurrent import ThreadPoolExecutor, LinkedBlockingQueue,\
-    TimeUnit
+from java.util.concurrent import (ThreadPoolExecutor, LinkedBlockingQueue,
+                                  TimeUnit)
 
 from swingutils.threads.defer import AsyncToken
 from swingutils.threads.util import RunnableWrapper
@@ -23,7 +23,7 @@ class _AsyncRunnable(RunnableWrapper):
 class TaskExecutor(ThreadPoolExecutor):
     """
     This is a configurable thread pool for executing background tasks.
-    
+
     :param coreThreads: Minimum number of threads
     :param maxThreads: Maximum number of threads
     :param keepalive: Time in seconds to keep idle non-core threads alive

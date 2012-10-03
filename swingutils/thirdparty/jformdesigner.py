@@ -37,7 +37,8 @@ class JythonInvocationHandler(InvocationHandler):
 
 
 class JythonFormCreator(FormCreator):
-    def newEventInvocationHandler(self, listenerMethod, handlerMethod, paramTypes):
+    def newEventInvocationHandler(self, listenerMethod, handlerMethod,
+                                  paramTypes):
         method = self.target
         for part in handlerMethod.split('.'):
             method = getattr(method, part, None)

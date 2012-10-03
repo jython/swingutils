@@ -19,6 +19,7 @@ MANUAL = 0
 ONEWAY = 1
 TWOWAY = 2
 
+
 class _LocalsProxy(object):
     def __init__(self, obj, options):
         self.obj = obj
@@ -272,7 +273,7 @@ class BindingGroup(object):
     def sync(self, reverse=False):
         """
         Synchronizes all bindings in this group.
-        
+
         :param reverse: ``True`` to synchronize targets to sources,
                         ``False`` to synchronize sources to targets
 

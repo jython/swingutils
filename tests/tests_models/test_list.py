@@ -14,11 +14,11 @@ class TestListModel(object):
     def setup(self):
         self.model = DelegateListModel([])
         addEventListener(self.model, ListDataListener,
-            'intervalAdded', self.intervalAdded)
+                         'intervalAdded', self.intervalAdded)
         addEventListener(self.model, ListDataListener,
-            'intervalRemoved', self.intervalRemoved)
+                         'intervalRemoved', self.intervalRemoved)
         addEventListener(self.model, ListDataListener,
-            'contentsChanged', self.contentsChanged)
+                         'contentsChanged', self.contentsChanged)
 
     def intervalAdded(self, event):
         self.addEvent = event
@@ -177,4 +177,3 @@ class TestListModel(object):
         eq_(self.removeEvent.index1, 4)
         eq_(self.changeEvent.index0, 0)
         eq_(self.changeEvent.index1, 0)
-        
