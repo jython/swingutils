@@ -1,7 +1,8 @@
 v1.0.3
 ======
 
-* ADDED: Ability to errback() on AsyncTokens directly with an exception object 
+* ADDED: Ability to errback() on AsyncTokens directly with an exception object
+* ADDED: Ability to add callables as event listeners that don't take arguments
 * FIXED: Event listeners added in JFormDesigner work now
          (requires the customized jfd-loader.jar for now)
 * FIXED: Incorrect information in a few docstrings

@@ -57,6 +57,21 @@ arguments, which are passed through to the listener::
 
     listener = addEventListener(button, ActionListener, 'actionPerformed', handleEvent, 'foo', anotherarg='bar')
 
+The target callable is not required to accept the event object as an argument. Therefore this is also fine::
+
+    def handleEvent():
+        print "Button was pushed"
+
+    listener = addEventListener(button, ActionListener, 'actionPerformed', handleEvent)
+
+You can still pass variable positional and keyword arguments to the callable::
+
+    def handleEvent(**kwargs):
+        print "Hello, %(name)s" % kwargs
+
+    listener = addEventListener(button, ActionListener, 'actionPerformed', handleEvent, name='world')
+
+
 Shortcuts
 ---------
 

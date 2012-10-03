@@ -1,4 +1,6 @@
 from java.util import EventListener
+from inspect import getargspec
+from types import MethodType
 
 
 _wrapperClassMap = {}       # event interface name -> wrapper class
@@ -40,8 +42,15 @@ class EventListenerWrapper(object):
         self.removeMethod = removeMethod
         self.removeMethodArgs = (self,)
 
+        argspec = getargspec(listener)
+        min_args = 2 if isinstance(listener, MethodType) else 1
+        self.pass_event = len(argspec[0]) >= min_args
+
     def handleEvent(self, event):
-        self.listener(event, *self.args, **self.kwargs)
+        if self.pass_event:
+            self.listener(event, *self.args, **self.kwargs)
+        else:
+            self.listener(*self.args, **self.kwargs)
 
     def unlisten(self):
         self.removeMethod(*self.removeMethodArgs)
