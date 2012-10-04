@@ -122,7 +122,7 @@ class MainFrame(JFrame):
 
         vbox.add(Box.createVerticalGlue())
 
-    def addPerson(self, event):
+    def addPerson(self):
         person = Person()
         self.peopleTable.model.append(person)
         modelRow = self.peopleTable.model.getObjectIndex(person)
@@ -132,7 +132,7 @@ class MainFrame(JFrame):
         # Set the focus to the first name field
         self.firstNameField.grabFocus()
 
-    def removePerson(self, event):
+    def removePerson(self):
         viewRow = self.peopleTable.selectedRow
         modelRow = self.peopleTable.convertRowIndexToView(viewRow)
         del self.peopleTable.model[modelRow]
