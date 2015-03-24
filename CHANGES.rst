@@ -8,6 +8,7 @@ v1.0.3
 * FIXED: Incorrect information in a few docstrings
 * CHANGED: Removed assertions from ObjectTableModel because they interfered
            with some table model proxying schemes
+* ADMINISTRATIVE: Switched version control system from Mercurial to Git
 
 
 v1.0.2

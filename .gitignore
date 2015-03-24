@@ -1,0 +1,12 @@
+build
+dist
+docs/_build
+build.properties
+*.egg-info
+*.pyc
+*.class
+__pycache__
+.settings
+.project
+.pydevproject
+.idea
