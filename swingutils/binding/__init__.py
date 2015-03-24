@@ -6,13 +6,11 @@ and this is provided by a collection of adapters. Adapters are used
 automatically when a matching object is encountered.
 
 """
-from StringIO import StringIO
 import __builtin__
 import sys
 
-from swingutils.events import addPropertyListener
 from swingutils.binding.parser import createChains
-from swingutils.binding.adapters import swing
+from swingutils.binding.adapters import swing  # flake8: noqa
 
 # Synchronization modes
 MANUAL = 0

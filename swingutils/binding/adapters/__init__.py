@@ -23,7 +23,7 @@ class AdapterRegistry(object):
         clsname = u'%s.%s' % (cls.__module__, cls.__name__)
 
         # Skip proxy classes
-        if not u'$' in clsname:
+        if u'$' not in clsname:
             names.append(clsname)
         for basecls in cls.__bases__:
             self._getClassNames(basecls, names, level + 1)

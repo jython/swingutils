@@ -30,7 +30,7 @@ class SimpleFileFilter(FileFilter):
         else:
             self.suffixes = list(suffixes)
 
-        if preferred and not preferred in self.suffixes:
+        if preferred and preferred not in self.suffixes:
             self.suffixes.append(preferred)
         self.preferred = preferred or self.suffixes[0]
 

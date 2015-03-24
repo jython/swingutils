@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-if not 'java' in sys.platform.lower():
+if 'java' not in sys.platform.lower():
     raise Exception('This package can only be installed on Jython.')
 
 long_description = open('README.rst').read()

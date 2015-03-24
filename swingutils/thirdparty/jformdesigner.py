@@ -80,7 +80,7 @@ class FormWrapper(object):
                           immediately accessible after this call returns
 
         """
-        if formName is None or not '/' in formName:
+        if formName is None or '/' not in formName:
             modulePath = self.__class__.__module__.split('.')[:-1]
             modulePath = '/'.join(modulePath)
             fileName = formName if formName else self.__class__.__name__

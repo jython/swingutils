@@ -20,7 +20,7 @@ def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
         className = eventInterface.__module__ + '.' + className
 
     # Create a wrapper class for this event class if one doesn't exist already
-    if not className in _wrapperClassMap:
+    if className not in _wrapperClassMap:
         wrapperClass = type('%sWrapper' % eventInterface.__name__,
                             (EventListenerWrapper, eventInterface), {})
         _wrapperClassMap[className] = wrapperClass
