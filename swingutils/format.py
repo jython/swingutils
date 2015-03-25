@@ -34,15 +34,7 @@ class PyDecimalFormat(DecimalFormat):
 
 class EmptyNumberFormatter(NumberFormatter):
     def stringToValue(self, text):
-        if not text:
-            return None
-
-        value = NumberFormatter.stringToValue(self, text)
-        if not isinstance(value, self.valueClass):
-            # Counteract Jython's automatic numeric type conversion
-            return self.valueClass(value)
-
-        return value
+        return NumberFormatter.stringToValue(self, text) if text else None
 
 
 def installFormat(field, format):

@@ -1,8 +1,9 @@
 from java.lang import Short, Integer, Long, Double, Float
 from java.text import SimpleDateFormat, DecimalFormatSymbols
 from java.util import Date, GregorianCalendar
-from java.math import BigInteger
+from java.math import BigInteger, BigDecimal
 from javax.swing import JFormattedTextField
+from decimal import Decimal
 
 from nose.tools import eq_
 
@@ -54,4 +55,5 @@ def testNumberFormatters():
         yield numberFormatterTest, Float, float, u'123.4', nullable
         yield numberFormatterTest, Double, float, u'123.4', nullable
         yield numberFormatterTest, int, long, u'123', nullable
-        yield numberFormatterTest, long, BigInteger, u'123', nullable
+        yield numberFormatterTest, long, long, u'123', nullable
+        yield numberFormatterTest, Decimal, BigDecimal, u'123.4', nullable
