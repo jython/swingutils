@@ -20,7 +20,7 @@ Included in this package:
 * decorators and functions for safely accessing the GUI from any thread
 * support for running background tasks in separate threads
 
-Requires Jython 2.5.1 or later.
+Requires Jython 2.7 or later.
 
 Documentation can be found at the Jython-Swingutils
 `documentation repository <http://packages.python.org/jython-swingutils/>`_

@@ -12,7 +12,7 @@ long_description = open('README.rst').read()
 
 setup(
     name='jython-swingutils',
-    version='1.0.3.dev3',
+    version='2.0.0a1',
     description="Makes using Java's Swing UI toolkit easy on Jython",
     long_description=long_description,
     author='Alex Gronholm',
@@ -23,7 +23,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: Jython',
         'Topic :: Software Development :: User Interfaces'
     ],
