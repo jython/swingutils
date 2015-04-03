@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="binjar">
 
-	<!-- You need to create a build.properties file and provide the "signer",
-	     "storepass" and "version" properties to build this -->
-	<property file="build.properties"/>
-	<property name="srcjarfile" location="dist/jython-swingutils-${version}.jar" />
-	<property name="binjarfile" location="dist/jython-swingutils-${version}-bin.jar" />
-
-	<taskdef name="jython.compile" classname="org.python.util.JycompileAntTask" />
+    <!-- You need to create a build.properties file and provide the "jythonjarpath" and
+    "version" properties to build this. To sign the (source or binary) jar, you also
+    need to provide the "signer", "storepass", "keypass" properties. -->
+    <property file="build.properties"/>
+    <property name="srcjarfile" location="dist/jython-swingutils-${version}.jar" />
+    <property name="binjarfile" location="dist/jython-swingutils-${version}-bin.jar" />
 
     <target name="clean">
         <delete dir="build"/>
     </target>
-	
-	<target name="compile">
-		<mkdir dir="build"/>
-		<jython.compile srcdir="." destdir="build" includes="swingutils/**"/>
-	</target>
-	
-	<target name="srcjar">
-		<mkdir dir="dist"/>
-		<delete file="${srcjarfile}" />
-		<jar destfile="${srcjarfile}">
-			<fileset dir=".">
-				<include name="swingutils/**"/>
-				<exclude name="**/*.class"/>
-				<exclude name="**/*.pyc" />
-			</fileset>
-		</jar>
-	</target>
+    
+    <target name="compile">
+        <copy todir="build">
+            <fileset dir="." includes="swingutils/**/*.py"/>
+        </copy>
+        <java jar="${jythonjarpath}" fork="true">
+            <arg value="-m"/>
+            <arg value="compileall"/>
+            <arg value="build"/>
+        </java>
+    </target>
+    
+    <target name="srcjar">
+        <mkdir dir="dist"/>
+        <delete file="${srcjarfile}" />
+        <jar destfile="${srcjarfile}">
+            <fileset dir="." includes="swingutils/**/*.py"/>
+        </jar>
+    </target>
 
-	<target name="binjar" depends="clean, compile">
-		<mkdir dir="dist"/>
-		<delete file="${binjarfile}" />
-		<jar destfile="${binjarfile}">
-			<fileset dir="build" />
-		</jar>
-	</target>
+    <target name="binjar" depends="clean, compile">
+        <mkdir dir="dist"/>
+        <delete file="${binjarfile}" />
+        <jar destfile="${binjarfile}">
+            <fileset dir="build" includes="**/*.class"/>
+        </jar>
+    </target>
 
-	<target name="signbinjar" depends="binjar">
-		<signjar jar="${binjarfile}" alias="${signer}" storepass="${storepass}" />
-	</target>
+    <target name="signbinjar" depends="binjar">
+        <signjar jar="${binjarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
+    </target>
 
-	<target name="signsrcjar" depends="srcjar">
-		<signjar jar="${srcjarfile}" alias="${signer}" storepass="${storepass}" />
-	</target>
+    <target name="signsrcjar" depends="srcjar">
+        <signjar jar="${srcjarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
+    </target>
 
 </project>
