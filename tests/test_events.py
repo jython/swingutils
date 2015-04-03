@@ -1,5 +1,3 @@
-from nose.tools import eq_
-
 from javax.swing import JList, DefaultListModel
 from javax.swing.event import ListSelectionListener
 
@@ -19,8 +17,8 @@ def testListSelectionEvent():
 
     lst.setSelectionInterval(0, 0)
     event = eventHolder[0]
-    eq_(event.firstIndex, 0)
-    eq_(event.lastIndex, 0)
+    assert event.firstIndex == 0
+    assert event.lastIndex == 0
 
 
 def testListSelectionEventNoArgs():
@@ -35,7 +33,7 @@ def testListSelectionEventNoArgs():
                      selectionListener)
 
     lst.setSelectionInterval(0, 0)
-    eq_(holder, [1])
+    assert holder == [1]
 
 
 def testListSelectionEventVarargs():
@@ -50,7 +48,7 @@ def testListSelectionEventVarargs():
                      selectionListener, 2)
 
     lst.setSelectionInterval(0, 0)
-    eq_(holder[0], (2,))
+    assert holder[0] == (2,)
 
 
 def testListSelectionEventKwargs():
@@ -65,4 +63,4 @@ def testListSelectionEventKwargs():
                      selectionListener, test=2)
 
     lst.setSelectionInterval(0, 0)
-    eq_(holder[0], {'test': 2})
+    assert holder[0] == {'test': 2}

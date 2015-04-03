@@ -1,7 +1,5 @@
 from javax.swing.event import ListDataEvent, ListDataListener
 
-from nose.tools import eq_
-
 from swingutils.models.list import DelegateListModel
 from swingutils.events import addEventListener
 
@@ -33,147 +31,147 @@ class TestListModel(object):
         self.model.append('TEST')
         self.model.append('123')
         self.model.append(456)
-        eq_(len(self.model), 3)
+        assert len(self.model) == 3
 
         del self.model[1]
 
-        eq_(self.removeEvent.index0, 1)
-        eq_(self.removeEvent.index1, 1)
-        eq_(len(self.model), 2)
+        assert self.removeEvent.index0 == 1
+        assert self.removeEvent.index1 == 1
+        assert len(self.model) == 2
 
     def testDelSlice(self):
         self.model.append('TEST')
         self.model.append('123')
         self.model.append(456)
         self.model.append(789)
-        eq_(len(self.model), 4)
+        assert len(self.model) == 4
 
         del self.model[1:3]
 
-        eq_(self.removeEvent.index0, 1)
-        eq_(self.removeEvent.index1, 2)
-        eq_(len(self.model), 2)
+        assert self.removeEvent.index0 == 1
+        assert self.removeEvent.index1 == 2
+        assert len(self.model) == 2
 
     def testAppend(self):
         self.model.append(u'Test')
 
-        eq_(self.addEvent.index0, 0)
-        eq_(self.addEvent.index1, 0)
-        eq_(self.addEvent.type, ListDataEvent.INTERVAL_ADDED)
-        eq_(self.model[0], u'Test')
+        assert self.addEvent.index0 == 0
+        assert self.addEvent.index1 == 0
+        assert self.addEvent.type == ListDataEvent.INTERVAL_ADDED
+        assert self.model[0] == u'Test'
 
         self.model.append(345)
 
-        eq_(self.addEvent.type, ListDataEvent.INTERVAL_ADDED)
-        eq_(self.addEvent.index0, 1)
-        eq_(self.addEvent.index1, 1)
-        eq_(self.model[0], u'Test')
-        eq_(self.model[1], 345)
+        assert self.addEvent.type == ListDataEvent.INTERVAL_ADDED
+        assert self.addEvent.index0 == 1
+        assert self.addEvent.index1 == 1
+        assert self.model[0] == u'Test'
+        assert self.model[1] == 345
 
     def testInsert(self):
         self.model.append(u'Test')
         self.model.append(u'Test3')
-        eq_(self.model[0], u'Test')
-        eq_(self.model[1], u'Test3')
+        assert self.model[0] == u'Test'
+        assert self.model[1] == u'Test3'
 
         self.model.insert(1, 'Test2')
 
-        eq_(self.addEvent.index0, 1)
-        eq_(self.addEvent.index1, 1)
-        eq_(len(self.model), 3)
-        eq_(self.model[1], 'Test2')
+        assert self.addEvent.index0 == 1
+        assert self.addEvent.index1 == 1
+        assert len(self.model) == 3
+        assert self.model[1] == 'Test2'
 
         self.model.insert(0, 345)
 
-        eq_(self.addEvent.index0, 0)
-        eq_(self.addEvent.index1, 0)
-        eq_(self.model[0], 345)
-        eq_(len(self.model), 4)
+        assert self.addEvent.index0 == 0
+        assert self.addEvent.index1 == 0
+        assert self.model[0] == 345
+        assert len(self.model) == 4
 
     def testExtend(self):
         self.model.extend([u'Test', 'Test2', 678])
 
-        eq_(self.addEvent.index0, 0)
-        eq_(self.addEvent.index1, 2)
-        eq_(self.model[0], u'Test')
-        eq_(self.model[1], 'Test2')
-        eq_(self.model[2], 678)
+        assert self.addEvent.index0 == 0
+        assert self.addEvent.index1 == 2
+        assert self.model[0] == u'Test'
+        assert self.model[1] == 'Test2'
+        assert self.model[2] == 678
 
         self.model.extend([345, 7.0])
 
-        eq_(self.addEvent.index0, 3)
-        eq_(self.addEvent.index1, 4)
-        eq_(self.model[3], 345)
-        eq_(self.model[4], 7.0)
+        assert self.addEvent.index0 == 3
+        assert self.addEvent.index1 == 4
+        assert self.model[3] == 345
+        assert self.model[4] == 7.0
 
     def testCount(self):
         self.model.extend(['a', 'bb', 'ccc', 'bb'])
 
-        eq_(self.model.count('bb'), 2)
+        assert self.model.count('bb') == 2
 
     def testIndex(self):
         self.model.extend(['a', 'bb', 'ccc', 'bb'])
 
-        eq_(self.model.index('ccc'), 2)
+        assert self.model.index('ccc') == 2
 
     def testRemove(self):
         self.model.extend(['a', 'bb', 'ccc', 'bb'])
 
         self.model.remove('bb')
-        eq_(self.model._delegate, ['a', 'ccc', 'bb'])
+        assert self.model._delegate == ['a', 'ccc', 'bb']
 
     def testSetSingle(self):
         self.model.append('abc')
         self.model[0] = '123'
 
-        eq_(self.changeEvent.index0, 0)
-        eq_(self.changeEvent.index1, 0)
-        eq_(len(self.model), 1)
-        eq_(self.model[0], '123')
+        assert self.changeEvent.index0 == 0
+        assert self.changeEvent.index1 == 0
+        assert len(self.model) == 1
+        assert self.model[0] == '123'
 
     def testSetSlice(self):
         self.model.extend([u'Test', 'Test2', 678])
         self.model[2:4] = ['abc', 'xyz', 'foo']
 
-        eq_(self.changeEvent.index0, 2)
-        eq_(self.changeEvent.index1, 2)
-        eq_(self.addEvent.index0, 3)
-        eq_(self.addEvent.index1, 4)
+        assert self.changeEvent.index0 == 2
+        assert self.changeEvent.index1 == 2
+        assert self.addEvent.index0 == 3
+        assert self.addEvent.index1 == 4
 
         for i, val in enumerate([u'Test', 'Test2', 'abc', 'xyz', 'foo']):
-            eq_(self.model[i], val)
+            assert self.model[i] == val
 
     def testSetSliceReplace(self):
         self.model.extend([u'Test', 'Test2', 678])
         self.model[:] = ['abc', 'xyz']
 
-        eq_(self.changeEvent.index0, 0)
-        eq_(self.changeEvent.index1, 1)
-        eq_(self.removeEvent.index0, 2)
-        eq_(self.removeEvent.index1, 2)
+        assert self.changeEvent.index0 == 0
+        assert self.changeEvent.index1 == 1
+        assert self.removeEvent.index0 == 2
+        assert self.removeEvent.index1 == 2
 
         for i, val in enumerate(['abc', 'xyz']):
-            eq_(self.model[i], val)
+            assert self.model[i] == val
 
     def testDelegateReplace(self):
         self.model.delegate = [1, 2, 3]
 
-        eq_(self.addEvent.index0, 0)
-        eq_(self.addEvent.index1, 2)
-        eq_(self.removeEvent, None)
-        eq_(self.changeEvent, None)
+        assert self.addEvent.index0 == 0
+        assert self.addEvent.index1 == 2
+        assert self.removeEvent is None
+        assert self.changeEvent is None
 
         self.model.delegate = [7, 6, 1, 2, 4]
-        eq_(self.addEvent.index0, 3)
-        eq_(self.addEvent.index1, 4)
-        eq_(self.removeEvent, None)
-        eq_(self.changeEvent.index0, 0)
-        eq_(self.changeEvent.index1, 2)
+        assert self.addEvent.index0 == 3
+        assert self.addEvent.index1 == 4
+        assert self.removeEvent is None
+        assert self.changeEvent.index0 == 0
+        assert self.changeEvent.index1 == 2
 
         del self.addEvent
         self.model.delegate = [4]
-        eq_(self.addEvent, None)
-        eq_(self.removeEvent.index0, 1)
-        eq_(self.removeEvent.index1, 4)
-        eq_(self.changeEvent.index0, 0)
-        eq_(self.changeEvent.index1, 0)
+        assert self.addEvent is None
+        assert self.removeEvent.index0 == 1
+        assert self.removeEvent.index1 == 4
+        assert self.changeEvent.index0 == 0
+        assert self.changeEvent.index1 == 0

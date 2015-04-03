@@ -1,6 +1,4 @@
 # coding: utf-8
-from nose.tools import eq_
-
 from swingutils.beans import JavaBeanSupport, AutoChangeNotifier, MirrorObject
 from swingutils.events import addPropertyListener
 
@@ -12,19 +10,19 @@ def testPropertyChange():
 
     def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(event.oldValue, None)
-        eq_(event.newValue, 'newVal')
+        assert event.oldValue is None
+        assert event.newValue == 'newVal'
 
     listenerOk = [False]
     bean = DummyBean()
     wrapper = addPropertyListener(bean, u'testProperty', listener, listenerOk)
     bean.testFire()
-    eq_(listenerOk[0], True)
+    assert listenerOk[0] is True
 
     listenerOk = [False]
     bean.removePropertyChangeListener(u'testProperty', wrapper)
     bean.testFire()
-    eq_(listenerOk[0], False)
+    assert listenerOk[0] is False
 
 
 def testAllPropertyChange():
@@ -34,20 +32,20 @@ def testAllPropertyChange():
 
     def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(event.propertyName, u'testProperty')
-        eq_(event.oldValue, None)
-        eq_(event.newValue, 'newVal')
+        assert event.propertyName == u'testProperty'
+        assert event.oldValue is None
+        assert event.newValue == 'newVal'
 
     listenerOk = [False]
     bean = DummyBean()
     wrapper = addPropertyListener(bean, None, listener, listenerOk)
     bean.testFire()
-    eq_(listenerOk[0], True)
+    assert listenerOk[0] is True
 
     listenerOk = [False]
     bean.removePropertyChangeListener(wrapper)
     bean.testFire()
-    eq_(listenerOk[0], False)
+    assert listenerOk[0] is False
 
 
 def testAutoProperty():
@@ -56,19 +54,19 @@ def testAutoProperty():
 
     def listener(event, listenerOk):
         listenerOk[0] = True
-        eq_(event.oldValue, 'test1')
-        eq_(event.newValue, 'test2')
+        assert event.oldValue == 'test1'
+        assert event.newValue == 'test2'
 
     listenerOk = [False]
     bean = DummyBean()
     wrapper = addPropertyListener(bean, u'prop', listener, listenerOk)
     bean.prop = 'test2'
-    eq_(listenerOk[0], True)
+    assert listenerOk[0] is True
 
     listenerOk = [False]
     bean.removePropertyChangeListener(u'prop', wrapper)
     bean.prop = 'test3'
-    eq_(listenerOk[0], False)
+    assert listenerOk[0] is False
 
 
 class DummyBean1(object):
@@ -105,16 +103,16 @@ class TestMirrorObject(object):
         self.changes.append((event.propertyName, event.newValue))
 
     def testDelegateProperties(self):
-        eq_(self.mirror.prop1, 'foo')
-        eq_(self.mirror.prop2, 'bar')
+        assert self.mirror.prop1 == 'foo'
+        assert self.mirror.prop2 == 'bar'
 
     def testPropertyChange(self):
         self.mirror.prop2 = 'bleh'
-        eq_(self.propertyValue2, 'bleh')
-        eq_(self.changes, [('prop2', 'bleh')])
+        assert self.propertyValue2 == 'bleh'
+        assert self.changes == [('prop2', 'bleh')]
 
     def testDelegateChange(self):
         self.mirror._delegate = DummyBean2()
-        eq_(self.propertyValue1, None)
-        eq_(self.propertyValue2, 'abc')
-        eq_(self.propertyValue3, 'xyz')
+        assert self.propertyValue1 is None
+        assert self.propertyValue2 == 'abc'
+        assert self.propertyValue3 == 'xyz'

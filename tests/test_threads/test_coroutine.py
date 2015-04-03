@@ -1,7 +1,5 @@
 from concurrent.futures import Future
 
-from nose.tools import eq_
-
 from swingutils.threads.coroutine import swingCoroutine, returnValue
 
 
@@ -19,7 +17,7 @@ def test_swing_coroutine():
         returnValue(res)
 
     future = inner()
-    eq_(future.result(1), 6)
+    assert future.result(1) == 6
 
 
 def test_swing_coroutine_no_generator():
@@ -33,7 +31,7 @@ def test_swing_coroutine_no_generator():
         return x + y
 
     future = inner(1, 2)
-    eq_(future.result(0), 3)
+    assert future.result(0) == 3
 
 
 def test_swing_coroutine_exception():

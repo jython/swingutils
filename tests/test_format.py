@@ -6,10 +6,8 @@ from java.util import Date, GregorianCalendar
 from java.math import BigDecimal
 from javax.swing import JFormattedTextField
 
-from nose.tools import eq_
-
-from swingutils.format import installNumberFormat, installFormat, \
-    PyDecimalFormat
+from swingutils.format import (installNumberFormat, installFormat,
+                               PyDecimalFormat)
 
 
 DECIMAL_SEPARATOR = DecimalFormatSymbols().decimalSeparator
@@ -20,24 +18,24 @@ def testDateFormat():
     installFormat(textField, SimpleDateFormat('yyyy-MM-dd'))
     textField.setText(u'2010-11-9')
     textField.commitEdit()
-    eq_(type(textField.value), Date)
+    assert type(textField.value) == Date
 
     cal = GregorianCalendar(time=textField.value)
-    eq_(cal.get(GregorianCalendar.YEAR), 2010)
-    eq_(cal.get(GregorianCalendar.MONTH), 10)   # January = 0
-    eq_(cal.get(GregorianCalendar.DAY_OF_MONTH), 9)
+    assert cal.get(GregorianCalendar.YEAR) == 2010
+    assert cal.get(GregorianCalendar.MONTH) == 10   # January = 0
+    assert cal.get(GregorianCalendar.DAY_OF_MONTH) == 9
 
 
 def testFractionDigits():
     format = PyDecimalFormat(fractionDigits=3)
-    eq_(format.format(123.4562), u'123%s456' % DECIMAL_SEPARATOR)
-    eq_(format.format(123.4), u'123%s400' % DECIMAL_SEPARATOR)
+    assert format.format(123.4562) == u'123%s456' % DECIMAL_SEPARATOR
+    assert format.format(123.4) == u'123%s400' % DECIMAL_SEPARATOR
 
 
 def testIntegerDigits():
     format = PyDecimalFormat(integerDigits=3)
-    eq_(format.format(12), u'012')
-    eq_(format.format(1234), u'234')
+    assert format.format(12) == u'012'
+    assert format.format(1234) == u'234'
 
 
 def numberFormatterTest(numType, expectedType, text, nullable):
@@ -45,7 +43,7 @@ def numberFormatterTest(numType, expectedType, text, nullable):
     installNumberFormat(textField, numType, nullable=nullable)
     textField.setText(text)
     textField.commitEdit()
-    eq_(type(textField.value), expectedType)
+    assert type(textField.value) == expectedType
 
 
 def testNumberFormatters():
