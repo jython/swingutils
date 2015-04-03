@@ -6,6 +6,7 @@ and this is provided by a collection of adapters. Adapters are used
 automatically when a matching object is encountered.
 
 """
+from __future__ import unicode_literals
 import __builtin__
 import sys
 

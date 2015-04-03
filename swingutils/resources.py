@@ -3,6 +3,8 @@ This module contains helper functions to load resources (=files) contained
 in jars, or anywhere else in the class path.
 
 """
+from __future__ import unicode_literals
+
 from java.lang import Thread
 
 __all__ = ('getResource', 'getResourceAsStream', 'loadImage', 'loadImageIcon')

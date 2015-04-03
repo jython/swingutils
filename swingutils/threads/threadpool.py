@@ -1,23 +1,28 @@
+from concurrent.futures import Future
 from functools import wraps
+import sys
 
 from java.util.concurrent import (ThreadPoolExecutor, LinkedBlockingQueue,
                                   TimeUnit)
 
-from swingutils.threads.defer import AsyncToken
 from swingutils.threads.util import RunnableWrapper
 
 
 class _AsyncRunnable(RunnableWrapper):
     def __init__(self, func, args, kwargs):
         RunnableWrapper.__init__(self, func, args, kwargs)
-        self.token = AsyncToken()
+        self.future = Future()
 
     def run(self):
-        try:
-            result = self._func(*self._args, **self._kwargs)
-            self.token.callback(result)
-        except:
-            self.token.errback()
+        if self.future.set_running_or_notify_cancel():
+            try:
+                result = self._func(*self._args, **self._kwargs)
+                self.future.set_result(result)
+            except BaseException as e:
+                if hasattr(self.future, 'set_exception_info'):
+                    self.future.set_exception_info(*sys.exc_info()[1:])
+                else:
+                    self.future.set_exception(e)
 
 
 class TaskExecutor(ThreadPoolExecutor):
@@ -47,7 +52,7 @@ class TaskExecutor(ThreadPoolExecutor):
         """
         runnable = _AsyncRunnable(func, args, kwargs)
         self.execute(runnable)
-        return runnable.token
+        return runnable.future
 
     def backgroundTask(self, func):
         """

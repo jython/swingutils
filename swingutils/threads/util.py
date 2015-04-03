@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from java.lang import Runnable
 from java.util.concurrent import Callable
 

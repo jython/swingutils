@@ -1,37 +1,50 @@
-from java.util import EventListener
+from __future__ import unicode_literals
 from inspect import getargspec
 from types import MethodType
 
-_wrapperClassMap = {}       # event interface name -> wrapper class
+from java.util import EventListener
+
+_wrapperClassMap = {}  # event interface name -> wrapper class
+_noOp = lambda self, event: None
 
 
-def _createListenerWrapper(eventInterface, event, listener, args, kwargs,
+def _createListenerWrapper(eventInterface, eventNames, listener, args, kwargs,
                            removeMethod):
-    events = (event,) if isinstance(event, basestring) else event
+    eventNames = ((eventNames,) if isinstance(eventNames, basestring) else
+                  sorted(eventNames))
     assert issubclass(eventInterface, EventListener), \
-        'event class must be a subclass of EventListener'
+        'eventName class must be a subclass of EventListener'
     assert hasattr(listener, '__call__'), 'listener must be callable'
-    for event in events:
-        assert hasattr(eventInterface, event), \
-            '%s has no method named "%s"' % (eventInterface.__name__, event)
+    for eventName in eventNames:
+        assert hasattr(eventInterface, eventName), \
+            '%s has no method named "%s"' % \
+            (eventInterface.__name__, eventName)
 
+    # Figure out the fully qualified name of the interface
     className = eventInterface.__name__
     if eventInterface.__module__:
         className = eventInterface.__module__ + '.' + className
+    mapKey = '%s/%s' % (className, ','.join(eventNames))
 
-    # Create a wrapper class for this event class if one doesn't exist already
-    if className not in _wrapperClassMap:
+    # Create a wrapper class for this eventName class if it's not there yet
+    wrapperClass = _wrapperClassMap.get(mapKey)
+    if not wrapperClass:
+        # Gather all the interface methods
+        methodNames = set()
+        for cls in eventInterface.__mro__:
+            if cls is EventListener:
+                break
+            methodNames.update(m for m in cls.__dict__ if
+                               not m.startswith('_'))
+
+        # Redirect all interface methods to self.handleEvent()
+        methods = {m: EventListenerWrapper.handleEvent
+                   if m in eventNames else _noOp for m in methodNames}
         wrapperClass = type('%sWrapper' % eventInterface.__name__,
-                            (EventListenerWrapper, eventInterface), {})
-        _wrapperClassMap[className] = wrapperClass
-    else:
-        wrapperClass = _wrapperClassMap[className]
+                            (EventListenerWrapper, eventInterface), methods)
+        _wrapperClassMap[mapKey] = wrapperClass
 
-    # Create a listener instance and add handleEvent as an instance method
-    wrapper = wrapperClass(listener, args, kwargs, removeMethod)
-    for event in events:
-        setattr(wrapper, event, wrapper.handleEvent)
-    return wrapper
+    return wrapperClass(listener, args, kwargs, removeMethod)
 
 
 class EventListenerWrapper(object):
@@ -44,10 +57,10 @@ class EventListenerWrapper(object):
 
         argspec = getargspec(listener)
         min_args = 2 if isinstance(listener, MethodType) else 1
-        self.pass_event = len(argspec[0]) >= min_args
+        self.passEvent = len(argspec[0]) >= min_args
 
     def handleEvent(self, event):
-        if self.pass_event:
+        if self.passEvent:
             self.listener(event, *self.args, **self.kwargs)
         else:
             self.listener(*self.args, **self.kwargs)

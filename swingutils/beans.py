@@ -92,6 +92,7 @@ class BeanProperty(object):
 
     """
     def __init__(self, name, initval=None):
+        super(BeanProperty, self).__init__()
         self.name = name
         self.mangled_name = '__beanproperty_%s' % name
         self.defaultValue = initval
@@ -115,12 +116,15 @@ class MirrorObject(JavaBeanSupport):
     __delegate = None
 
     def __init__(self, delegate=None):
+        super(MirrorObject, self).__init__()
         self.__delegate = delegate
 
-    def _getDelegate(self):
+    @property
+    def _delegate(self):
         return self.__delegate
 
-    def _setDelegate(self, newDelegate):
+    @_delegate.setter
+    def _delegate(self, newDelegate):
         oldDelegate = self.__delegate
         self.__delegate = newDelegate
         self.firePropertyChange('_delegate', oldDelegate, newDelegate)
@@ -141,8 +145,6 @@ class MirrorObject(JavaBeanSupport):
                 raise
             except:
                 pass
-
-    _delegate = property(_getDelegate, _setDelegate)
 
     def __getattr__(self, name):
         if name.startswith('_'):

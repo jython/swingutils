@@ -6,7 +6,7 @@ from swingutils.beans import MirrorObject
 from swingutils.events import addListSelectionListener, addPropertyListener
 
 
-class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
+class DelegateTableModel(AbstractDelegateList, AbstractTableModel):
     """
     Table model that wraps any list-like object, and fires events when its
     contents are manipulated (through the table model).
@@ -33,8 +33,7 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
         :param delegate: the list where this table model gets its data from
 
         """
-        AbstractTableModel.__init__(self)
-        AbstractDelegateList.__init__(self, delegate)
+        super(DelegateTableModel, self).__init__(delegate)
 
         self.__columns__ = list(args if args else self.__columns__)
         for index, column in enumerate(self.__columns__):
@@ -58,11 +57,14 @@ class DelegateTableModel(AbstractTableModel, AbstractDelegateList):
     def _fireItemsRemoved(self, start, end):
         self.fireTableRowsDeleted(start, end)
 
-    def setDelegate(self, value):
+    @property
+    def delegate(self):
+        return self._delegate
+
+    @delegate.setter
+    def delegate(self, value):
         self._delegate = value
         self.fireTableDataChanged()
-
-    delegate = property(AbstractDelegateList.getDelegate, setDelegate)
 
     #
     # TableModel methods
@@ -122,6 +124,7 @@ class ObjectTableModel(DelegateTableModel):
     #
 
     def __init__(self, delegate, *args):
+        # TODO: use super() when #1540 is fixed
         AbstractTableModel.__init__(self)
         AbstractDelegateList.__init__(self, delegate)
 

@@ -1,14 +1,22 @@
-v1.0.3
+v2.0.0
 ======
 
-* ADDED: Ability to errback() on AsyncTokens directly with an exception object
-* ADDED: Ability to add callables as event listeners that don't take arguments
-* FIXED: Event listeners added in JFormDesigner work now
-         (requires the customized jfd-loader.jar for now)
-* FIXED: Incorrect information in a few docstrings
-* CHANGED: Removed assertions from ObjectTableModel because they interfered
-           with some table model proxying schemes
-* ADMINISTRATIVE: Switched version control system from Mercurial to Git
+Breaking changes:
+
+* Switched exclusively to Python 2.7 syntax
+* Removed the swingutils.defer.AsyncToken class in favor of Futures from
+  concurrent.futures
+* Renamed swingutils.defer.inlineCallbacks to swingCoroutine
+
+Other changes:
+
+* Switched version control system from Mercurial to Git
+* Added the ability to add callables that don't take arguments as event
+  listeners 
+* Event listeners added in JFormDesigner work now
+* Fixed incorrect information in a few docstrings
+* Removed assertions from ObjectTableModel because they interfered with
+  some table model proxying schemes
 
 
 v1.0.2

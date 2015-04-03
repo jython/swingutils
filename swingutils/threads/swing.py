@@ -2,6 +2,7 @@
 Functions for running code in the Event Dispatch Thread.
 
 """
+from __future__ import unicode_literals
 from functools import wraps
 
 from java.util.concurrent import FutureTask

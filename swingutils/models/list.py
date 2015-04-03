@@ -12,16 +12,20 @@ class AbstractDelegateList(object):
 
     """
     def __init__(self, delegate=None):
+        # TODO: add this back when Jython bug #1540 has been fixed
+        # super(AbstractDelegateList, self).__init__()
         self._delegate = delegate
 
     #
     # Getter and setter for the "delegate" property
     #
 
-    def getDelegate(self):
+    @property
+    def delegate(self):
         return self._delegate
 
-    def setDelegate(self, value):
+    @delegate.setter
+    def delegate(self, value):
         oldLength = len(self._delegate) if self._delegate else 0
         self._delegate = value
         newLength = len(self._delegate) if self._delegate else 0
@@ -35,8 +39,6 @@ class AbstractDelegateList(object):
             self._fireItemsRemoved(minLength, maxLength - 1)
         if minLength > 0:
             self._fireItemsChanged(0, minLength - 1)
-
-    delegate = property(getDelegate, setDelegate)
 
     #
     # Abstract methods to fire event changes
@@ -136,15 +138,14 @@ class AbstractDelegateList(object):
         del self[self.index(obj)]
 
 
-class DelegateListModel(AbstractListModel, AbstractDelegateList):
+class DelegateListModel(AbstractDelegateList, AbstractListModel):
     """
     A delegate list model that provides a :class:`~javax.swing.ListModel`
     interface.
     """
 
     def __init__(self, delegate=None):
-        AbstractListModel.__init__(self)
-        AbstractDelegateList.__init__(self, delegate)
+        super(DelegateListModel, self).__init__(delegate)
 
     def _fireItemsChanged(self, start, end):
         self.fireContentsChanged(self, start, end)
@@ -176,6 +177,7 @@ class ListSelectionMirror(MirrorObject):
     __slots__ = ('_list', '_selectionListener')
 
     def __init__(self, list_):
+        super(ListSelectionMirror, self).__init__()
         self._list = list_
         self._selectionListener = addListSelectionListener(
             list.selectionModel, self._selectionChanged)

@@ -1,9 +1,10 @@
+from decimal import Decimal
+
 from java.lang import Short, Integer, Long, Double, Float
 from java.text import SimpleDateFormat, DecimalFormatSymbols
 from java.util import Date, GregorianCalendar
-from java.math import BigInteger, BigDecimal
+from java.math import BigDecimal
 from javax.swing import JFormattedTextField
-from decimal import Decimal
 
 from nose.tools import eq_
 

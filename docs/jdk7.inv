@@ -1,6 +1,6 @@
 # Sphinx inventory version 1
 # Project: Java Development Kit
-# Version: 5
+# Version: 7
 java.awt.MouseListener class java/event/MouseListener.html
 java.lang.Runnable class java/lang/Runnable.html
 java.lang.Number class java/lang/Number.html

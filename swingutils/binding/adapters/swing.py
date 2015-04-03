@@ -3,9 +3,11 @@ Provides a property adapter for JavaBeans binding and adapters for most
 built-in Swing components.
 
 """
-from swingutils.events import (addPropertyListener, addEventListener,
-                               addRowSorterListener)
-from swingutils.binding.adapters import BindingAdapter, registry
+from __future__ import unicode_literals
+
+from ...events import (addPropertyListener, addEventListener,
+                       addRowSorterListener)
+from . import BindingAdapter, registry
 
 
 @registry.registerDefaultPropertyAdapter

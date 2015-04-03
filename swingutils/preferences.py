@@ -3,6 +3,7 @@ This module provides helper classes and functions for accessing Java's
 Preferences system.
 
 """
+from __future__ import unicode_literals
 from types import NoneType
 from array import array
 
@@ -18,9 +19,9 @@ class PreferencesNode(object):
 
     """
     def __init__(self, path, userMode):
-        path = path.replace(u'.', u'/')
-        if not path.startswith(u'/'):
-            path = u'/' + path
+        path = path.replace('.', '/')
+        if not path.startswith('/'):
+            path = '/' + path
 
         if userMode:
             self._delegate = JavaPreferences.userRoot().node(path)
@@ -112,16 +113,17 @@ class PreferencesAdapter(object):
         self.key = key
         self.default = default
 
-    def _getValue(self):
+    @property
+    def value(self):
         return self.node.get(self.key, self.default)
 
-    def _putValue(self, value):
+    @value.setter
+    def value(self, value):
         self.node.put(self.key, value)
 
-    def _removeValue(self):
+    @value.deleter
+    def value(self):
         self.node.remove(self.key)
-
-    value = property(_getValue, _putValue, _removeValue)
 
 
 def getUserPrefs(path):

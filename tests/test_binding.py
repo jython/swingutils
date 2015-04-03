@@ -1,4 +1,4 @@
-from jarray import array
+from array import array
 import logging
 
 from java.lang import String, Integer
@@ -219,18 +219,18 @@ class TestAdapters(object):
 
         table.setRowSelectionInterval(1, 1)
         eq_(tableModel.getSelectedObject(table), personList[1])
-        eq_(self.dummy.value, array([1], 'i'))
+        eq_(self.dummy.value, array('i', [1]))
 
         table.setRowSelectionInterval(2, 2)
         eq_(tableModel.getSelectedObject(table), personList[2])
-        eq_(self.dummy.value, array([2], 'i'))
+        eq_(self.dummy.value, array('i', [2]))
 
         table.setRowSelectionInterval(0, 1)
         eq_(tableModel.getSelectedObjects(table), [self.person, personList[1]])
-        eq_(self.dummy.value, array([0, 1], 'i'))
+        eq_(self.dummy.value, array('i', [0, 1]))
 
         table.selectionModel = DefaultListSelectionModel()
-        eq_(self.dummy.value, array([], 'i'))
+        eq_(self.dummy.value, array('i', []))
 
     def testJTableColumns(self):
         personList = [self.person]
@@ -245,10 +245,10 @@ class TestAdapters(object):
         self.group.bind(table, u'selectedColumns', self.dummy, u'value')
 
         table.setColumnSelectionInterval(1, 1)
-        eq_(self.dummy.value, array([1], 'i'))
+        eq_(self.dummy.value, array('i', [1]))
 
         table.setColumnSelectionInterval(1, 2)
-        eq_(self.dummy.value, array([1, 2], 'i'))
+        eq_(self.dummy.value, array('i', [1, 2]))
 
         columnModel = DefaultTableColumnModel()
         columnModel.addColumn(TableColumn())
@@ -256,7 +256,7 @@ class TestAdapters(object):
         table.setColumnModel(columnModel)
 
         table.setColumnSelectionInterval(0, 1)
-        eq_(self.dummy.value, array([0, 1], 'i'))
+        eq_(self.dummy.value, array('i', [0, 1]))
 
     def testJComboBox(self):
         personList = [self.person]

@@ -1,7 +1,8 @@
+from __future__ import unicode_literals
 import ast
 import weakref
 
-from swingutils.binding.adapters import registry
+from .adapters import registry
 
 
 class BindingNode(object):
@@ -32,7 +33,7 @@ class BindingNode(object):
             raise
         except:
             if self.logger:
-                self.logger.debug(u'%s: error getting value',
+                self.logger.debug('%s: error getting value',
                                   self, exc_info=True)
             if not self.options['ignoreErrors']:
                 raise
@@ -42,7 +43,7 @@ class BindingNode(object):
 
     def handleEvent(self, event=None):
         if self.logger:
-            self.logger.debug(u'%s: change event triggered' % self)
+            self.logger.debug('%s: change event triggered' % self)
 
         self.callback()
 
@@ -63,7 +64,7 @@ class BindingNode(object):
 
     def bind(self, parent):
         if self.logger:
-            self.logger.debug(u'%s: adding event listeners (parent=%s)', self,
+            self.logger.debug('%s: adding event listeners (parent=%s)', self,
                               parent)
 
         self.lastParentRef = weakref.ref(parent)
@@ -76,7 +77,7 @@ class BindingNode(object):
                 raise
             except:
                 if self.logger:
-                    self.logger.debug(u'%s: error adding event listener',
+                    self.logger.debug('%s: error adding event listener',
                                       self, exc_info=True)
                 if not self.options['ignoreErrors']:
                     raise
@@ -113,8 +114,8 @@ class AttributeNode(BindingNode):
         if self.adapter and not isinstance(
                 self.adapter, registry.defaultPropertyAdapter):
             adapterClassName = self.adapter.__class__.__name__
-            return u'Attribute(%s, %s)' % (self.attr, adapterClassName)
-        return u'Attribute(%s)' % self.attr
+            return 'Attribute(%s, %s)' % (self.attr, adapterClassName)
+        return 'Attribute(%s)' % self.attr
 
 
 class VariableNode(BindingNode):
@@ -128,7 +129,7 @@ class VariableNode(BindingNode):
         return self.locals_.vars[self.name]
 
     def __unicode__(self):
-        return u'Variable(%s)' % self.name
+        return 'Variable(%s)' % self.name
 
 
 class SubscriptNode(BindingNode):
@@ -152,8 +153,8 @@ class SubscriptNode(BindingNode):
         if self.adapter and not isinstance(
                 self.adapter, registry.defaultListAdapter):
             adapterClassName = self.adapter.__class__.__name__
-            return u'Subscript(%s)' % adapterClassName
-        return u'Subscript'
+            return 'Subscript(%s)' % adapterClassName
+        return 'Subscript'
 
 
 class CallNode(BindingNode):
@@ -171,7 +172,7 @@ class CallNode(BindingNode):
         return eval(self.code, self.locals_, dict(___binding_parent=parent))
 
     def __unicode__(self):
-        return u'Call'
+        return 'Call'
 
 
 class NameCollector(ast.NodeVisitor):

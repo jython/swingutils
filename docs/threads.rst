@@ -83,30 +83,30 @@ runSwing/swingRun            No                     Yes
 runSwingLater/swingRunLater  No                     No
 ===========================  =====================  ================================
 
-Using @inlineCallbacks
-----------------------
+Using @swingCoroutine
+---------------------
 
 So we have the means to execute code in background threads and to execute
 GUI code from those threads. This is however not the best we can do with
 Python. If you have a complex event chain that requires bouncing between
 background and GUI threads, things can get quite messy.
 
-Enter the **@inlineCallbacks** decorator. Decorating a function with this
+Enter the **@swingCoroutine** decorator. Decorating a function with this
 allows the execution to "adjourn" while waiting for the background task to
 complete, freeing the EDT to attend to other tasks while waiting. Observe::
 
-    from swingutils.threads.defer import inlineCallbacks
+    from swingutils.threads.defer import swingCoroutine
     from swingutils.threads.threadpool import TaskExecutor
 
     executor = TaskExecutor()
 
-    @inlineCallbacks
+    @swingCoroutine
     def fillInExchangeRates(rates):
         for rateField, curr1, curr2 in rates:
             rate = yield executor.runBackground(fetchExchangeRate, curr1, curr2)
             rateField.setValue(rate)
 
-The code wrapped by @inlineCallbacks always run in the EDT. What happens here
+The code wrapped by @swingCoroutine always run in the EDT. What happens here
 is that it runs until a request is made to fetch an exchange rate in a
 background thread. At that point, the execution is "adjourned" and the EDT
 returns to processing its own queue. When fetchExchangeRate() returns, it
@@ -117,13 +117,13 @@ Technically this was implemented using Python's generator mechanism, which
 unfortunately adds a few restrictions:
 
 * You must use the ``yield`` statement when executing other functions that
-  return an :class:`~swingutils.threads.defer.AsyncToken` (such as those
-  decorated by @inlineCallbacks)
-* The "return" statement can't be used -- use
+  return an :class:`~concurrent.futures.Future` (such as those decorated by
+  @swingCoroutine)
+* The "return" statement can't be used on Jython 2.x -- use
   :func:`~swingutils.threads.defer.returnValue` instead
 * Don't catch BaseException in a block that calls returnValue() since it is
   implemented as an exception behind the scenes
 
 The ``yield`` statement can be safely used when calling functions from an
-@inlineCallbacks decorated function. Doing so ensures proper handling of
-any returned AsyncTokens.
+@swingCoroutine decorated function. Doing so ensures proper handling of
+any returned Futures.

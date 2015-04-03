@@ -2,6 +2,7 @@
 Contains convenience functions for working with formatters.
 
 """
+from __future__ import unicode_literals
 from decimal import Decimal
 
 from java.lang import Number, Long, Double
