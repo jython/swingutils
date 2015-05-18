@@ -12,8 +12,7 @@ class DelegateComboBoxModel(DelegateListModel, MutableComboBoxModel):
     _selectedItem = None
 
     def __init__(self, delegate=None):
-        # TODO: use super() when #1540 is fixed
-        DelegateListModel.__init__(self, delegate)
+        super(DelegateComboBoxModel, self).__init__(delegate)
 
     #
     # ComboBoxModel methods

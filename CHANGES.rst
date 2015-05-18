@@ -1,3 +1,10 @@
+v2.0.1
+======
+
+* Use super() to call superclass constructors in combo/list models as
+  originally intended
+
+
 v2.0.0
 ======
 

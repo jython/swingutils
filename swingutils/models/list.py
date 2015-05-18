@@ -12,8 +12,7 @@ class AbstractDelegateList(object):
 
     """
     def __init__(self, delegate=None):
-        # TODO: add this back when Jython bug #1540 has been fixed
-        # super(AbstractDelegateList, self).__init__()
+        super(AbstractDelegateList, self).__init__()
         self._delegate = delegate
 
     #
