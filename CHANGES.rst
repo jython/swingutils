@@ -3,6 +3,7 @@ v2.0.1
 
 * Use super() to call superclass constructors in combo/list models as
   originally intended
+* Added instructions for building jars
 
 
 v2.0.0

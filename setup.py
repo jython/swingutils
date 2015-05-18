@@ -6,10 +6,11 @@ if 'java' not in sys.platform.lower():
     raise Exception('This package can only be installed on Jython.')
 
 long_description = open('README.rst').read()
+version = open('RELEASE').read()
 
 setup(
     name='jython-swingutils',
-    version='2.0.1',
+    version=version,
     description="Makes using Java's Swing UI toolkit easy on Jython",
     long_description=long_description,
     author='Alex Gronholm',

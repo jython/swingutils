@@ -5,8 +5,8 @@
     "version" properties to build this. To sign the (source or binary) jar, you also
     need to provide the "signer", "storepass", "keypass" properties. -->
     <property file="build.properties"/>
-    <property name="srcjarfile" location="dist/jython-swingutils-${version}.jar" />
-    <property name="binjarfile" location="dist/jython-swingutils-${version}-bin.jar" />
+	<loadfile property="release" srcfile="RELEASE"/>
+    <property name="jarfile" location="dist/jython-swingutils-${release}.jar" />
 
     <target name="clean">
         <delete dir="build"/>
@@ -25,26 +25,26 @@
     
     <target name="srcjar">
         <mkdir dir="dist"/>
-        <delete file="${srcjarfile}" />
-        <jar destfile="${srcjarfile}">
+        <delete file="${jarfile}" />
+        <jar destfile="${jarfile}">
             <fileset dir="." includes="swingutils/**/*.py"/>
         </jar>
     </target>
 
     <target name="binjar" depends="clean, compile">
         <mkdir dir="dist"/>
-        <delete file="${binjarfile}" />
-        <jar destfile="${binjarfile}">
+        <delete file="${jarfile}" />
+        <jar destfile="${jarfile}">
             <fileset dir="build" includes="**/*.class"/>
         </jar>
     </target>
 
     <target name="signbinjar" depends="binjar">
-        <signjar jar="${binjarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
+        <signjar jar="${jarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
     </target>
 
     <target name="signsrcjar" depends="srcjar">
-        <signjar jar="${srcjarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
+        <signjar jar="${jarfile}" alias="${signer}" storepass="${storepass}" keypass="${keypass}" />
     </target>
 
 </project>
