@@ -60,9 +60,14 @@ To build a signed, compiled jar (suitable for `Java Web Start`_)::
     
     ant signbinjar
 
+The generated jar file will be timestamped using Safe Creative's `free
+timestamping`_ service. If you want to use a different timestamping authority,
+you can override the ``tsaurl`` property in your own ``build.properties``
+file.
 
 .. _JFormDesigner: http://www.jformdesigner.com/
 .. _source code: https://github.com/jython/swingutils
 .. _issue tracker: https://github.com/jython/swingutils/issues
 .. _documentation repository: http://packages.python.org/jython-swingutils/
 .. _Java Web Start: http://docs.oracle.com/javase/tutorial/deployment/webstart/
+.. _free timestamping: https://tsa.safecreative.org/
