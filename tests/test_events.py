@@ -21,24 +21,9 @@ def testListSelectionEvent():
     assert event.lastIndex == 0
 
 
-def testListSelectionEventNoArgs():
-    def selectionListener():
-        holder[0] = 1
-
-    model = DefaultListModel()
-    lst = JList(model)
-    model.addElement(u'Test')
-    holder = [None]
-    addEventListener(lst, ListSelectionListener, 'valueChanged',
-                     selectionListener)
-
-    lst.setSelectionInterval(0, 0)
-    assert holder == [1]
-
-
 def testListSelectionEventVarargs():
     def selectionListener(*args):
-        holder[0] = args
+        _event, holder[0] = args
 
     model = DefaultListModel()
     lst = JList(model)
@@ -48,11 +33,11 @@ def testListSelectionEventVarargs():
                      selectionListener, 2)
 
     lst.setSelectionInterval(0, 0)
-    assert holder[0] == (2,)
+    assert holder[0] == 2
 
 
 def testListSelectionEventKwargs():
-    def selectionListener(**kwargs):
+    def selectionListener(event, **kwargs):
         holder[0] = kwargs
 
     model = DefaultListModel()

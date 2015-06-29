@@ -5,7 +5,10 @@ from types import MethodType
 from java.util import EventListener
 
 _wrapperClassMap = {}  # event interface name -> wrapper class
-_noOp = lambda self, event: None
+
+
+def _noOp(self, event):
+    pass
 
 
 def _createListenerWrapper(eventInterface, eventNames, listener, args, kwargs,
@@ -55,15 +58,8 @@ class EventListenerWrapper(object):
         self.removeMethod = removeMethod
         self.removeMethodArgs = (self,)
 
-        argspec = getargspec(listener)
-        min_args = 2 if isinstance(listener, MethodType) else 1
-        self.passEvent = len(argspec[0]) >= min_args
-
     def handleEvent(self, event):
-        if self.passEvent:
-            self.listener(event, *self.args, **self.kwargs)
-        else:
-            self.listener(*self.args, **self.kwargs)
+        self.listener(event, *self.args, **self.kwargs)
 
     def unlisten(self):
         self.removeMethod(*self.removeMethodArgs)
@@ -88,6 +84,12 @@ def addEventListener(target, eventInterface, event, listener, *args, **kwargs):
              events (with :meth:`~EventListenerWrapper.unlisten`)
 
     """
+    # Sanity check
+    argspec = getargspec(listener)
+    min_args = 2 if isinstance(listener, MethodType) else 1
+    if len(argspec.args) < min_args and not argspec.varargs:
+        raise TypeError('The target callable has too few parameters declared')
+
     addMethodName = 'add%s' % eventInterface.__name__
     addMethod = getattr(target, addMethodName)
     removeMethodName = 'remove%s' % eventInterface.__name__
