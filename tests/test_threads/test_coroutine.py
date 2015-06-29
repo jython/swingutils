@@ -1,6 +1,7 @@
 from concurrent.futures import Future
 
-from swingutils.threads.coroutine import swingCoroutine, returnValue
+from swingutils.threads.coroutine import swingCoroutine, returnValue, setDefaultCoroutineExceptionHandler
+from threading import Event
 
 
 def add(x, y):
@@ -20,29 +21,25 @@ def test_swing_coroutine():
     assert future.result(1) == 6
 
 
-def test_swing_coroutine_no_generator():
-    """
-    Tests that an @swing_coroutine decorated function returns a future with
-    the return value preset if it's not a generator.
-    """
-
-    @swingCoroutine
-    def inner(x, y):
-        return x + y
-
-    future = inner(1, 2)
-    assert future.result(0) == 3
-
-
 def test_swing_coroutine_exception():
     class TestError(Exception):
         pass
+
+    def excepthook(exc_type, exc_value, tb):
+        excepthook_event.set()
 
     @swingCoroutine
     def raiseException():
         yield add(1, 2)
         raise TestError
 
-    future = raiseException()
-    exc = future.exception(1)
+    excepthook_event = Event()
+    setDefaultCoroutineExceptionHandler(excepthook)
+    try:
+        future = raiseException()
+        exc = future.exception(1)
+        assert excepthook_event.wait(1)
+    finally:
+        setDefaultCoroutineExceptionHandler(None)
+
     assert isinstance(exc, TestError)

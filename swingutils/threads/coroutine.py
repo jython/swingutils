@@ -3,19 +3,16 @@ A coroutine mechanism that uses the AWT event loop.
 
 """
 from functools import wraps
-from types import GeneratorType
 from functools import partial
 from concurrent.futures import Future
+from inspect import isgeneratorfunction
 import sys
 
-from swingutils.threads.swing import swingRun
+from swingutils.threads.swing import runSwing
 
 __all__ = ('returnValue', 'swingCoroutine')
 
-
-class _ReturnValue(BaseException):
-    def __init__(self, result):
-        self.result = result
+_defaultExceptionHandler = None
 
 
 def returnValue(result):
@@ -24,84 +21,93 @@ def returnValue(result):
     generators, a normal ``return`` statement can't be used on Jython 2.x.
 
     """
-    raise _ReturnValue(result)
+    exception = StopIteration()
+    exception.value = result
+    raise exception
 
 
 def isFuture(obj):
-    return hasattr(obj, 'add_done_callback') and hasattr(obj, 'result') and \
-        hasattr(obj, 'exception')
+    return (hasattr(obj, 'add_done_callback') and hasattr(obj, 'result') and
+            hasattr(obj, 'exception'))
 
 
-@swingRun
 def _swingCoroutine(future, g, parentFuture):
-    while True:
-        try:
+    try:
+        exc = future.exception()
+        if exc:
             # Take advantage of the exception_info() method on the futures
             # backport which contains the traceback since exceptions don't
             # have __traceback__ on Python 2.x
-            exc = future.exception()
-            if exc:
-                tb = None
-                if hasattr(future, 'exception_info'):
-                    exc, tb = future.exception_info()
-                else:
-                    exc = future.exception()
-                result = g.throw(type(exc), exc, tb)
+            if hasattr(future, 'exception_info'):
+                exc, tb = future.exception_info()
             else:
-                result = g.send(future.result())
-        except StopIteration as e:
-            # StopIteration.value is set on Python 3 when the return
-            # statement is used with a value
-            value = getattr(e, 'value', None)
-            parentFuture.set_result(value)
-            return
-        except _ReturnValue as e:
-            parentFuture.set_result(e.result)
-            return
-        except BaseException as e:
-            # Take advantage of the backport again if possible
-            if hasattr(parentFuture, 'set_exception_info'):
-                parentFuture.set_exception_info(*sys.exc_info()[1:])
-            else:
-                parentFuture.set_exception(e)
-            return
+                exc, tb = future.exception(), None
 
-        if isFuture(result):
-            callback = partial(_swingCoroutine, g=g,
-                               parentFuture=parentFuture)
-            result.add_done_callback(callback)
-            return
+            result = g.throw(type(exc), exc, tb)
+        else:
+            result = g.send(future.result())
+
+        if not isFuture(result):
+            raise TypeError(
+                'A @swingCoroutine must only yield Futures -- '
+                'received {} instead'.format(result.__class__.__name__))
+
+        callback = partial(runSwing, _swingCoroutine, g=g,
+                           parentFuture=parentFuture)
+        result.add_done_callback(callback)
+    except StopIteration as e:
+        # StopIteration.value is set on Python 3 when the return
+        # statement is used with a value
+        value = getattr(e, 'value', None)
+        parentFuture.set_result(value)
+    except BaseException as e:
+        # Take advantage of the backport if possible
+        excInfo = sys.exc_info()
+        if hasattr(parentFuture, 'set_exception_info'):
+            parentFuture.set_exception_info(*excInfo[1:])
+        else:
+            parentFuture.set_exception(e)
+
+        if _defaultExceptionHandler and not parentFuture._done_callbacks:
+            _defaultExceptionHandler(*excInfo)
 
 
 def swingCoroutine(func):
     """
-    Enables the wrapped function to pause execution every time it needs a
-    Future to be completed to continue. If the wrapped function is a
-    generator, it will run it on the AWT event loop until either
-    returnValue() is called or the execution reaches the end of the function.
+    Enables the wrapped generator function to pause execution when it needs a
+    Future to be completed to continue. The wrapped function is guaranteed to
+    run on the AWT event dispatch thread. To return a value from it on
+    Jython 2, call :func:`returnValue` instead of using the `return`
+    statement.
 
-    :rtype: :class:`~Future`
+    If there is unhandled exception in the wrapped method and the future
+    returned from the wrapper has no listener callbacks, the default coroutine
+    exception handler is invoked.
 
     """
+
+    if not isgeneratorfunction(func):
+        raise TypeError('The wrapped function must be a generator function')
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         g = func(*args, **kwargs)
-
-        # Pass through the result if it was a Future
-        if isFuture(g):
-            return g
-
-        # If func was a regular function and not a generator, simply return
-        # its return value. Otherwise start executing the code and return a
-        # Future.
         future = Future()
-        if isinstance(g, GeneratorType):
-            subFuture = Future()
-            subFuture.set_result(None)
-            _swingCoroutine(subFuture, g, future)
-        else:
-            future.set_result(g)
-
+        subFuture = Future()
+        subFuture.set_result(None)
+        runSwing(_swingCoroutine, subFuture, g, future)
         return future
 
     return wrapper
+
+
+def setDefaultCoroutineExceptionHandler(handler):
+    """
+    Sets the default handler for unhandled exceptions in @swingCoroutines.
+
+    The handler receives three arguments: exception type, exception instance,
+    traceback object.
+    """
+
+    global _defaultExceptionHandler
+    _defaultExceptionHandler = handler

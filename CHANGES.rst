@@ -1,3 +1,19 @@
+v2.1.0
+======
+
+* BACKWARDS INCOMPATIBLE: event handlers are now always sent the
+  event as the first argument. While functions with no arguments
+  were previously allowed as event handlers, this was never
+  documented.
+* BACKWARDS INCOMPATIBLE: @swingCoroutine now requires that wrapped
+  callables are generator functions. While they were always intended
+  to be used this way, it was previously allowed to decorate normal
+  functions as well.
+* Added the setDefaultCoroutineExceptionHandler() function in
+  swingutils.threads.coroutine which allows you to set a default
+  handler for any unhandled exceptions in @swingCoroutine.
+
+
 v2.0.1
 ======
 
