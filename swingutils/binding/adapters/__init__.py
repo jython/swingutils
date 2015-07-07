@@ -6,6 +6,8 @@ instances when given a target object.
 
 """
 
+from __future__ import print_function
+
 
 class AdapterRegistry(object):
     defaultPropertyAdapter = None
@@ -92,17 +94,17 @@ class AdapterRegistry(object):
     def dumpAdapters(self):
         """Prints a list of all registered adapters to standard output."""
 
-        print 'Registered property adapters:'
+        print('Registered property adapters:')
         for key in sorted(self.propertyAdapters.keys()):
             adapter = self.propertyAdapters[key]
-            print '* %s (class=%s property=%s)' % (adapter.__name__, key[0],
-                                                   key[1])
+            print('* %s (class=%s property=%s)' % (
+                adapter.__name__, key[0], key[1]))
 
-        print
-        print 'Registered list adapters:'
+        print()
+        print('Registered list adapters:')
         for key in sorted(self.listAdapters.keys()):
             adapter = self.listAdapters[key]
-            print '* %s (class=%s)' % (adapter, key)
+            print('* %s (class=%s)' % (adapter, key))
 
 registry = AdapterRegistry()
 

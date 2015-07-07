@@ -6,7 +6,7 @@ and this is provided by a collection of adapters. Adapters are used
 automatically when a matching object is encountered.
 
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 import __builtin__
 import sys
 
@@ -90,7 +90,7 @@ class BindingExpression(object):
         """
         outfile = outfile or sys.stdout
         indentspace = u' ' * indent
-        print >> outfile, u'%sSource code: %s' % (indentspace, self.source)
+        print(u'%sSource code: %s' % (indentspace, self.source), file=outfile)
         if not self.chains:
             self.chains = createChains(self.source, None, self.locals,
                                        self.options)
@@ -101,8 +101,8 @@ class BindingExpression(object):
             while node:
                 txts.append(unicode(node))
                 node = node.next
-            print >> outfile, u'%sChain %d: %s' % (indentspace, i + 1,
-                                                   u' -> '.join(txts))
+            print(u'%sChain %d: %s' % (
+                indentspace, i + 1, u' -> '.join(txts)), file=outfile)
 
 
 class Binding(object):
@@ -225,9 +225,9 @@ class Binding(object):
         """
         outfile = outfile or sys.stdout
         indentspace = u' ' * indent
-        print >> outfile, indentspace + u'Source:'
+        print(outfile, indentspace + u'Source:', file=outfile)
         self.sourceExpression.dump(indent + 2)
-        print >> outfile, indentspace + u'Target:'
+        print(outfile, indentspace + u'Target:', file=outfile)
         self.targetExpression.dump(indent + 2)
 
 
@@ -290,5 +290,5 @@ class BindingGroup(object):
         outfile = outfile or sys.stdout
         indentspace = u' ' * indent
         for i, b in enumerate(self.bindings):
-            print >> outfile, u'%sBinding %d:' % (indentspace, i + 1)
+            print(u'%sBinding %d:' % (indentspace, i + 1), file=outfile)
             b.dump(indent + 2, outfile)
