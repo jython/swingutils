@@ -6,7 +6,7 @@
     need to provide the "signer", "storepass", "keypass" properties. -->
 	<loadfile property="release" srcfile="RELEASE"/>
     <property file="build.properties"/>
-	<property name="tsaurl" value="http://tsa.safecreative.org/"/>
+	<property name="tsaurl" value="http://www.startssl.com/timestamp"/>
     <property name="jarfile" location="dist/jython-swingutils-${release}.jar" />
 
     <target name="clean">
