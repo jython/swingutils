@@ -44,10 +44,12 @@ copyright = u'2009-2015, Alex Grönholm'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '2.0.0'
+with open('../RELEASE') as f:
+    release = f.read()
+
+# The short X.Y version.
+version = '.'.join(release.split('.')[:2])
 
 intersphinx_mapping = {'http://download.oracle.com/javase/7/docs/api': 'jdk7.inv'}
 
@@ -93,7 +95,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'default'
+html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
