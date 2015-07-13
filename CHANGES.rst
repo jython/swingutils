@@ -1,3 +1,9 @@
+v2.1.1
+======
+
+* Fixed addEventListener() not allowing built-in functions as event listeners
+
+
 v2.1.0
 ======
 

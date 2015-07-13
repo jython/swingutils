@@ -49,3 +49,17 @@ def testListSelectionEventKwargs():
 
     lst.setSelectionInterval(0, 0)
     assert holder[0] == {'test': 2}
+
+
+def testBuiltinListener():
+    model = DefaultListModel()
+    lst = JList(model)
+    model.addElement(u'Test')
+    events = []
+    addEventListener(lst, ListSelectionListener, 'valueChanged',
+                     events.append)
+
+    lst.setSelectionInterval(0, 0)
+    assert len(events) == 1
+    assert events[0].firstIndex == 0
+    assert events[0].lastIndex == 0

@@ -1,6 +1,4 @@
 from __future__ import unicode_literals
-from inspect import getargspec
-from types import MethodType
 
 from java.util import EventListener
 
@@ -84,12 +82,6 @@ def addEventListener(target, eventInterface, event, listener, *args, **kwargs):
              events (with :meth:`~EventListenerWrapper.unlisten`)
 
     """
-    # Sanity check
-    argspec = getargspec(listener)
-    min_args = 2 if isinstance(listener, MethodType) else 1
-    if len(argspec.args) < min_args and not argspec.varargs:
-        raise TypeError('The target callable has too few parameters declared')
-
     addMethodName = 'add%s' % eventInterface.__name__
     addMethod = getattr(target, addMethodName)
     removeMethodName = 'remove%s' % eventInterface.__name__
