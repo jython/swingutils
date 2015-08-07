@@ -1,3 +1,9 @@
+v2.1.2
+======
+
+* Fixed installation from tarball (the RELEASE file was not packaged)
+
+
 v2.1.1
 ======
 

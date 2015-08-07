@@ -1,4 +1,5 @@
 recursive-include docs *.rst *.py *.inv
+include RELEASE
 include README.rst
 include CHANGES.rst
 include build.xml
